@@ -120,6 +120,9 @@ body {
 .main-content {
     margin-left: 260px;
     flex: 1;
+    /* min-width 0: sin esto el item flex no puede encogerse por debajo del
+       ancho de la tabla, el layout se estira y nunca aparece scroll horizontal */
+    min-width: 0;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -229,7 +232,35 @@ body {
     overflow: auto;
     max-height: calc(100vh - 240px);
     position: relative;
+    scrollbar-color: #A52A2A #f5e6e8; /* Firefox / Chrome modernos */
 }
+/* En el resumen los KPIs ocupan alto extra: se acorta la tabla para que
+   la barra horizontal inferior quede siempre dentro de la pantalla */
+#view-summary .table-container { max-height: calc(100vh - 310px); }
+
+/* Barra de scroll bien visible con los colores del tablero (Chrome/Edge/Safari) */
+.table-container::-webkit-scrollbar { height: 14px; width: 12px; }
+.table-container::-webkit-scrollbar-track { background: #f5e6e8; border-radius: 8px; }
+.table-container::-webkit-scrollbar-thumb { background: #A52A2A; border-radius: 8px; border: 3px solid #f5e6e8; }
+.table-container::-webkit-scrollbar-thumb:hover { background: #7A1E24; }
+
+/* === BARRA SUPERIOR DE SCROLL HORIZONTAL ===
+   Barra espejo arriba de la tabla, sincronizada por JS, para navegar de
+   izquierda a derecha sin tener que ir hasta el fondo de la tabla */
+.top-scroll {
+    overflow-x: scroll;
+    overflow-y: hidden;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(139,21,37,0.06);
+    margin-bottom: 6px;
+    scrollbar-color: #A52A2A #f5e6e8;
+}
+.top-scroll::-webkit-scrollbar { height: 14px; }
+.top-scroll::-webkit-scrollbar-track { background: #f5e6e8; border-radius: 8px; }
+.top-scroll::-webkit-scrollbar-thumb { background: #A52A2A; border-radius: 8px; border: 3px solid #f5e6e8; }
+.top-scroll::-webkit-scrollbar-thumb:hover { background: #7A1E24; }
+.top-scroll-spacer { height: 1px; }
 
 /* === DP% HEATMAP TABLE === */
 .dp-table {
@@ -520,7 +551,7 @@ body {
 
 /* === PRINT === */
 @media print {
-    .sidebar, .filter-bar, .collapse-btn { display: none !important; }
+    .sidebar, .filter-bar, .collapse-btn, .top-scroll { display: none !important; }
     .main-content { margin-left: 0 !important; }
     .table-container { max-height: none; overflow: visible; }
 }
@@ -639,6 +670,7 @@ function init() {
     buildZoneFilter();
     buildDPTable();
     buildAllProductViews();
+    setupTopScrollbars();
     setupTooltip();
 }
 
@@ -668,6 +700,8 @@ function toggleSidebar() {
     } else {
         icon.innerHTML = '&#9664;';
     }
+    // Recalcular barras cuando termina la transicion de ancho (0.3s)
+    setTimeout(refreshTopScrollbars, 350);
 }
 
 function toggleMobileMenu() {
@@ -714,6 +748,8 @@ function showView(viewName) {
             }
         }
     }
+    // Recalcular barras: los paneles ocultos miden 0 hasta que se muestran
+    refreshTopScrollbars();
 }
 
 // === ZONE FILTER ===
@@ -926,6 +962,45 @@ function renderProductBody(data) {
         html += '</tr>';
     }
     return html;
+}
+
+// === BARRA SUPERIOR DE SCROLL HORIZONTAL ===
+// Crea sobre cada tabla una barra espejo sincronizada, para navegar de
+// izquierda a derecha sin tener que bajar hasta el final de la tabla.
+var topScrollRefreshers = [];
+
+function setupTopScrollbars() {
+    var containers = document.querySelectorAll('.table-container');
+    for (var i = 0; i < containers.length; i++) {
+        createTopScrollbar(containers[i]);
+    }
+    window.addEventListener('resize', refreshTopScrollbars);
+}
+
+function createTopScrollbar(container) {
+    var bar = document.createElement('div');
+    bar.className = 'top-scroll';
+    var spacer = document.createElement('div');
+    spacer.className = 'top-scroll-spacer';
+    bar.appendChild(spacer);
+    container.parentNode.insertBefore(bar, container);
+
+    function refresh() {
+        // Solo se muestra si la tabla es mas ancha que el contenedor
+        var needsScroll = container.scrollWidth > container.clientWidth + 1;
+        bar.style.display = needsScroll ? 'block' : 'none';
+        spacer.style.width = container.scrollWidth + 'px';
+    }
+    refresh();
+    topScrollRefreshers.push(refresh);
+
+    // Sincronizacion en ambos sentidos (asignar el mismo valor no re-dispara el evento)
+    bar.addEventListener('scroll', function() { container.scrollLeft = bar.scrollLeft; });
+    container.addEventListener('scroll', function() { bar.scrollLeft = container.scrollLeft; });
+}
+
+function refreshTopScrollbars() {
+    for (var i = 0; i < topScrollRefreshers.length; i++) topScrollRefreshers[i]();
 }
 
 // === SORTING ===
