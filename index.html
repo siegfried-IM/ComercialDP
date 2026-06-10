@@ -231,12 +231,19 @@ body {
     box-shadow: 0 2px 8px rgba(139,21,37,0.06);
     overflow: auto;
     max-height: calc(100vh - 240px);
+    /* piso de 320px: en ventanas bajas (notebook chica, media pantalla,
+       telefono apaisado) la tabla no se achata hasta ser inusable;
+       dvh descuenta la barra de direcciones en celulares */
+    max-height: max(320px, calc(100dvh - 240px));
     position: relative;
     scrollbar-color: #A52A2A #f5e6e8; /* Firefox / Chrome modernos */
 }
 /* En el resumen los KPIs ocupan alto extra: se acorta la tabla para que
    la barra horizontal inferior quede siempre dentro de la pantalla */
-#view-summary .table-container { max-height: calc(100vh - 310px); }
+#view-summary .table-container {
+    max-height: calc(100vh - 310px);
+    max-height: max(300px, calc(100dvh - 310px));
+}
 
 /* Barra de scroll bien visible con los colores del tablero (Chrome/Edge/Safari) */
 .table-container::-webkit-scrollbar { height: 14px; width: 12px; }
@@ -520,12 +527,18 @@ body {
     .kpi-row { grid-template-columns: 1fr 1fr; gap: 10px; }
     .kpi-card { padding: 14px; }
     .kpi-value { font-size: 1.4rem; }
-    .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px 10px 56px; }
+    /* apilada en columna la barra de filtros mide ~170px: si quedara
+       sticky se comeria un cuarto de la pantalla del telefono */
+    .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; padding: 10px 12px 10px 56px; position: static; }
     .search-box { width: 100%; }
     .filter-select { width: 100%; }
     .page-content { padding: 10px; }
     .view-title { font-size: 1.1rem; }
-    .table-container { border-radius: 6px; max-height: calc(100vh - 320px); }
+    .table-container {
+        border-radius: 6px;
+        max-height: calc(100vh - 320px);
+        max-height: max(260px, calc(100dvh - 320px));
+    }
     .dp-table { font-size: 0.7rem; }
     .dp-table td.sticky-zona { min-width: 60px; max-width: 60px; font-size: 0.65rem; }
     .dp-table td.sticky-region { min-width: 100px; max-width: 100px; left: 60px; font-size: 0.7rem; }
