@@ -1,0 +1,18 @@
+# Secretos: nunca commitear el token de Qlik
+.env
+generador/qlik_token.txt
+*.token
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Temporales de extracción
+datos/*.tmp
+datos/checkpoint_*.json
+
+# Sistema
+desktop.ini
+Thumbs.db
