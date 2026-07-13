@@ -1127,6 +1127,7 @@ function setVariation(v) {
     if (v === 'ap' && currentWindow === 'YTD') return;   // combinación no válida
     currentVariation = v;
     markVarActive();
+    sortState = {};   // las tablas se rearman en orden por defecto (igual que setWindow/setMetric)
     applyWindow(true);
     if (currentView === 'crecimiento') renderGrowth();   // el crecimiento usa la variación activa
 }
@@ -1140,10 +1141,13 @@ function updateFilterBarForView(v) {
     var isMap = (v === 'mapa');
     var isTable = !isEvol && !isGrowth && !isMap;   // 'summary' o vista de producto
     var hasWin = (typeof WIN !== 'undefined' && WIN);
-    // Ventana + variación: aplican a tablas, crecimiento y mapa (no a la evolución trimestral)
+    // Ventana: aplica a tablas, crecimiento y mapa (no a la evolución trimestral).
     var showWin = hasWin && !isEvol;
+    // Variación (vs año/período ant.): SOLO donde se consume — tablas y crecimiento.
+    // El mapa colorea el valor actual de la ventana, no usa la variación.
+    var showVar = hasWin && (isTable || isGrowth);
     _fbShow('winGroupLabel', showWin); _fbShow('winToggle', showWin);
-    _fbShow('varGroupLabel', showWin); _fbShow('varToggle', showWin);
+    _fbShow('varGroupLabel', showVar); _fbShow('varToggle', showVar);
     // Búsqueda / zonas / compacto: sólo en vistas con tabla por región
     _fbShow('searchBox', isTable);
     _fbShow('zoneDD', isTable);
@@ -2165,6 +2169,12 @@ function initMap() {
 // --- zoom / pan del mapa (manipula el viewBox del SVG) ---
 var _mapZ = null;
 var mapDragged = false;
+var mapSelProv = null, mapSelDepto = null;   // selección activa para re-render del detalle
+
+function resetMapDetail() {
+    var d = document.getElementById('mapDetail');
+    if (d) d.innerHTML = '<div class="evol-empty">Hac&eacute; clic en una provincia o departamento (mapa o tabla) para ver el detalle.</div>';
+}
 function attachMapZoom(svg, baseVB) {
     if (!svg) return;
     var b = baseVB.split(' ').map(Number);
@@ -2207,6 +2217,7 @@ function mapZoomReset() { if (_mapZ) _mapZ.reset(); }
 
 function mapClick(prov) {
     if (mapDragged) { mapDragged = false; return; }
+    mapSelProv = prov; mapSelDepto = null;
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-prov') === prov);
     renderMapDetail(prov);
@@ -2279,6 +2290,15 @@ function renderMap() {
     var tbl = document.getElementById('mapTable');
     if (tbl) tbl.innerHTML = thtml;
     var rt = document.getElementById('mapRankTitle'); if (rt) rt.textContent = 'Ranking por provincia';
+    // Mantener coherente el panel de detalle: refrescarlo para la provincia
+    // seleccionada (así no queda con métrica/ventana/producto viejos) o resetear.
+    if (mapSelProv) {
+        var selP = document.querySelector('#mapSvg path[data-prov="' + mapSelProv.replace(/"/g, '') + '"]');
+        if (selP) selP.classList.add('sel');
+        renderMapDetail(mapSelProv);
+    } else {
+        resetMapDetail();
+    }
 }
 
 function miniLine(serie, labels) {
@@ -2308,10 +2328,13 @@ function renderMapDetail(prov) {
     if (pu) html += evolStat('Unid. mercado', fmtUnits(pu.tot)) + evolStat('Unid. Siegfried', fmtUnits(pu.sie)) +
                     evolStat('MS% (share)', fmtMs(pu.sie, pu.tot));
     if (ps) {
-        var f = null; for (var i = 0; i < ps.length; i++) { if (ps[i] !== null && ps[i] !== undefined) { f = ps[i]; break; } }
-        if (f !== null && pv !== null && pv !== undefined) {
-            var dd = pv - f, dc = dd >= 0 ? '#198754' : '#dc3545';
-            html += evolStat('&Delta; vs ' + labels[0], '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
+        // Δ sobre la MISMA serie trimestral (primer vs último período con dato),
+        // consistente con el gráfico de abajo — no mezcla la ventana activa.
+        var fi = -1, li = -1;
+        for (var i = 0; i < ps.length; i++) { if (ps[i] !== null && ps[i] !== undefined) { if (fi < 0) fi = i; li = i; } }
+        if (fi >= 0 && li > fi) {
+            var dd = ps[li] - ps[fi], dc = dd >= 0 ? '#198754' : '#dc3545';
+            html += evolStat('&Delta; ' + labels[fi] + ' &rarr; ' + labels[li] + ' (trim.)', '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
         }
     }
     html += '</div>';
@@ -2344,6 +2367,16 @@ function renderMapDepto() {
     }
     var product = document.getElementById('mapProduct').value;
     var data = (mapaPartido[currentMetric] && mapaPartido[currentMetric][product]) || {};
+    // Total Compañía no tiene agregado por departamento -> evitar el mapa todo gris engañoso
+    if (!data || Object.keys(data).length === 0) {
+        svgc.innerHTML = '<div class="evol-empty" style="padding:34px 20px;line-height:1.5">El m&aacute;ximo detalle por departamento no est&aacute; disponible para <b>' + product +
+            '</b>.<br>Eleg&iacute; un producto puntual en el selector de arriba, o us&aacute; el nivel <b>Provincia</b>.</div>';
+        document.getElementById('mapTable').innerHTML = '';
+        document.getElementById('mapTitle').textContent = 'Mapa por departamento — ' + product;
+        var rtx = document.getElementById('mapRankTitle'); if (rtx) rtx.textContent = 'Ranking por departamento';
+        resetMapDetail();
+        return;
+    }
     var svg = '<svg viewBox="' + provGeoDepto.viewBox + '" preserveAspectRatio="xMidYMin meet">';
     for (var i = 0; i < provGeoDepto.feats.length; i++) {
         var f = provGeoDepto.feats[i];
@@ -2386,6 +2419,14 @@ function renderMapDepto() {
             '<span class="maprow-u" title="Unidades del mercado">' + fmtUnits(x.tot) + '</span>' +
             '<span class="maprow-u ms" title="Market share en unidades">' + fmtMs(x.sie, x.tot) + '</span></div>';
     }).join('')) : '<div class="evol-empty">Sin datos.</div>';
+    // Refrescar el detalle del departamento seleccionado (o resetear) para que no quede viejo
+    if (mapSelDepto) {
+        var selD = document.querySelector('#mapSvg path[data-k="' + mapSelDepto.replace(/"/g, '') + '"]');
+        if (selD) selD.classList.add('sel');
+        renderDeptoDetail(mapSelDepto);
+    } else {
+        resetMapDetail();
+    }
 }
 
 // {tot, gap} de unidades por departamento (geokey) para la ventana activa
@@ -2400,6 +2441,7 @@ function deptoUnits(product, k) {
 
 function mapClickDepto(k) {
     if (mapDragged) { mapDragged = false; return; }
+    mapSelDepto = k; mapSelProv = null;
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-k') === k);
     renderDeptoDetail(k);
