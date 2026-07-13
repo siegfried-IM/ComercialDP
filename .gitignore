@@ -21,6 +21,8 @@ Thumbs.db
 progreso.html
 datos/historico_win.json
 datos/depto_win.json
+datos/unidades_region.json
+datos/unidades_depto.json
 
 # geojson crudo IGN (fuente reproducible; se usa datos/departamentos_svg.json derivado)
 datos/dep_ign.geojson

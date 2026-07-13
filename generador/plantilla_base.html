@@ -630,6 +630,7 @@ body {
 .ms-group { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px; color:#a58589; padding:7px 8px 3px; font-weight:700; }
 .clear-btn { border:1px solid #d9c2c4; background:#fff; color:#95232C; border-radius:6px; padding:8px 14px; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
 .clear-btn:hover { background:#f7ebec; }
+.u-cell { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; color:#3a2022; }
 /* === MAPA === */
 .map-card { text-align:center; position:relative; }
 .map-zoom-ctrl { position:absolute; top:12px; right:12px; display:flex; flex-direction:column; gap:5px; z-index:5; }
@@ -648,10 +649,19 @@ body {
 @media (max-width:900px) { .map-layout { grid-template-columns:1fr; } }
 .map-table-card { max-height:74vh; overflow-y:auto; }
 .maprow { display:grid; grid-template-columns:14px 1fr auto; align-items:center; gap:8px; padding:5px 6px; border-radius:5px; cursor:pointer; font-size:0.82rem; }
+.maprow.rk { grid-template-columns:14px minmax(60px,1fr) auto auto 48px; gap:6px; }
 .maprow:hover { background:#f7ebec; }
 .mapdot { width:12px; height:12px; border-radius:3px; }
 .maprow-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.maprow-val { font-weight:700; color:#3a2022; }
+.maprow-val { font-weight:700; color:#3a2022; text-align:right; }
+.maprow-u { text-align:right; font-variant-numeric:tabular-nums; color:#4a3436; font-size:0.78rem; white-space:nowrap; }
+.maprow-u.gap { color:#95232C; }
+.maprow.rk.hdr { cursor:default; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px; color:#a58589; border-bottom:1px solid #f0e4e5; padding-bottom:4px; }
+.maprow.rk.hdr:hover { background:none; }
+.maprow.rk.hdr .maprow-u, .maprow.rk.hdr .maprow-val { color:#a58589; font-weight:600; }
+.maprank-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
+.maprank-sort { font-size:0.72rem; color:#8a6d6f; display:flex; align-items:center; gap:5px; }
+.maprank-sort select { font-size:0.75rem; padding:3px 6px; border:1px solid #d9c2c4; border-radius:5px; background:#fff; color:#3a2022; }
 /* === MODO COMPACTO (más columnas visibles) === */
 body.compact-tables .dp-table th, body.compact-tables .dp-table td { padding:2px 5px; font-size:0.66rem; }
 body.compact-tables .dp-table thead th.col-product { height:86px; padding-bottom:6px; }
@@ -863,7 +873,16 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                     <div class="map-legend" id="mapLegend"></div>
                 </div>
                 <div class="evol-card map-table-card">
-                    <h4 class="growth-h" style="color:#7a1e24;margin:0 0 8px">Ranking por provincia</h4>
+                    <div class="maprank-head">
+                        <h4 class="growth-h" id="mapRankTitle" style="color:#7a1e24;margin:0">Ranking</h4>
+                        <label class="maprank-sort">Ordenar por
+                            <select id="mapRankSort" onchange="renderMap()">
+                                <option value="tot">Unid. mercado</option>
+                                <option value="gap">Potencial no capt.</option>
+                                <option value="dp">DP% / DF%</option>
+                            </select>
+                        </label>
+                    </div>
                     <div id="mapTable"></div>
                 </div>
             </div>
@@ -1000,17 +1019,22 @@ function winDataFor(w, m) {
 
 function productDataFromWin(w) {
     // Convierte el dataset de ventana (act/ay/ap por región) al formato {ant,act}
-    // que consumen las tablas de producto, según la variación activa.
+    // que consumen las tablas de producto, según la variación activa. Adjunta
+    // unidades (tot = mercado, gap = potencial no capturado) desde WINU.
     var useAp = (currentVariation === 'ap');
+    var ureg = (typeof WINU !== 'undefined' && WINU && WINU.win[currentWindow]) ? WINU.win[currentWindow].reg : null;
     var out = {};
     for (var p = 0; p < productNames.length; p++) {
         var pn = productNames[p];
         var src = w.prod[pn] || [];
+        var u = ureg && ureg[pn] ? ureg[pn] : null;
         out[pn] = src.map(function (r) {
             var cmp = useAp ? r.ap : r.ay;
+            var uu = u && u[r.region] ? u[r.region] : null;
             return { zona: r.zona, region: r.region,
                      act: (r.act == null ? 0 : r.act),
-                     ant: (cmp == null ? 0 : cmp) };
+                     ant: (cmp == null ? 0 : cmp),
+                     tot: uu ? uu.tot : null, gap: uu ? uu.gap : null };
         });
     }
     return out;
@@ -1310,6 +1334,16 @@ function limpiarFiltros() {
     if (currentView === 'crecimiento') renderGrowth();   // el umbral también afecta al crecimiento
 }
 
+// Formato compacto de unidades (1,41 M / 405 K / 812)
+function fmtUnits(n) {
+    if (n == null || isNaN(n)) return '<span style="color:#c9b6b8">&mdash;</span>';
+    n = Math.round(n);
+    var a = Math.abs(n);
+    if (a >= 1e6) return (n / 1e6).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' M';
+    if (a >= 1e3) return (n / 1e3).toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' K';
+    return n.toLocaleString('es-AR');
+}
+
 // === HEATMAP COLOR ===
 function heatmapColor(val) {
     var pct = val * 100;
@@ -1434,6 +1468,8 @@ function buildProductTable(pn, color) {
     html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 3)">' + actHdr + '<span class="sort-arrow"></span></th>';
     html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 4)">Variaci&oacute;n<span class="sort-arrow"></span></th>';
     html += '<th style="background:' + hdrBg + '">Tendencia</th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" title="Unidades totales del mercado (todos los laboratorios) en la ventana" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 6)">Unid. mercado<span class="sort-arrow"></span></th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" title="Potencial no capturado: unidades del mercado en farmacias donde Siegfried no está presente" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 7)">Pot. no capt.<span class="sort-arrow"></span></th>';
     html += '</tr></thead>';
     html += '<tbody id="prodBody-' + pn.replace(/ /g, '_') + '">';
     html += renderProductBody(data);
@@ -1463,6 +1499,8 @@ function renderProductBody(data) {
     html += '<td class="' + varClass + '">' + varSign + varPct + '%';
     html += '<span class="var-bar-container"><span class="var-bar" style="width:' + barWidth + '%;background:' + barColor + '"></span></span></td>';
     html += '<td>' + trendHtml + '</td>';
+    html += '<td class="u-cell">' + fmtUnits(total.tot) + '</td>';
+    html += '<td class="u-cell">' + fmtUnits(total.gap) + '</td>';
     html += '</tr>';
 
     // Region rows
@@ -1508,6 +1546,8 @@ function renderProductBody(data) {
         html += '<td class="' + varClass + '">' + varSign + varPct + '%';
         html += '<span class="var-bar-container"><span class="var-bar" style="width:' + barWidth + '%;background:' + barColor + '"></span></span></td>';
         html += '<td>' + trendHtml + '</td>';
+        html += '<td class="u-cell">' + fmtUnits(row.tot) + '</td>';
+        html += '<td class="u-cell">' + fmtUnits(row.gap) + '</td>';
         html += '</tr>';
     }
     return html;
@@ -1588,6 +1628,8 @@ function sortProdTable(pn, colIdx) {
         else if (colIdx === 2) { va = a.ant; vb = b.ant; }
         else if (colIdx === 3) { va = a.act; vb = b.act; }
         else if (colIdx === 4) { va = a.act - a.ant; vb = b.act - b.ant; }
+        else if (colIdx === 6) { va = a.tot == null ? -1 : a.tot; vb = b.tot == null ? -1 : b.tot; }
+        else if (colIdx === 7) { va = a.gap == null ? -1 : a.gap; vb = b.gap == null ? -1 : b.gap; }
         else { va = 0; vb = 0; }
 
         if (typeof va === 'string') {
@@ -2169,6 +2211,15 @@ function provVal(product, prov) {
     return s ? s[s.length - 1] : null;
 }
 
+// {tot, gap} de unidades por provincia para la ventana activa (o null)
+function provUnits(product, prov) {
+    if (typeof WINU !== 'undefined' && WINU && WINU.win[currentWindow] && WINU.win[currentWindow].prov) {
+        var pm = WINU.win[currentWindow].prov[product];
+        return pm && pm[prov] ? pm[prov] : null;
+    }
+    return null;
+}
+
 function renderMap() {
     var level = document.getElementById('mapLevel') ? document.getElementById('mapLevel').value : 'prov';
     if (level === 'depto') { renderMapDepto(); return; }
@@ -2189,24 +2240,36 @@ function renderMap() {
     var mt = document.getElementById('mapTitle');
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
     if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
-    // ranking al costado
+    // ranking al costado (con unidades del mercado + potencial no capturado)
+    var sortBy = document.getElementById('mapRankSort') ? document.getElementById('mapRankSort').value : 'tot';
     var rows = [];
     for (var j = 0; j < provinciasOrden.length; j++) {
         var pr = provinciasOrden[j];
-        rows.push({ name: pr, v: provVal(product, pr) });
+        var u = provUnits(product, pr);
+        rows.push({ name: pr, v: provVal(product, pr), tot: u ? u.tot : null, gap: u ? u.gap : null });
     }
-    rows.sort(function (a, b) { return (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v); });
-    var thtml = '';
+    var keyf = function (r) {
+        if (sortBy === 'gap') return r.gap == null ? -1 : r.gap;
+        if (sortBy === 'dp') return r.v == null ? -1 : r.v;
+        return r.tot == null ? -1 : r.tot;
+    };
+    rows.sort(function (a, b) { return keyf(b) - keyf(a); });
+    var thtml = '<div class="maprow rk hdr"><span></span><span class="maprow-name">Provincia</span>' +
+                '<span class="maprow-u">Mercado</span><span class="maprow-u gap">No capt.</span>' +
+                '<span class="maprow-val">' + metricLabel + '</span></div>';
     for (var t = 0; t < rows.length; t++) {
         var col = (rows[t].v == null) ? '#e8dcdd' : heatmapColor(rows[t].v).bg;
         var pc = (rows[t].v == null) ? 's/d' : (rows[t].v * 100).toFixed(1) + '%';
-        thtml += '<div class="maprow" onclick="mapClick(\'' + rows[t].name.replace(/'/g, "\\'") + '\')">' +
+        thtml += '<div class="maprow rk" onclick="mapClick(\'' + rows[t].name.replace(/'/g, "\\'") + '\')">' +
                  '<span class="mapdot" style="background:' + col + '"></span>' +
                  '<span class="maprow-name">' + rows[t].name + '</span>' +
+                 '<span class="maprow-u" title="Unidades del mercado">' + fmtUnits(rows[t].tot) + '</span>' +
+                 '<span class="maprow-u gap" title="Potencial no capturado">' + fmtUnits(rows[t].gap) + '</span>' +
                  '<span class="maprow-val">' + pc + '</span></div>';
     }
     var tbl = document.getElementById('mapTable');
     if (tbl) tbl.innerHTML = thtml;
+    var rt = document.getElementById('mapRankTitle'); if (rt) rt.textContent = 'Ranking por provincia';
 }
 
 function miniLine(serie, labels) {
@@ -2288,9 +2351,11 @@ function renderMapDepto() {
     attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
     document.getElementById('mapTitle').innerHTML = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL +
         ' <span style="font-size:0.7rem;color:#a58589;font-weight:400">(m&aacute;ximo detalle &middot; per&iacute;odo actual)</span>';
+    // regenerar el título del ranking al cambiar de nivel (unidades por depto: fase siguiente)
     var rows = provGeoDepto.feats.map(function (f) { return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k] }; })
         .filter(function (x) { return x.v !== undefined && x.v !== null; })
         .sort(function (a, b) { return b.v - a.v; });
+    var rtd = document.getElementById('mapRankTitle'); if (rtd) rtd.textContent = 'Ranking por departamento';
     document.getElementById('mapTable').innerHTML = rows.map(function (x) {
         return '<div class="maprow" onclick="mapClickDepto(\'' + x.k.replace(/'/g, "\\'") + '\')">' +
             '<span class="mapdot" style="background:' + heatmapColor(x.v).bg + '"></span>' +

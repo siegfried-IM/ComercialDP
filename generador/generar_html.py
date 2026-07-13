@@ -264,6 +264,51 @@ def build_windows(winstore, productNames, zonesOrder, zoneRegions):
     return out
 
 
+def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
+    """Desde unidades_region.json arma, por ventana y producto, las unidades por
+    ubicación: región (para tablas) y provincia (para el mapa). tot = unidades
+    totales del mercado; gap = potencial no capturado (mercado en farmacias sin SIE).
+    Ambas aditivas -> provincia = suma de sus regiones."""
+    datos = unistore.get("datos", {})
+    if not datos:
+        return None
+    CUR = max(int(k) for k in datos)
+    cur = datos[str(CUR)]
+    regions = [r for z in zonesOrder for r in zoneRegions[z]]
+    prov_regions = {}
+    for r in regions:
+        prov_regions.setdefault(C.REGION_TO_PROVINCE.get(r), []).append(r)
+    out = {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "win": {}}
+    for W in WIN_ORDER:
+        reg_out, prov_out = {}, {}
+        for pn in productNames:
+            pd = cur.get(pn)
+            if not pd or not pd.get("_ok"):
+                continue
+            rmap = {}
+            for loc, wins in pd.items():
+                if loc == "_ok":
+                    continue
+                c = wins.get(W)
+                if c:
+                    rmap[loc] = {"tot": c["tot"], "gap": c["gap"]}
+            reg_out[pn] = rmap
+            pmap = {}
+            for prov, regs in prov_regions.items():
+                if not prov:
+                    continue
+                tot = gap = 0.0; any_ = False
+                for r in regs:
+                    c = pd.get(r, {}).get(W)
+                    if c:
+                        any_ = True; tot += c["tot"]; gap += c["gap"]
+                if any_:
+                    pmap[prov] = {"tot": round(tot, 1), "gap": round(gap, 1)}
+            prov_out[pn] = pmap
+        out["win"][W] = {"reg": reg_out, "prov": prov_out}
+    return out
+
+
 def compute_kpis(dpTotalRow, productNames, n_regions):
     vals = [dpTotalRow["values"].get(pn, 0) for pn in productNames]
     nonzero = [v for v in vals if v > 0]
@@ -285,6 +330,7 @@ def main():
     depto_geo = load_opt("departamentos_svg.json")
     mapa_part = load_opt("mapa_partido.json")
     winstore = load_opt("historico_win.json")
+    unistore = load_opt("unidades_region.json")
 
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
@@ -344,6 +390,10 @@ def main():
     winobj = build_windows(winstore, productNames, zonesOrder, zoneRegions) if winstore else None
     if winobj:
         print(f"[ventanas] {winobj['order']} | período {winobj['curLabel']}")
+    uniobj = build_unidades(unistore, productNames, zonesOrder, zoneRegions) if unistore else None
+    if uniobj:
+        nprod = len(uniobj["win"]["TRI"]["reg"])
+        print(f"[unidades] período {uniobj['curLabel']} | productos con datos: {nprod}")
 
     data = {}
     for m in ("DP", "DF"):
@@ -395,7 +445,8 @@ def main():
               "var provinciasOrden = " + dump(C.PROVINCES) + ";\n" +
               ("var provGeoDepto = " + dump(depto_geo) + ";\n" if depto_geo else "") +
               ("var mapaPartido = " + dump(mapa_part) + ";\n" if mapa_part else "") +
-              ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n"))
+              ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n") +
+              ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n"))
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:
