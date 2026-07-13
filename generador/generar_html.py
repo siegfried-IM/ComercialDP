@@ -12,6 +12,7 @@ Uso:
     python generar_html.py 24317      # genera para un período específico (May-2026)
 """
 import json, os, re, sys, datetime
+import config as C
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -94,13 +95,17 @@ def build_evolution(store, productNames, zonesOrder, zoneRegions, metric):
     labels = [period_label(p) for p in periods]
     dkey = DEN[metric] + "_act"
     regions = [r for z in zonesOrder for r in zoneRegions[z]]
-    # ubicaciones: TOTAL nacional, cada Zona (agregada), cada Región
-    locs = ["TOTAL"] + ["ZONA:" + z for z in zonesOrder] + regions
+    # ubicaciones: TOTAL nacional, cada Zona, cada Provincia, cada Región
+    locs = (["TOTAL"] + ["ZONA:" + z for z in zonesOrder] +
+            ["PROV:" + p for p in C.PROVINCES] + regions)
 
     def counts(prod_dict, loc):
         """(sie, den) para un producto en una ubicación."""
         if loc.startswith("ZONA:"):
             regs = zoneRegions[loc[5:]]
+        elif loc.startswith("PROV:"):
+            prov = loc[5:]
+            regs = [r for r in regions if C.REGION_TO_PROVINCE.get(r) == prov]
         elif loc == "TOTAL":
             regs = ["TOTAL"]
         else:
@@ -152,6 +157,7 @@ def main():
     with open(BASE, encoding="utf-8") as f:
         base = f.read()
     store = json.load(open(STORE, encoding="utf-8"))
+    prov_geo = json.load(open(os.path.join(ROOT, "datos", "provincias_svg.json"), encoding="utf-8"))
 
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
@@ -208,7 +214,10 @@ def main():
               "var evolData = evolDataDP;\n"
               "var kpiData = " + dump({"DP": kpiDP, "DF": kpiDF}) + ";\n"
               "var currentMetric = 'DP';\n"
-              "var PERIODO_LBL = " + dump(lbl) + ";\n")
+              "var PERIODO_LBL = " + dump(lbl) + ";\n"
+              "var provGeo = " + dump(prov_geo) + ";\n"
+              "var regionProvincia = " + dump(C.REGION_TO_PROVINCE) + ";\n"
+              "var provinciasOrden = " + dump(C.PROVINCES) + ";\n")
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:

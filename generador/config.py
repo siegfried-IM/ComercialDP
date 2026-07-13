@@ -65,6 +65,25 @@ ZONES = {
 }
 ZONES_ORDER = ["CABA", "BUENOS AIRES", "CENTRO", "CUYO", "NOA", "NEA", "PATAGONIA"]
 
+# --- Mapeo región (29) -> provincia (nombres del geojson jazzido, 24) ---
+PROVINCES = ["Capital Federal", "Buenos Aires", "Santa Fe", "Cordoba", "La Pampa",
+             "Mendoza", "San Juan", "San Luis", "Tucuman", "Salta", "Jujuy", "Catamarca",
+             "La Rioja", "Santiago del Estero", "Corrientes", "Chaco", "Misiones", "Formosa",
+             "Entre Rios", "Neuquen", "Rio Negro", "Chubut", "Santa Cruz", "Tierra del Fuego"]
+REGION_TO_PROVINCE = {
+    "CABA": "Capital Federal",
+    "BUENOS AIRES": "Buenos Aires", "LA PLATA": "Buenos Aires", "MDQ": "Buenos Aires",
+    "TANDIL-OLAVARRIA": "Buenos Aires", "BAHIA BLANCA": "Buenos Aires",
+    "SANTA FE": "Santa Fe", "ROSARIO": "Santa Fe",
+    "CORDOBA": "Cordoba", "LA PAMPA": "La Pampa",
+    "MENDOZA": "Mendoza", "SAN JUAN": "San Juan", "SAN LUIS": "San Luis",
+    "TUCUMAN": "Tucuman", "SALTA": "Salta", "JUJUY": "Jujuy", "CATAMARCA": "Catamarca",
+    "LA RIOJA": "La Rioja", "SANTIAGO DEL ESTERO": "Santiago del Estero",
+    "CORRIENTES": "Corrientes", "CHACO": "Chaco", "MISIONES": "Misiones", "FORMOSA": "Formosa",
+    "ENTRE RIOS": "Entre Rios", "NEUQUEN": "Neuquen", "RIO NEGRO": "Rio Negro",
+    "CHUBUT": "Chubut", "SANTA CRUZ": "Santa Cruz", "TIERRA DEL FUEGO": "Tierra del Fuego",
+}
+
 # --- Mapeo producto (nombre tablero) -> DescripcionMercado exacto ---
 # 32 son match exacto; los 9 ambiguos se resuelven por valor (ver resolver_mercados.py)
 PRODUCTO_A_MERCADO = {
