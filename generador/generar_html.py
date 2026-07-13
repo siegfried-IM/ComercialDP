@@ -165,6 +165,51 @@ def main():
     depto_geo = load_opt("departamentos_svg.json")
     mapa_part = load_opt("mapa_partido.json")
 
+    # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
+    # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
+    # misma provincia. Robusto y sin alias frágiles.
+    if depto_geo and mapa_part:
+        import difflib
+        geoset = set(f["k"] for f in depto_geo["feats"])
+        by_prov = {}
+        for gk in geoset:
+            by_prov.setdefault(gk.split("|", 1)[0], []).append(gk)
+
+        def resolve(datakey):
+            if datakey in geoset:
+                return datakey
+            if "|" not in datakey:
+                return None
+            prov, part = datakey.split("|", 1)
+            qt = set(part.split())
+            best, bestsc = None, 0.0
+            for gk in by_prov.get(prov, []):
+                gp = gk.split("|", 1)[1]
+                gt = set(gp.split())
+                sm = difflib.SequenceMatcher(None, part, gp).ratio()
+                inter = qt & gt
+                jac = len(inter) / len(qt | gt) if (qt | gt) else 0
+                sc = max(sm, jac)
+                if inter and (qt <= gt or gt <= qt):
+                    sc = max(sc, 0.9)          # uno contiene al otro (prefijos tipo Coronel/General)
+                if sc > bestsc:
+                    bestsc, best = sc, gk
+            return best if bestsc >= 0.72 else None
+
+        allk = set()
+        for met in ("DP", "DF"):
+            for prod in mapa_part[met]:
+                allk.update(mapa_part[met][prod].keys())
+        resmap = {k: resolve(k) for k in allk}
+        fuzzy = {k: v for k, v in resmap.items() if v and v != k}
+        unres = sorted(k for k, v in resmap.items() if not v)
+        for met in ("DP", "DF"):
+            for prod in list(mapa_part[met].keys()):
+                mapa_part[met][prod] = {resmap[k]: v for k, v in mapa_part[met][prod].items() if resmap.get(k)}
+        print(f"[mapa depto] claves: {len(allk)} | fuzzy: {len(fuzzy)} | sin resolver: {len(unres)}")
+        if unres:
+            print("  sin resolver:", unres[:20])
+
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
     zoneRegions = parse_js_var(base, "zoneRegions")
