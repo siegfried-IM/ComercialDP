@@ -725,7 +725,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <button type="button" class="ms-toggle mini" id="zoneBtn" onclick="msToggle('zonePanel', event)">Todas las zonas &#9662;</button>
             <div class="ms-panel" id="zonePanel"></div>
         </div>
-        <label class="threshold-toggle">
+        <label class="threshold-toggle" id="thresholdField">
             <span>Solo con valor &lt;</span>
             <select class="filter-select" id="thresholdSelect" onchange="applyFilters(); if (currentView === 'crecimiento') renderGrowth();">
                 <option value="">Todos</option>
@@ -734,11 +734,11 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                 <option value="0.50">50%</option>
             </select>
         </label>
-        <label class="threshold-toggle">
+        <label class="threshold-toggle" id="compactField">
             <input type="checkbox" id="compactToggle" onchange="toggleCompact()">
             <span>Compacto</span>
         </label>
-        <button type="button" class="clear-btn" onclick="limpiarFiltros()">Limpiar filtros</button>
+        <button type="button" class="clear-btn" id="clearFiltersBtn" onclick="limpiarFiltros()">Limpiar filtros</button>
     </div>
 
     <!-- Barra de contexto: qué se está analizando -->
@@ -813,10 +813,13 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <div class="view-title" id="growthTitle">Crecimiento / Ca&iacute;da</div>
             <div class="evol-controls">
                 <div class="evol-field">
-                    <label>Regi&oacute;n</label>
+                    <label>Ubicaci&oacute;n</label>
                     <select id="growthRegion" onchange="renderGrowth()"></select>
                 </div>
                 <div class="evol-field">
+                    <span class="hint">Ventana y comparaci&oacute;n se controlan arriba (barra de filtros).</span>
+                </div>
+                <div class="evol-field" id="growthBaselineField" style="display:none">
                     <label>Comparar contra</label>
                     <select id="growthBaseline" onchange="renderGrowth()"></select>
                 </div>
@@ -950,6 +953,15 @@ function updateContext() {
     else if (currentView === 'crecimiento') vista = 'Crecimiento';
     else if (currentView === 'mapa') vista = 'Mapa';
     else if (currentView !== 'summary') vista = currentView;
+    // La evolución es una serie trimestral de todos los períodos: la ventana no aplica
+    if (currentView === 'evolution') {
+        var rango = (typeof evolData !== 'undefined' && evolData.labels && evolData.labels.length)
+            ? (evolData.labels.length + ' per&iacute;odos (' + evolData.labels[0] + ' &rarr; ' + evolData.labels[evolData.labels.length - 1] + ')') : '';
+        bar.innerHTML = '<span class="ctx-tag">' + vista + '</span>' +
+            'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Serie <b>trimestral</b> · ' + rango +
+            ' <span class="ctx-def">— mide % ' + def + '</span>';
+        return;
+    }
     var per = (winCurLabel || ((typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : ''));
     var vent = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || 'Trimestre') : 'Trimestre móvil';
     var cmp = (typeof WIN !== 'undefined' && WIN && winCmpLabel)
@@ -1082,6 +1094,7 @@ function setWindow(w) {
     enforceVariationForWindow();
     sortState = {};
     applyWindow(true);
+    if (currentView === 'crecimiento') renderGrowth();   // el crecimiento usa la ventana activa
 }
 function setVariation(v) {
     if (v === currentVariation) return;
@@ -1089,6 +1102,29 @@ function setVariation(v) {
     currentVariation = v;
     markVarActive();
     applyWindow(true);
+    if (currentView === 'crecimiento') renderGrowth();   // el crecimiento usa la variación activa
+}
+
+// === VISIBILIDAD DE FILTROS POR VISTA ===
+// Cada pestaña muestra únicamente los controles que efectivamente la afectan.
+function _fbShow(id, on) { var e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; }
+function updateFilterBarForView(v) {
+    var isEvol = (v === 'evolution');
+    var isGrowth = (v === 'crecimiento');
+    var isMap = (v === 'mapa');
+    var isTable = !isEvol && !isGrowth && !isMap;   // 'summary' o vista de producto
+    var hasWin = (typeof WIN !== 'undefined' && WIN);
+    // Ventana + variación: aplican a tablas, crecimiento y mapa (no a la evolución trimestral)
+    var showWin = hasWin && !isEvol;
+    _fbShow('winGroupLabel', showWin); _fbShow('winToggle', showWin);
+    _fbShow('varGroupLabel', showWin); _fbShow('varToggle', showWin);
+    // Búsqueda / zonas / compacto: sólo en vistas con tabla por región
+    _fbShow('searchBox', isTable);
+    _fbShow('zoneDD', isTable);
+    _fbShow('compactField', isTable);
+    // Umbral y "Limpiar filtros": tablas + crecimiento (ambas lo usan)
+    _fbShow('thresholdField', isTable || isGrowth);
+    _fbShow('clearFiltersBtn', isTable || isGrowth);
 }
 
 // === INIT ===
@@ -1098,6 +1134,7 @@ function init() {
     buildZoneFilter();
     buildWindowControls();
     applyWindow(false);   // fija datos por ventana, KPIs, arma tablas de resumen + producto, aplica filtros y contexto
+    updateFilterBarForView(currentView);
     initEvolution();
     initGrowth();
     initMap();
@@ -1205,6 +1242,7 @@ function showView(viewName) {
     }
     // Recalcular barras: los paneles ocultos miden 0 hasta que se muestran
     refreshTopScrollbars();
+    updateFilterBarForView(viewName);
     updateContext();
 }
 
@@ -1269,6 +1307,7 @@ function limpiarFiltros() {
     var cA = document.getElementById('kpiCardAbove'), cB = document.getElementById('kpiCardBelow');
     if (cA) cA.classList.remove('kpi-active'); if (cB) cB.classList.remove('kpi-active');
     applyFilters();
+    if (currentView === 'crecimiento') renderGrowth();   // el umbral también afecta al crecimiento
 }
 
 // === HEATMAP COLOR ===
@@ -1981,35 +2020,78 @@ function growthBar(name, delta, maxAbs, positive) {
         '<span class="gbar-val" style="color:' + color + '">' + sign + (delta * 100).toFixed(1) + ' pp</span></div>';
 }
 
+// {act, cmp} del producto en una ubicación, para la ventana + variación activas.
+function winLocRatios(product, location) {
+    var w = winDataFor(currentWindow, currentMetric);
+    if (!w) return null;
+    var pickCmp = function (o) { return (currentVariation === 'ap') ? o.ap : o.ay; };
+    if (location === 'TOTAL') {
+        var t = (w.prod[product] || [])[0];
+        return t ? { act: t.act, cmp: pickCmp(t) } : null;
+    }
+    if (location.indexOf('ZONA:') === 0) {
+        var z = w.zone && w.zone[product] && w.zone[product][location.slice(5)];
+        return z ? { act: z.act, cmp: pickCmp(z) } : null;
+    }
+    if (location.indexOf('PROV:') === 0) {
+        var pvm = WIN.prov[currentWindow] && WIN.prov[currentWindow][currentMetric];
+        var pv = pvm && pvm[product] && pvm[product][location.slice(5)];
+        return pv ? { act: pv.act, cmp: pickCmp(pv) } : null;
+    }
+    var rows = w.prod[product] || [];
+    for (var i = 0; i < rows.length; i++) if (rows[i].region === location) return { act: rows[i].act, cmp: pickCmp(rows[i]) };
+    return null;
+}
+
 function renderGrowth() {
     if (typeof evolData === 'undefined' || !evolData.labels) return;
-    var labels = evolData.labels;
     var up = document.getElementById('growthUp'), down = document.getElementById('growthDown');
-    if (labels.length < 2) {
-        up.innerHTML = '<div class="evol-empty">Se necesitan al menos 2 per&iacute;odos completos (el hist&oacute;rico se est&aacute; completando).</div>';
-        down.innerHTML = ''; return;
-    }
-    var region = document.getElementById('growthRegion').value;
-    var baseIdx = parseInt(document.getElementById('growthBaseline').value, 10) || 0;
-    var lastIdx = labels.length - 1;
+    if (!up || !down) return;
+    var region = document.getElementById('growthRegion') ? document.getElementById('growthRegion').value : 'TOTAL';
     var thSel = document.getElementById('thresholdSelect');
     var thVal = thSel ? parseFloat(thSel.value) : NaN;
-    var rows = [];
-    for (var p = 0; p < productNames.length; p++) {
-        var pn = productNames[p];
-        var s = (evolData.series[pn] && evolData.series[pn][region]) || [];
-        var a = s[baseIdx], b = s[lastIdx];
-        if (a === null || a === undefined || b === null || b === undefined) continue;
-        if (!isNaN(thVal) && b >= thVal) continue;   // filtro por umbral (valor actual)
-        rows.push({ name: pn, delta: b - a });
+    var w = winDataFor(currentWindow, currentMetric);
+    var rows = [], p, pn;
+    if (w) {
+        // Crecimiento = valor actual − comparación (año/período anterior) en la ventana activa
+        for (p = 0; p < productNames.length; p++) {
+            pn = productNames[p];
+            var r = winLocRatios(pn, region);
+            if (!r || r.act == null || r.cmp == null) continue;
+            if (!isNaN(thVal) && r.act >= thVal) continue;   // umbral sobre el valor actual
+            rows.push({ name: pn, delta: r.act - r.cmp });
+        }
+    } else {
+        // fallback TRIM (sin datos de ventana): último vs primer período de la serie
+        var labels = evolData.labels, lastIdx = labels.length - 1;
+        if (labels.length < 2) {
+            up.innerHTML = '<div class="evol-empty">Se necesitan al menos 2 per&iacute;odos.</div>'; down.innerHTML = ''; return;
+        }
+        for (p = 0; p < productNames.length; p++) {
+            pn = productNames[p];
+            var s = (evolData.series[pn] && evolData.series[pn][region]) || [];
+            var a = s[0], b = s[lastIdx];
+            if (a == null || b == null) continue;
+            if (!isNaN(thVal) && b >= thVal) continue;
+            rows.push({ name: pn, delta: b - a });
+        }
     }
-    var maxAbs = Math.max.apply(null, rows.map(function (r) { return Math.abs(r.delta); }).concat([0.0001]));
-    var ups = rows.filter(function (r) { return r.delta > 0; }).sort(function (x, y) { return y.delta - x.delta; });
-    var downs = rows.filter(function (r) { return r.delta < 0; }).sort(function (x, y) { return x.delta - y.delta; });
-    up.innerHTML = ups.length ? ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true); }).join('') : '<div class="evol-empty">Ninguno.</div>';
-    down.innerHTML = downs.length ? downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+    if (!rows.length) {
+        up.innerHTML = '<div class="evol-empty">Sin datos para la selecci&oacute;n.</div>'; down.innerHTML = '';
+    } else {
+        var maxAbs = Math.max.apply(null, rows.map(function (r) { return Math.abs(r.delta); }).concat([0.0001]));
+        var ups = rows.filter(function (r) { return r.delta > 0; }).sort(function (x, y) { return y.delta - x.delta; });
+        var downs = rows.filter(function (r) { return r.delta < 0; }).sort(function (x, y) { return x.delta - y.delta; });
+        up.innerHTML = ups.length ? ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+        down.innerHTML = downs.length ? downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+    }
     var gt = document.getElementById('growthTitle');
-    if (gt) gt.textContent = 'Crecimiento / Caída — ' + metricLabel + ' · ' + regionLabel(region) + ' · ' + labels[baseIdx] + ' → ' + labels[lastIdx];
+    if (gt) {
+        var vent = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : 'Trimestre';
+        var rangoTxt = w ? (winCmpLabel + ' → ' + winCurLabel)
+                         : (evolData.labels[0] + ' → ' + evolData.labels[evolData.labels.length - 1]);
+        gt.textContent = 'Crecimiento / Caída — ' + metricLabel + ' · ' + regionLabel(region) + ' · ' + vent + ': ' + rangoTxt;
+    }
 }
 
 // === MAPA POR PROVINCIA ===

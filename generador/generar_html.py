@@ -223,7 +223,16 @@ def build_windows(winstore, productNames, zonesOrder, zoneRegions):
                                     "ay": ratio(pn, [reg], W, ant_p, M),
                                     "ap": ratio(pn, [reg], W, prev_p, M)})
                 prod[pn] = arr
-            out["win"][W][M] = {"dp": rows, "prod": prod, "antP": ant_p, "prevP": prev_p,
+            # zonas (para el ranking de Crecimiento por zona): Σ conteos de sus regiones
+            zn = {}
+            for pn in productNames:
+                zn[pn] = {}
+                for z in zonesOrder:
+                    regs = zoneRegions[z]
+                    zn[pn][z] = {"act": ratio(pn, regs, W, CUR, M),
+                                 "ay": ratio(pn, regs, W, ant_p, M),
+                                 "ap": ratio(pn, regs, W, prev_p, M)}
+            out["win"][W][M] = {"dp": rows, "prod": prod, "zone": zn, "antP": ant_p, "prevP": prev_p,
                                 "antLabel": period_label(ant_p), "prevLabel": period_label(prev_p)}
             # provincias (para el mapa): por producto + TOTAL COMPAÑÍA
             pv = {}
