@@ -357,6 +357,18 @@ def main():
         p = os.path.join(ROOT, "datos", name)
         return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
     depto_geo = load_opt("departamentos_svg.json")
+    if depto_geo:
+        # Unificar features que comparten geokey (CABA viene en 14 comunas -> 1 solo
+        # polígono compuesto y una sola fila en el ranking).
+        merged = {}
+        order = []
+        for f in depto_geo["feats"]:
+            k = f["k"]
+            if k in merged:
+                merged[k]["d"] += " " + f["d"]
+            else:
+                merged[k] = dict(f); order.append(k)
+        depto_geo["feats"] = [merged[k] for k in order]
     mapa_part = load_opt("mapa_partido.json")
     winstore = load_opt("historico_win.json")
     unistore = load_opt("unidades_region.json")

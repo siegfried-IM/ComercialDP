@@ -33,9 +33,19 @@ def main():
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
     P = int(sys.argv[1]) if len(sys.argv) > 1 else max_p
+    # resumible: si ya existe el store para el mismo período, saltear lo hecho
     out = {"meta": {"periodo": P, "min_periodo": min_p}, "DP": {}, "DF": {}}
+    if os.path.exists(OUT):
+        try:
+            prev = json.load(open(OUT, encoding="utf-8"))
+            if prev.get("meta", {}).get("periodo") == P:
+                out = prev; out["meta"]["min_periodo"] = min_p
+        except Exception:
+            pass
     t0 = time.time()
     for i, (prod, merc) in enumerate(mapping.items(), 1):
+        if prod in out["DP"]:
+            continue
         for attempt in range(3):
             try:
                 q.clear_all(doc)
