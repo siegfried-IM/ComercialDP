@@ -338,6 +338,60 @@ def build_unidades_depto(store, productNames):
     return {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "prod": prod}
 
 
+def build_depto_dp(store, productNames):
+    """Desde depto_win.json (conteos s/p/t por producto/geokey/ventana, período actual)
+    arma DP%/DF% por departamento y ventana, para colorear el mapa depto siguiendo la
+    ventana activa. Estructura compacta: prod[producto][geokey][W] = [dp, df, mkt]
+    (dp=s/p ó null; df=s/t ó null; mkt=1 si hay mercado t>0). Incluye 'TOTAL COMPAÑÍA'
+    (Σ conteos sobre todos los productos: aditivo)."""
+    datos = store.get("datos", {})
+    if not datos:
+        return None
+    CUR = max(int(k) for k in datos)
+    cur = datos[str(CUR)]
+
+    def cell(s, p, t):
+        if t <= 0:
+            return None  # sin mercado -> se omite
+        return [round(s / p, 4) if p > 0 else None, round(s / t, 4) if t > 0 else None, 1]
+
+    prod = {}
+    comp = {}  # geokey -> W -> [Σs, Σp, Σt]
+    for pn in productNames:
+        pd = cur.get(pn)
+        if not pd or not pd.get("_ok"):
+            continue
+        gk = {}
+        for k, wins in pd.items():
+            if k == "_ok":
+                continue
+            wm = {}
+            for W in WIN_ORDER:
+                c = wins.get(W)
+                if not c:
+                    continue
+                r = cell(c.get("s", 0), c.get("p", 0), c.get("t", 0))
+                if r:
+                    wm[W] = r
+                cc = comp.setdefault(k, {}).setdefault(W, [0.0, 0.0, 0.0])
+                cc[0] += c.get("s", 0); cc[1] += c.get("p", 0); cc[2] += c.get("t", 0)
+            if wm:
+                gk[k] = wm
+        prod[pn] = gk
+
+    compOut = {}
+    for k, wm in comp.items():
+        o = {}
+        for W, spt in wm.items():
+            r = cell(spt[0], spt[1], spt[2])
+            if r:
+                o[W] = r
+        if o:
+            compOut[k] = o
+    prod["TOTAL COMPAÑÍA"] = compOut
+    return {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "prod": prod}
+
+
 def compute_kpis(dpTotalRow, productNames, n_regions):
     vals = [dpTotalRow["values"].get(pn, 0) for pn in productNames]
     nonzero = [v for v in vals if v > 0]
@@ -373,12 +427,14 @@ def main():
     winstore = load_opt("historico_win.json")
     unistore = load_opt("unidades_region.json")
     unidepstore = load_opt("unidades_depto.json")
+    deptowinstore = load_opt("depto_win.json")
 
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
     zoneRegions = parse_js_var(base, "zoneRegions")
 
     unidepobj = build_unidades_depto(unidepstore, productNames) if unidepstore else None
+    windepobj = build_depto_dp(deptowinstore, productNames) if deptowinstore else None
 
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
@@ -415,10 +471,13 @@ def main():
         for met in ("DP", "DF"):
             for prod in mapa_part[met]:
                 allk.update(mapa_part[met][prod].keys())
-        # incluir claves de unidades por depto para resolverlas con el mismo criterio
+        # incluir claves de unidades y DP por depto para resolverlas con el mismo criterio
         if unidepobj:
             for prod in unidepobj["prod"]:
                 allk.update(unidepobj["prod"][prod].keys())
+        if windepobj:
+            for prod in windepobj["prod"]:
+                allk.update(windepobj["prod"][prod].keys())
         resmap = {k: resolve(k) for k in allk}
         fuzzy = {k: v for k, v in resmap.items() if v and v != k}
         unres = sorted(k for k, v in resmap.items() if not v)
@@ -428,10 +487,15 @@ def main():
         if unidepobj:
             for prod in list(unidepobj["prod"].keys()):
                 unidepobj["prod"][prod] = {resmap[k]: v for k, v in unidepobj["prod"][prod].items() if resmap.get(k)}
+        if windepobj:
+            for prod in list(windepobj["prod"].keys()):
+                windepobj["prod"][prod] = {resmap[k]: v for k, v in windepobj["prod"][prod].items() if resmap.get(k)}
         print(f"[mapa depto] claves: {len(allk)} | fuzzy: {len(fuzzy)} | sin resolver: {len(unres)}")
         if unres:
             print("  sin resolver:", unres[:20])
 
+    if windepobj:
+        print(f"[mapa depto x ventana] productos: {len(windepobj['prod'])} | período {windepobj['curLabel']}")
     periods = sorted(int(p) for p in store["datos"].keys())
     P = int(sys.argv[1]) if len(sys.argv) > 1 else periods[-1]
     if str(P) not in store["datos"]:
@@ -495,10 +559,11 @@ def main():
               "var regionProvincia = " + dump(C.REGION_TO_PROVINCE) + ";\n"
               "var provinciasOrden = " + dump(C.PROVINCES) + ";\n" +
               ("var provGeoDepto = " + dump(depto_geo) + ";\n" if depto_geo else "") +
-              ("var mapaPartido = " + dump(mapa_part) + ";\n" if mapa_part else "") +
+              # mapaPartido reemplazado por WINDEP (DP/DF por depto y ventana, incl. TOTAL COMPAÑÍA)
               ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n") +
               ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n") +
-              ("var WINU_DEPTO = " + dump(unidepobj) + ";\n" if unidepobj else "var WINU_DEPTO = null;\n"))
+              ("var WINU_DEPTO = " + dump(unidepobj) + ";\n" if unidepobj else "var WINU_DEPTO = null;\n") +
+              ("var WINDEP = " + dump(windepobj) + ";\n" if windepobj else "var WINDEP = null;\n"))
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:

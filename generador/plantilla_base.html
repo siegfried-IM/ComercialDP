@@ -2358,19 +2358,35 @@ function deptoTieneMercado(product, k) {
            (mapaPartido.DF[product] && mapaPartido.DF[product][k] != null);
 }
 
+// DP%/DF% por departamento para la ventana + métrica activas. {v: ratio|null, mkt: hay mercado}
+function deptoDP(product, k) {
+    if (typeof WINDEP !== 'undefined' && WINDEP && WINDEP.prod && WINDEP.prod[product]) {
+        var e = WINDEP.prod[product][k];
+        e = e ? e[currentWindow] : null;
+        if (e) return { v: (currentMetric === 'DF' ? e[1] : e[0]), mkt: !!e[2] };
+        return { v: null, mkt: false };   // producto en WINDEP pero depto sin mercado
+    }
+    // fallback: mapaPartido (período actual, sin ventana)
+    if (typeof mapaPartido !== 'undefined' && mapaPartido[currentMetric] && mapaPartido[currentMetric][product]) {
+        var d = mapaPartido[currentMetric][product];
+        return { v: (d[k] != null ? d[k] : null), mkt: deptoTieneMercado(product, k) };
+    }
+    return null;   // ni WINDEP ni mapaPartido tienen el producto
+}
+
 function renderMapDepto() {
     var svgc = document.getElementById('mapSvg');
-    if (typeof provGeoDepto === 'undefined' || typeof mapaPartido === 'undefined') {
+    if (typeof provGeoDepto === 'undefined') {
         svgc.innerHTML = '<div class="evol-empty">Datos por departamento a&uacute;n no disponibles.</div>';
         document.getElementById('mapTable').innerHTML = '';
         return;
     }
     var product = document.getElementById('mapProduct').value;
-    var data = (mapaPartido[currentMetric] && mapaPartido[currentMetric][product]) || {};
-    // Total Compañía no tiene agregado por departamento -> evitar el mapa todo gris engañoso
-    if (!data || Object.keys(data).length === 0) {
+    var hasWin = (typeof WINDEP !== 'undefined' && WINDEP && WINDEP.prod && WINDEP.prod[product]);
+    var hasPart = (typeof mapaPartido !== 'undefined' && mapaPartido[currentMetric] && mapaPartido[currentMetric][product]);
+    if (!hasWin && !hasPart) {
         svgc.innerHTML = '<div class="evol-empty" style="padding:34px 20px;line-height:1.5">El m&aacute;ximo detalle por departamento no est&aacute; disponible para <b>' + product +
-            '</b>.<br>Eleg&iacute; un producto puntual en el selector de arriba, o us&aacute; el nivel <b>Provincia</b>.</div>';
+            '</b>.<br>Us&aacute; el nivel <b>Provincia</b>.</div>';
         document.getElementById('mapTable').innerHTML = '';
         document.getElementById('mapTitle').textContent = 'Mapa por departamento — ' + product;
         var rtx = document.getElementById('mapRankTitle'); if (rtx) rtx.textContent = 'Ranking por departamento';
@@ -2380,12 +2396,12 @@ function renderMapDepto() {
     var svg = '<svg viewBox="' + provGeoDepto.viewBox + '" preserveAspectRatio="xMidYMin meet">';
     for (var i = 0; i < provGeoDepto.feats.length; i++) {
         var f = provGeoDepto.feats[i];
-        var v = data[f.k];
+        var r = deptoDP(product, f.k);
         var fill, pct;
-        if (v !== undefined && v !== null) {
-            fill = heatmapColor(v).bg; pct = (v * 100).toFixed(1) + '%';
-        } else if (deptoTieneMercado(product, f.k)) {
-            fill = '#b7a9c9'; pct = 'mercado marginal (sin núcleo 80-20)';   // existe pero sin core
+        if (r && r.v != null) {
+            fill = heatmapColor(r.v).bg; pct = (r.v * 100).toFixed(1) + '%';
+        } else if (r && r.mkt) {
+            fill = '#b7a9c9'; pct = 'mercado marginal (sin núcleo 80-20)';
         } else {
             fill = '#efe6e6'; pct = 'sin mercado en la zona';
         }
@@ -2394,12 +2410,13 @@ function renderMapDepto() {
     svg += '</svg>';
     svgc.innerHTML = svg;
     attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
-    document.getElementById('mapTitle').innerHTML = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL +
-        ' <span style="font-size:0.7rem;color:#a58589;font-weight:400">(m&aacute;ximo detalle &middot; per&iacute;odo actual)</span>';
+    var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
+    document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
     var sortBy = document.getElementById('mapRankSort') ? document.getElementById('mapRankSort').value : 'tot';
     var rows = provGeoDepto.feats.map(function (f) {
         var u = deptoUnits(product, f.k);
-        return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k], tot: u ? u.tot : null, gap: u ? u.gap : null, sie: u ? u.sie : null };
+        var r = deptoDP(product, f.k);
+        return { k: f.k, name: f.depto, prov: f.prov, v: r ? r.v : null, tot: u ? u.tot : null, sie: u ? u.sie : null };
     }).filter(function (x) { return (x.v != null) || (x.tot != null); });
     var keyf = function (r) {
         if (sortBy === 'ms') return r.tot ? r.sie / r.tot : -1;
@@ -2449,22 +2466,22 @@ function mapClickDepto(k) {
 
 function renderDeptoDetail(k) {
     var product = document.getElementById('mapProduct').value;
-    var data = (mapaPartido[currentMetric] && mapaPartido[currentMetric][product]) || {};
     var feat = null;
     for (var i = 0; i < provGeoDepto.feats.length; i++) if (provGeoDepto.feats[i].k === k) { feat = provGeoDepto.feats[i]; break; }
     if (!feat) return;
-    var v = data[k];
+    var r = deptoDP(product, k);
+    var v = r ? r.v : null;
     var u = deptoUnits(product, k);
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
-    var uStats = u ? (evolStat('Unid. mercado &middot; ' + ventLbl, fmtUnits(u.tot)) +
+    var uStats = u ? (evolStat('Unid. mercado', fmtUnits(u.tot)) +
                       evolStat('Unid. Siegfried', fmtUnits(u.sie)) +
                       evolStat('MS% (share)', fmtMs(u.sie, u.tot))) : '';
     document.getElementById('mapDetail').innerHTML =
         '<h3 class="growth-h" style="color:#95232C">' + feat.depto + ' &mdash; ' + product + '</h3>' +
         '<div class="evol-stats">' + evolStat('Provincia', feat.prov) +
-        evolStat(metricLabel + ' (' + PERIODO_LBL + ')', (v !== undefined && v !== null) ? (v * 100).toFixed(1) + '%' : 's/d') +
+        evolStat(metricLabel + ' &middot; ' + ventLbl, (v !== undefined && v !== null) ? (v * 100).toFixed(1) + '%' : 's/d') +
         uStats +
-        '</div><p style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">' + metricLabel + ' por departamento: per&iacute;odo actual (' + PERIODO_LBL + '). Unidades: seg&uacute;n la ventana seleccionada.</p>';
+        '</div><p style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">M&aacute;ximo detalle por departamento &middot; per&iacute;odo ' + (winCurLabel || PERIODO_LBL) + ', ventana <b>' + ventLbl + '</b>.</p>';
 }
 
 // === RUN ===
