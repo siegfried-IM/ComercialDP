@@ -291,7 +291,7 @@ def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
                     continue
                 c = wins.get(W)
                 if c:
-                    rmap[loc] = {"tot": c["tot"], "gap": c["gap"]}
+                    rmap[loc] = {"tot": int(round(c["tot"])), "gap": int(round(c["gap"]))}
             reg_out[pn] = rmap
             pmap = {}
             for prov, regs in prov_regions.items():
@@ -303,10 +303,39 @@ def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
                     if c:
                         any_ = True; tot += c["tot"]; gap += c["gap"]
                 if any_:
-                    pmap[prov] = {"tot": round(tot, 1), "gap": round(gap, 1)}
+                    pmap[prov] = {"tot": int(round(tot)), "gap": int(round(gap))}
             prov_out[pn] = pmap
         out["win"][W] = {"reg": reg_out, "prov": prov_out}
     return out
+
+
+def build_unidades_depto(store, productNames):
+    """Desde unidades_depto.json arma WINU_DEPTO.prod[producto][geokey][ventana] = {t,g}
+    (geokey una sola vez por producto, claves cortas -> JSON compacto). t=unidades del
+    mercado, g=potencial no capturado. Las geokeys se re-clavean al geojson en main()."""
+    datos = store.get("datos", {})
+    if not datos:
+        return None
+    CUR = max(int(k) for k in datos)
+    cur = datos[str(CUR)]
+    prod = {}
+    for pn in productNames:
+        pd = cur.get(pn)
+        if not pd or not pd.get("_ok"):
+            continue
+        gkmap = {}
+        for k, wins in pd.items():
+            if k == "_ok":
+                continue
+            wm = {}
+            for W in WIN_ORDER:
+                c = wins.get(W)
+                if c and (c["tot"] or c["gap"]):
+                    wm[W] = {"t": int(round(c["tot"])), "g": int(round(c["gap"]))}
+            if wm:
+                gkmap[k] = wm
+        prod[pn] = gkmap
+    return {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "prod": prod}
 
 
 def compute_kpis(dpTotalRow, productNames, n_regions):
@@ -331,6 +360,13 @@ def main():
     mapa_part = load_opt("mapa_partido.json")
     winstore = load_opt("historico_win.json")
     unistore = load_opt("unidades_region.json")
+    unidepstore = load_opt("unidades_depto.json")
+
+    productNames = parse_js_var(base, "productNames")
+    zonesOrder = parse_js_var(base, "zonesOrder")
+    zoneRegions = parse_js_var(base, "zoneRegions")
+
+    unidepobj = build_unidades_depto(unidepstore, productNames) if unidepstore else None
 
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
@@ -367,19 +403,22 @@ def main():
         for met in ("DP", "DF"):
             for prod in mapa_part[met]:
                 allk.update(mapa_part[met][prod].keys())
+        # incluir claves de unidades por depto para resolverlas con el mismo criterio
+        if unidepobj:
+            for prod in unidepobj["prod"]:
+                allk.update(unidepobj["prod"][prod].keys())
         resmap = {k: resolve(k) for k in allk}
         fuzzy = {k: v for k, v in resmap.items() if v and v != k}
         unres = sorted(k for k, v in resmap.items() if not v)
         for met in ("DP", "DF"):
             for prod in list(mapa_part[met].keys()):
                 mapa_part[met][prod] = {resmap[k]: v for k, v in mapa_part[met][prod].items() if resmap.get(k)}
+        if unidepobj:
+            for prod in list(unidepobj["prod"].keys()):
+                unidepobj["prod"][prod] = {resmap[k]: v for k, v in unidepobj["prod"][prod].items() if resmap.get(k)}
         print(f"[mapa depto] claves: {len(allk)} | fuzzy: {len(fuzzy)} | sin resolver: {len(unres)}")
         if unres:
             print("  sin resolver:", unres[:20])
-
-    productNames = parse_js_var(base, "productNames")
-    zonesOrder = parse_js_var(base, "zonesOrder")
-    zoneRegions = parse_js_var(base, "zoneRegions")
 
     periods = sorted(int(p) for p in store["datos"].keys())
     P = int(sys.argv[1]) if len(sys.argv) > 1 else periods[-1]
@@ -446,7 +485,8 @@ def main():
               ("var provGeoDepto = " + dump(depto_geo) + ";\n" if depto_geo else "") +
               ("var mapaPartido = " + dump(mapa_part) + ";\n" if mapa_part else "") +
               ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n") +
-              ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n"))
+              ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n") +
+              ("var WINU_DEPTO = " + dump(unidepobj) + ";\n" if unidepobj else "var WINU_DEPTO = null;\n"))
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:

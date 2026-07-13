@@ -2351,17 +2351,41 @@ function renderMapDepto() {
     attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
     document.getElementById('mapTitle').innerHTML = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL +
         ' <span style="font-size:0.7rem;color:#a58589;font-weight:400">(m&aacute;ximo detalle &middot; per&iacute;odo actual)</span>';
-    // regenerar el título del ranking al cambiar de nivel (unidades por depto: fase siguiente)
-    var rows = provGeoDepto.feats.map(function (f) { return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k] }; })
-        .filter(function (x) { return x.v !== undefined && x.v !== null; })
-        .sort(function (a, b) { return b.v - a.v; });
+    var sortBy = document.getElementById('mapRankSort') ? document.getElementById('mapRankSort').value : 'tot';
+    var rows = provGeoDepto.feats.map(function (f) {
+        var u = deptoUnits(product, f.k);
+        return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k], tot: u ? u.tot : null, gap: u ? u.gap : null };
+    }).filter(function (x) { return (x.v != null) || (x.tot != null); });
+    var keyf = function (r) {
+        if (sortBy === 'gap') return r.gap == null ? -1 : r.gap;
+        if (sortBy === 'dp') return r.v == null ? -1 : r.v;
+        return r.tot == null ? -1 : r.tot;
+    };
+    rows.sort(function (a, b) { return keyf(b) - keyf(a); });
     var rtd = document.getElementById('mapRankTitle'); if (rtd) rtd.textContent = 'Ranking por departamento';
-    document.getElementById('mapTable').innerHTML = rows.map(function (x) {
-        return '<div class="maprow" onclick="mapClickDepto(\'' + x.k.replace(/'/g, "\\'") + '\')">' +
-            '<span class="mapdot" style="background:' + heatmapColor(x.v).bg + '"></span>' +
+    var hdr = '<div class="maprow rk hdr"><span></span><span class="maprow-name">Departamento</span>' +
+              '<span class="maprow-u">Mercado</span><span class="maprow-u gap">No capt.</span>' +
+              '<span class="maprow-val">' + metricLabel + '</span></div>';
+    document.getElementById('mapTable').innerHTML = rows.length ? (hdr + rows.map(function (x) {
+        var col = (x.v == null) ? '#e8dcdd' : heatmapColor(x.v).bg;
+        var pc = (x.v == null) ? 's/d' : (x.v * 100).toFixed(1) + '%';
+        return '<div class="maprow rk" onclick="mapClickDepto(\'' + x.k.replace(/'/g, "\\'") + '\')">' +
+            '<span class="mapdot" style="background:' + col + '"></span>' +
             '<span class="maprow-name">' + x.name + ' <small style="color:#a88">' + x.prov + '</small></span>' +
-            '<span class="maprow-val">' + (x.v * 100).toFixed(1) + '%</span></div>';
-    }).join('') || '<div class="evol-empty">Sin datos.</div>';
+            '<span class="maprow-u" title="Unidades del mercado">' + fmtUnits(x.tot) + '</span>' +
+            '<span class="maprow-u gap" title="Potencial no capturado">' + fmtUnits(x.gap) + '</span>' +
+            '<span class="maprow-val">' + pc + '</span></div>';
+    }).join('')) : '<div class="evol-empty">Sin datos.</div>';
+}
+
+// {tot, gap} de unidades por departamento (geokey) para la ventana activa
+function deptoUnits(product, k) {
+    if (typeof WINU_DEPTO !== 'undefined' && WINU_DEPTO && WINU_DEPTO.prod) {
+        var pm = WINU_DEPTO.prod[product];
+        var e = pm && pm[k] ? pm[k][currentWindow] : null;
+        return e ? { tot: e.t, gap: e.g } : null;
+    }
+    return null;
 }
 
 function mapClickDepto(k) {
@@ -2378,11 +2402,16 @@ function renderDeptoDetail(k) {
     for (var i = 0; i < provGeoDepto.feats.length; i++) if (provGeoDepto.feats[i].k === k) { feat = provGeoDepto.feats[i]; break; }
     if (!feat) return;
     var v = data[k];
+    var u = deptoUnits(product, k);
+    var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
+    var uStats = u ? (evolStat('Unid. mercado &middot; ' + ventLbl, fmtUnits(u.tot)) +
+                      evolStat('Potencial no capturado', fmtUnits(u.gap))) : '';
     document.getElementById('mapDetail').innerHTML =
         '<h3 class="growth-h" style="color:#95232C">' + feat.depto + ' &mdash; ' + product + '</h3>' +
         '<div class="evol-stats">' + evolStat('Provincia', feat.prov) +
         evolStat(metricLabel + ' (' + PERIODO_LBL + ')', (v !== undefined && v !== null) ? (v * 100).toFixed(1) + '%' : 's/d') +
-        '</div><p style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">El detalle por departamento corresponde al per&iacute;odo actual (' + PERIODO_LBL + ').</p>';
+        uStats +
+        '</div><p style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">' + metricLabel + ' por departamento: per&iacute;odo actual (' + PERIODO_LBL + '). Unidades: seg&uacute;n la ventana seleccionada.</p>';
 }
 
 // === RUN ===
