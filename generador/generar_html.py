@@ -159,6 +159,12 @@ def main():
     store = json.load(open(STORE, encoding="utf-8"))
     prov_geo = json.load(open(os.path.join(ROOT, "datos", "provincias_svg.json"), encoding="utf-8"))
 
+    def load_opt(name):
+        p = os.path.join(ROOT, "datos", name)
+        return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
+    depto_geo = load_opt("departamentos_svg.json")
+    mapa_part = load_opt("mapa_partido.json")
+
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
     zoneRegions = parse_js_var(base, "zoneRegions")
@@ -217,7 +223,9 @@ def main():
               "var PERIODO_LBL = " + dump(lbl) + ";\n"
               "var provGeo = " + dump(prov_geo) + ";\n"
               "var regionProvincia = " + dump(C.REGION_TO_PROVINCE) + ";\n"
-              "var provinciasOrden = " + dump(C.PROVINCES) + ";\n")
+              "var provinciasOrden = " + dump(C.PROVINCES) + ";\n" +
+              ("var provGeoDepto = " + dump(depto_geo) + ";\n" if depto_geo else "") +
+              ("var mapaPartido = " + dump(mapa_part) + ";\n" if mapa_part else ""))
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:

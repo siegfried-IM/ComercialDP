@@ -622,6 +622,14 @@ body {
 .map-legend i { width:14px; height:14px; border-radius:3px; display:inline-block; vertical-align:middle; margin-right:4px; }
 .map-detail-card { margin-top:14px; }
 .map-detail-card h4 { font-size:0.85rem; }
+.map-layout { display:grid; grid-template-columns:1.7fr 1fr; gap:14px; align-items:start; }
+@media (max-width:900px) { .map-layout { grid-template-columns:1fr; } }
+.map-table-card { max-height:74vh; overflow-y:auto; }
+.maprow { display:grid; grid-template-columns:14px 1fr auto; align-items:center; gap:8px; padding:5px 6px; border-radius:5px; cursor:pointer; font-size:0.82rem; }
+.maprow:hover { background:#f7ebec; }
+.mapdot { width:12px; height:12px; border-radius:3px; }
+.maprow-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.maprow-val { font-weight:700; color:#3a2022; }
 /* === MODO COMPACTO (más columnas visibles) === */
 body.compact-tables .dp-table th, body.compact-tables .dp-table td { padding:2px 5px; font-size:0.66rem; }
 body.compact-tables .dp-table thead th.col-product { height:86px; padding-bottom:6px; }
@@ -791,13 +799,26 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                     <label>Producto</label>
                     <select id="mapProduct" onchange="renderMap()"></select>
                 </div>
+                <div class="evol-field">
+                    <label>Nivel</label>
+                    <select id="mapLevel" onchange="renderMap()">
+                        <option value="prov">Provincia</option>
+                        <option value="depto">Departamento / Partido</option>
+                    </select>
+                </div>
             </div>
-            <div class="evol-card map-card">
-                <div id="mapSvg"></div>
-                <div class="map-legend" id="mapLegend"></div>
+            <div class="map-layout">
+                <div class="evol-card map-card">
+                    <div id="mapSvg"></div>
+                    <div class="map-legend" id="mapLegend"></div>
+                </div>
+                <div class="evol-card map-table-card">
+                    <h4 class="growth-h" style="color:#7a1e24;margin:0 0 8px">Ranking por provincia</h4>
+                    <div id="mapTable"></div>
+                </div>
             </div>
             <div class="evol-card map-detail-card" id="mapDetail">
-                <div class="evol-empty">Hac&eacute; clic en una provincia para ver el detalle abajo.</div>
+                <div class="evol-empty">Hac&eacute; clic en una provincia (en el mapa o la tabla) para ver el detalle abajo.</div>
             </div>
         </div>
 
@@ -1715,6 +1736,8 @@ function mapClick(prov) {
 }
 
 function renderMap() {
+    var level = document.getElementById('mapLevel') ? document.getElementById('mapLevel').value : 'prov';
+    if (level === 'depto') { renderMapDepto(); return; }
     if (typeof provGeo === 'undefined' || typeof evolData === 'undefined') return;
     var product = document.getElementById('mapProduct').value;
     var last = evolData.labels.length - 1;
@@ -1732,6 +1755,25 @@ function renderMap() {
     document.getElementById('mapSvg').innerHTML = svg;
     var mt = document.getElementById('mapTitle');
     if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + ' · ' + PERIODO_LBL;
+    // ranking al costado
+    var rows = [];
+    for (var j = 0; j < provinciasOrden.length; j++) {
+        var pr = provinciasOrden[j];
+        var ss = evolData.series[product] && evolData.series[product]['PROV:' + pr];
+        rows.push({ name: pr, v: ss ? ss[last] : null });
+    }
+    rows.sort(function (a, b) { return (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v); });
+    var thtml = '';
+    for (var t = 0; t < rows.length; t++) {
+        var col = (rows[t].v == null) ? '#e8dcdd' : heatmapColor(rows[t].v).bg;
+        var pc = (rows[t].v == null) ? 's/d' : (rows[t].v * 100).toFixed(1) + '%';
+        thtml += '<div class="maprow" onclick="mapClick(\'' + rows[t].name.replace(/'/g, "\\'") + '\')">' +
+                 '<span class="mapdot" style="background:' + col + '"></span>' +
+                 '<span class="maprow-name">' + rows[t].name + '</span>' +
+                 '<span class="maprow-val">' + pc + '</span></div>';
+    }
+    var tbl = document.getElementById('mapTable');
+    if (tbl) tbl.innerHTML = thtml;
 }
 
 function miniLine(serie, labels) {
@@ -1775,6 +1817,58 @@ function renderMapDetail(prov) {
         }).join('');
     }
     det.innerHTML = html;
+}
+
+// === MAPA POR DEPARTAMENTO ===
+function renderMapDepto() {
+    var svgc = document.getElementById('mapSvg');
+    if (typeof provGeoDepto === 'undefined' || typeof mapaPartido === 'undefined') {
+        svgc.innerHTML = '<div class="evol-empty">Datos por departamento a&uacute;n no disponibles.</div>';
+        document.getElementById('mapTable').innerHTML = '';
+        return;
+    }
+    var product = document.getElementById('mapProduct').value;
+    var data = (mapaPartido[currentMetric] && mapaPartido[currentMetric][product]) || {};
+    var svg = '<svg viewBox="' + provGeoDepto.viewBox + '" preserveAspectRatio="xMidYMin meet">';
+    for (var i = 0; i < provGeoDepto.feats.length; i++) {
+        var f = provGeoDepto.feats[i];
+        var v = data[f.k];
+        var fill = (v === undefined || v === null) ? '#e8dcdd' : heatmapColor(v).bg;
+        var pct = (v === undefined || v === null) ? 's/d' : (v * 100).toFixed(1) + '%';
+        svg += '<path d="' + f.d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.35" data-k="' + f.k + '" onclick="mapClickDepto(\'' + f.k.replace(/'/g, "\\'") + '\')"><title>' + f.depto + ' (' + f.prov + '): ' + pct + '</title></path>';
+    }
+    svg += '</svg>';
+    svgc.innerHTML = svg;
+    document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL;
+    var rows = provGeoDepto.feats.map(function (f) { return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k] }; })
+        .filter(function (x) { return x.v !== undefined && x.v !== null; })
+        .sort(function (a, b) { return b.v - a.v; });
+    document.getElementById('mapTable').innerHTML = rows.map(function (x) {
+        return '<div class="maprow" onclick="mapClickDepto(\'' + x.k.replace(/'/g, "\\'") + '\')">' +
+            '<span class="mapdot" style="background:' + heatmapColor(x.v).bg + '"></span>' +
+            '<span class="maprow-name">' + x.name + ' <small style="color:#a88">' + x.prov + '</small></span>' +
+            '<span class="maprow-val">' + (x.v * 100).toFixed(1) + '%</span></div>';
+    }).join('') || '<div class="evol-empty">Sin datos.</div>';
+}
+
+function mapClickDepto(k) {
+    var paths = document.querySelectorAll('#mapSvg path');
+    for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-k') === k);
+    renderDeptoDetail(k);
+}
+
+function renderDeptoDetail(k) {
+    var product = document.getElementById('mapProduct').value;
+    var data = (mapaPartido[currentMetric] && mapaPartido[currentMetric][product]) || {};
+    var feat = null;
+    for (var i = 0; i < provGeoDepto.feats.length; i++) if (provGeoDepto.feats[i].k === k) { feat = provGeoDepto.feats[i]; break; }
+    if (!feat) return;
+    var v = data[k];
+    document.getElementById('mapDetail').innerHTML =
+        '<h3 class="growth-h" style="color:#95232C">' + feat.depto + ' &mdash; ' + product + '</h3>' +
+        '<div class="evol-stats">' + evolStat('Provincia', feat.prov) +
+        evolStat(metricLabel + ' (' + PERIODO_LBL + ')', (v !== undefined && v !== null) ? (v * 100).toFixed(1) + '%' : 's/d') +
+        '</div><p style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">El detalle por departamento corresponde al per&iacute;odo actual (' + PERIODO_LBL + ').</p>';
 }
 
 // === RUN ===
