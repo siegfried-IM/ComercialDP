@@ -90,13 +90,19 @@ def main():
                 try:
                     q.clear_all(doc); q.select_text(doc, "TipoMercado", C.TIPO_MERCADO)
                     q.select_num(doc, "AñoMes_Num", range(min_p, P + 1)); q.select_text(doc, "DescripcionMercado", merc)
+                    W = 2 + len(ms)
+                    PAGE = max(1, 9000 // W)   # Qlik limita ~10k celdas por página: W(17)*529 < 10000
                     obj = {"qInfo": {"qType": "v"}, "qHyperCubeDef": {
                         "qDimensions": [{"qLibraryId": DIM_PROV}, {"qLibraryId": DIM_PART}],
-                        "qMeasures": ms, "qInitialDataFetch": [{"qLeft": 0, "qTop": 0, "qWidth": 2 + len(ms), "qHeight": 700}]}}
+                        "qMeasures": ms, "qInitialDataFetch": [{"qLeft": 0, "qTop": 0, "qWidth": W, "qHeight": PAGE}]}}
                     h = q.rpc("CreateSessionObject", doc, [obj])["qReturn"]["qHandle"]
-                    lay = q.rpc("GetLayout", h, [])["qLayout"]["qHyperCube"]; rows = lay["qDataPages"][0]["qMatrix"]; top = len(rows)
-                    while top < lay["qSize"]["qcy"]:
-                        pg = q.rpc("GetHyperCubeData", h, ["/qHyperCubeDef", [{"qLeft": 0, "qTop": top, "qWidth": 2 + len(ms), "qHeight": 400}]])["qDataPages"][0]["qMatrix"]
+                    lay = q.rpc("GetLayout", h, [])["qLayout"]["qHyperCube"]
+                    dp0 = lay.get("qDataPages") or []
+                    rows = dp0[0]["qMatrix"] if dp0 else []
+                    top = len(rows); total = lay["qSize"]["qcy"]
+                    while top < total:
+                        pgs = q.rpc("GetHyperCubeData", h, ["/qHyperCubeDef", [{"qLeft": 0, "qTop": top, "qWidth": W, "qHeight": PAGE}]]).get("qDataPages") or []
+                        pg = pgs[0]["qMatrix"] if pgs else []
                         if not pg: break
                         rows += pg; top += len(pg)
                     break

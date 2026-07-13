@@ -14,9 +14,10 @@ def plabel(p):
     if m == 0: a -= 1; m = 12
     return f"{MESES[m]}-{a}"
 
-REGION_TARGET = ["24317", "24316", "24314", "24311", "24305"]   # 5 períodos × 41
-DEPTO_WIN_TARGET = ["24317", "24305"]                            # 2 períodos × 41
+REGION_TARGET = ["24317", "24316", "24314", "24311", "24305"]              # 5 períodos × 41
+DEPTO_WIN_TARGET = ["24317", "24305", "24316", "24314", "24311", "24313"]  # 6 períodos × 41 (mapa, ambas variaciones)
 NPROD = 41
+DEPTO_HIST_PERIODOS = 18   # períodos restantes para el histórico Trimestre por depto
 
 
 def count_ok(store, pk):
