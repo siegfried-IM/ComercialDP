@@ -16,3 +16,11 @@ datos/checkpoint_*.json
 # Sistema
 desktop.ini
 Thumbs.db
+
+# progreso en vivo (temporal)
+progreso.html
+datos/historico_win.json
+datos/depto_win.json
+
+# geojson crudo IGN (fuente reproducible; se usa datos/departamentos_svg.json derivado)
+datos/dep_ign.geojson

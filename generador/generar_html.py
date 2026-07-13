@@ -144,6 +144,117 @@ def build_evolution(store, productNames, zonesOrder, zoneRegions, metric):
             "products": [COMPANY] + list(productNames), "series": series}
 
 
+WIN_ORDER = ["MEN", "TRI", "SEM", "MAT", "YTD"]
+WIN_LABEL = {"MEN": "Mensual", "TRI": "Trimestre", "SEM": "Semestre", "MAT": "MAT (12m)", "YTD": "YTD"}
+WIN_LEN = {"MEN": 1, "TRI": 3, "SEM": 6, "MAT": 12}   # YTD depende del mes
+
+
+def _month(p):
+    m = p % 12
+    return 12 if m == 0 else m
+
+
+def build_windows(winstore, productNames, zonesOrder, zoneRegions):
+    """Desde historico_win.json (conteos por producto/región/ventana/período)
+    arma, por ventana y métrica, los datasets de período actual con 2 variaciones.
+    Devuelve dict listo para inyectar; ausencia de período de comparación => variación null."""
+    datos = winstore.get("datos", {})
+    if not datos:
+        return None
+    CUR = max(int(k) for k in datos)
+    regions = [r for z in zonesOrder for r in zoneRegions[z]]
+
+    def counts(prod, region, win, period):
+        d = datos.get(str(period), {}).get(prod, {}).get(region)
+        if not d or win not in d:
+            return None
+        c = d[win]
+        return (c["s"], c["p"], c["t"])
+
+    def ratio(prod, region_list, win, period, metric):
+        s = den = 0.0; any_ = False
+        for r in region_list:
+            c = counts(prod, r, win, period)
+            if c:
+                any_ = True; s += c[0]; den += c[1] if metric == "DP" else c[2]
+        if not any_ or den == 0:
+            return None
+        return round(s / den, 6)
+
+    def var_periods(win):
+        L = _month(CUR) if win == "YTD" else WIN_LEN[win]
+        return CUR - 12, CUR - L      # (año anterior, período anterior)
+
+    # regiones que componen cada ubicación
+    prov_regions = {}
+    for r in regions:
+        prov_regions.setdefault(C.REGION_TO_PROVINCE.get(r), []).append(r)
+
+    out = {"order": WIN_ORDER, "label": WIN_LABEL, "current": CUR, "curLabel": period_label(CUR),
+           "win": {}, "prov": {}, "provOrder": C.PROVINCES}
+    for W in WIN_ORDER:
+        ant_p, prev_p = var_periods(W)
+        out["win"][W] = {}
+        out["prov"][W] = {}
+        for M in ("DP", "DF"):
+            # heatmap: TOTAL + regiones, valor actual por producto
+            rows = []
+            total = {"zona": "", "region": "TOTAL", "values": {}}
+            for pn in productNames:
+                total["values"][pn] = ratio(pn, ["TOTAL"], W, CUR, M)
+            rows.append(total)
+            for z in zonesOrder:
+                for reg in zoneRegions[z]:
+                    row = {"zona": z, "region": reg, "values": {}}
+                    for pn in productNames:
+                        row["values"][pn] = ratio(pn, [reg], W, CUR, M)
+                    rows.append(row)
+            # product tables: por producto, por región: act / año ant / período ant
+            prod = {}
+            for pn in productNames:
+                arr = [{"zona": "", "region": "TOTAL",
+                        "act": ratio(pn, ["TOTAL"], W, CUR, M),
+                        "ay": ratio(pn, ["TOTAL"], W, ant_p, M),
+                        "ap": ratio(pn, ["TOTAL"], W, prev_p, M)}]
+                for z in zonesOrder:
+                    for reg in zoneRegions[z]:
+                        arr.append({"zona": z, "region": reg,
+                                    "act": ratio(pn, [reg], W, CUR, M),
+                                    "ay": ratio(pn, [reg], W, ant_p, M),
+                                    "ap": ratio(pn, [reg], W, prev_p, M)})
+                prod[pn] = arr
+            out["win"][W][M] = {"dp": rows, "prod": prod, "antP": ant_p, "prevP": prev_p,
+                                "antLabel": period_label(ant_p), "prevLabel": period_label(prev_p)}
+            # provincias (para el mapa): por producto + TOTAL COMPAÑÍA
+            pv = {}
+            comp_regions = regions
+            for pn in productNames:
+                pv[pn] = {}
+                for prov, regs in prov_regions.items():
+                    if not prov:
+                        continue
+                    pv[pn][prov] = {"act": ratio(pn, regs, W, CUR, M),
+                                    "ay": ratio(pn, regs, W, ant_p, M),
+                                    "ap": ratio(pn, regs, W, prev_p, M)}
+            # TOTAL COMPAÑÍA por provincia = Σ conteos sobre todos los productos
+            comp = {}
+            for prov, regs in prov_regions.items():
+                if not prov:
+                    continue
+                def comp_ratio(period):
+                    s = den = 0.0; any_ = False
+                    for pn in productNames:
+                        for r in regs:
+                            c = counts(pn, r, W, period)
+                            if c:
+                                any_ = True; s += c[0]; den += c[1] if M == "DP" else c[2]
+                    return round(s / den, 6) if (any_ and den) else None
+                comp[prov] = {"act": comp_ratio(CUR), "ay": comp_ratio(ant_p), "ap": comp_ratio(prev_p)}
+            pv["TOTAL COMPAÑÍA"] = comp
+            out["prov"][W][M] = pv
+    return out
+
+
 def compute_kpis(dpTotalRow, productNames, n_regions):
     vals = [dpTotalRow["values"].get(pn, 0) for pn in productNames]
     nonzero = [v for v in vals if v > 0]
@@ -164,6 +275,7 @@ def main():
         return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else None
     depto_geo = load_opt("departamentos_svg.json")
     mapa_part = load_opt("mapa_partido.json")
+    winstore = load_opt("historico_win.json")
 
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
@@ -220,6 +332,9 @@ def main():
         sys.exit(f"Período {P} ({period_label(P)}) no está en el store.")
     pdata = store["datos"][str(P)]
     n_regions = sum(len(v) for v in zoneRegions.values())
+    winobj = build_windows(winstore, productNames, zonesOrder, zoneRegions) if winstore else None
+    if winobj:
+        print(f"[ventanas] {winobj['order']} | período {winobj['curLabel']}")
 
     data = {}
     for m in ("DP", "DF"):
@@ -270,7 +385,8 @@ def main():
               "var regionProvincia = " + dump(C.REGION_TO_PROVINCE) + ";\n"
               "var provinciasOrden = " + dump(C.PROVINCES) + ";\n" +
               ("var provGeoDepto = " + dump(depto_geo) + ";\n" if depto_geo else "") +
-              ("var mapaPartido = " + dump(mapa_part) + ";\n" if mapa_part else ""))
+              ("var mapaPartido = " + dump(mapa_part) + ";\n" if mapa_part else "") +
+              ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n"))
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:

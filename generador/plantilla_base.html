@@ -63,25 +63,30 @@ body {
 
 .sidebar-nav { padding: 10px 0; flex: 1; }
 .nav-item {
-    padding: 10px 16px;
+    padding: 11px 18px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
-    transition: background 0.2s;
+    gap: 12px;
+    font-size: 0.9rem;
+    letter-spacing: .2px;
+    color: rgba(255,255,255,0.9);
+    transition: background 0.15s, border-color 0.15s;
     border-left: 3px solid transparent;
     white-space: nowrap;
 }
-.nav-item:hover { background: rgba(255,255,255,0.12); }
-.nav-item.active { background: rgba(255,255,255,0.20); border-left-color: #fff; color: #fff; font-weight: 600; }
-.nav-item .nav-icon { width: 24px; text-align: center; flex-shrink: 0; }
+.nav-item:hover { background: rgba(255,255,255,0.10); }
+.nav-item.active { background: rgba(255,255,255,0.16); border-left-color: #fff; color: #fff; font-weight: 600; }
+.nav-item .nav-icon { width: 22px; display:inline-flex; align-items:center; justify-content:center; flex-shrink: 0; opacity:.82; }
+.nav-item.active .nav-icon, .nav-item:hover .nav-icon { opacity:1; }
+.nav-item .nav-icon svg { width:17px; height:17px; }
 
 .nav-section-title {
-    padding: 12px 16px 6px;
-    font-size: 0.75rem;
+    padding: 16px 18px 7px;
+    font-size: 0.66rem;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
-    letter-spacing: 1px;
+    color: rgba(255,255,255,0.42);
+    letter-spacing: 1.8px;
 }
 
 .product-list { max-height: 60vh; overflow-y: auto; }
@@ -605,6 +610,7 @@ body {
 /* === MULTI-SELECT DESPLEGABLE === */
 .ms-dropdown { position:relative; display:inline-block; }
 .ms-toggle { min-width:230px; max-width:320px; text-align:left; padding:8px 10px; border:1px solid #d9c2c4; border-radius:6px; background:#fff; color:#3a2022; font-size:0.9rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ms-toggle.mini { min-width:150px; max-width:210px; padding:7px 10px; }
 .ms-panel { display:none; position:absolute; z-index:60; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #d9c2c4; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,0.15); max-height:300px; overflow-y:auto; min-width:250px; padding:4px; }
 .ms-panel.open { display:block; }
 .ms-tools { display:flex; gap:8px; padding:4px 6px 6px; border-bottom:1px solid #f0e4e5; margin-bottom:4px; }
@@ -612,9 +618,16 @@ body {
 .ms-tools button:hover { background:#e7d2d4; }
 .ms-item { display:flex; align-items:center; gap:8px; padding:5px 8px; font-size:0.85rem; cursor:pointer; border-radius:4px; white-space:nowrap; }
 .ms-item:hover { background:#f7ebec; }
+.ms-group { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.8px; color:#a58589; padding:7px 8px 3px; font-weight:700; }
+.clear-btn { border:1px solid #d9c2c4; background:#fff; color:#95232C; border-radius:6px; padding:8px 14px; font-size:0.85rem; cursor:pointer; white-space:nowrap; }
+.clear-btn:hover { background:#f7ebec; }
 /* === MAPA === */
-.map-card { text-align:center; }
-#mapSvg svg { max-height:74vh; width:auto; max-width:100%; }
+.map-card { text-align:center; position:relative; }
+.map-zoom-ctrl { position:absolute; top:12px; right:12px; display:flex; flex-direction:column; gap:5px; z-index:5; }
+.map-zoom-ctrl button { width:30px; height:30px; border:1px solid #d9c2c4; background:#fff; color:#95232C; border-radius:6px; font-size:1.05rem; font-weight:700; line-height:1; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.12); }
+.map-zoom-ctrl button:hover { background:#f7ebec; }
+#mapSvg { overflow:hidden; }
+#mapSvg svg { height:82vh; width:auto; max-width:100%; -webkit-user-select:none; user-select:none; }
 #mapSvg path { transition:fill .15s, stroke .1s; }
 #mapSvg path:hover { stroke:#3a2022; stroke-width:1.3; }
 #mapSvg path.sel { stroke:#111; stroke-width:1.8; }
@@ -622,7 +635,7 @@ body {
 .map-legend i { width:14px; height:14px; border-radius:3px; display:inline-block; vertical-align:middle; margin-right:4px; }
 .map-detail-card { margin-top:14px; }
 .map-detail-card h4 { font-size:0.85rem; }
-.map-layout { display:grid; grid-template-columns:1.7fr 1fr; gap:14px; align-items:start; }
+.map-layout { display:grid; grid-template-columns:2.4fr 1fr; gap:14px; align-items:start; }
 @media (max-width:900px) { .map-layout { grid-template-columns:1fr; } }
 .map-table-card { max-height:74vh; overflow-y:auto; }
 .maprow { display:grid; grid-template-columns:14px 1fr auto; align-items:center; gap:8px; padding:5px 6px; border-radius:5px; cursor:pointer; font-size:0.82rem; }
@@ -638,6 +651,11 @@ body.compact-tables .dp-table td.sticky-zona, body.compact-tables .dp-table th.c
 body.compact-tables .dp-table thead th.col-region { left:44px; }
 body.compact-tables .dp-table td.sticky-region { left:44px; min-width:72px; max-width:72px; }
 body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding:3px 5px; font-size:0.68rem; }
+/* === BARRA DE CONTEXTO (qué se analiza) === */
+.ctx-bar { background:#fff; border:1px solid #efe0e1; border-left:4px solid #95232C; border-radius:8px; margin:0 24px 14px; padding:9px 14px; font-size:0.82rem; color:#5a3f41; }
+.ctx-bar .ctx-tag { background:#95232C; color:#fff; border-radius:10px; padding:2px 9px; font-size:0.68rem; text-transform:uppercase; letter-spacing:.5px; margin-right:8px; }
+.ctx-bar b { color:#3a2022; }
+.ctx-bar .ctx-def { color:#8a6d6f; }
 </style>
 </head>
 <body>
@@ -654,19 +672,19 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
     </div>
     <div class="sidebar-nav">
         <div class="nav-item active" id="nav-summary" onclick="showView('summary')">
-            <span class="nav-icon">&#9638;</span>
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
             <span class="sidebar-text">Resumen DP%</span>
         </div>
         <div class="nav-item" id="nav-evolution" onclick="showView('evolution')">
-            <span class="nav-icon">&#128200;</span>
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 16 9 10 13 14 21 5"/><polyline points="15 5 21 5 21 11"/></svg></span>
             <span class="sidebar-text">Evoluci&oacute;n</span>
         </div>
         <div class="nav-item" id="nav-crecimiento" onclick="showView('crecimiento')">
-            <span class="nav-icon">&#8645;</span>
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="10" y1="20" x2="10" y2="5"/><line x1="15" y1="20" x2="15" y2="14"/><line x1="20" y1="20" x2="20" y2="9"/></svg></span>
             <span class="sidebar-text">Crecimiento</span>
         </div>
         <div class="nav-item" id="nav-mapa" onclick="showView('mapa')">
-            <span class="nav-icon">&#127758;</span>
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="2 6 9 3 15 6 22 3 22 18 15 21 9 18 2 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></span>
             <span class="sidebar-text">Mapa</span>
         </div>
         <div class="nav-section-title sidebar-text">Productos</div>
@@ -687,9 +705,10 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <button type="button" id="btnDF" class="metric-btn" onclick="setMetric('DF')">F&iacute;sica (DF%)</button>
         </div>
         <input type="text" class="search-box" id="searchBox" placeholder="Buscar region..." oninput="applyFilters()">
-        <select class="filter-select" id="zoneFilter" onchange="applyFilters()">
-            <option value="">Todas las zonas</option>
-        </select>
+        <div class="ms-dropdown" id="zoneDD">
+            <button type="button" class="ms-toggle mini" id="zoneBtn" onclick="msToggle('zonePanel', event)">Todas las zonas &#9662;</button>
+            <div class="ms-panel" id="zonePanel"></div>
+        </div>
         <label class="threshold-toggle">
             <span>Solo con valor &lt;</span>
             <select class="filter-select" id="thresholdSelect" onchange="applyFilters(); if (currentView === 'crecimiento') renderGrowth();">
@@ -703,7 +722,11 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <input type="checkbox" id="compactToggle" onchange="toggleCompact()">
             <span>Compacto</span>
         </label>
+        <button type="button" class="clear-btn" onclick="limpiarFiltros()">Limpiar filtros</button>
     </div>
+
+    <!-- Barra de contexto: qué se está analizando -->
+    <div class="ctx-bar" id="ctxBar"></div>
 
     <!-- Page content area -->
     <div class="page-content">
@@ -747,8 +770,11 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                     </div>
                 </div>
                 <div class="evol-field">
-                    <label>Regi&oacute;n</label>
-                    <select id="evolRegion" onchange="renderEvolution()"></select>
+                    <label>Regiones <span class="hint">(clic para varias)</span></label>
+                    <div class="ms-dropdown" id="evolRegionDD">
+                        <button type="button" class="ms-toggle" id="evolRegionBtn" onclick="msToggle('evolRegionPanel', event)">TOTAL (Nacional) &#9662;</button>
+                        <div class="ms-panel" id="evolRegionPanel"></div>
+                    </div>
                 </div>
                 <div class="evol-field">
                     <label>Desde</label>
@@ -809,6 +835,11 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             </div>
             <div class="map-layout">
                 <div class="evol-card map-card">
+                    <div class="map-zoom-ctrl">
+                        <button type="button" onclick="mapZoomBy(0.65)" title="Acercar">+</button>
+                        <button type="button" onclick="mapZoomBy(1.55)" title="Alejar">&minus;</button>
+                        <button type="button" onclick="mapZoomReset()" title="Restablecer">&#8635;</button>
+                    </div>
                     <div id="mapSvg"></div>
                     <div class="map-legend" id="mapLegend"></div>
                 </div>
@@ -881,6 +912,27 @@ function updateMetricLabels() {
     if (et) et.textContent = 'Evolución de ' + metricLabel + ' (Distribución ' + nombre + ')';
     var kl = document.getElementById('kpiAvgLabel');
     if (kl) kl.textContent = metricLabel + ' Promedio General';
+    updateContext();
+}
+
+function updateContext() {
+    var bar = document.getElementById('ctxBar');
+    if (!bar) return;
+    var esDF = currentMetric === 'DF';
+    var nombre = esDF ? 'Distribución Física' : 'Distribución Ponderada';
+    var ml = esDF ? 'DF%' : 'DP%';
+    var def = esDF ? 'sobre <b>todas</b> las farmacias del mercado con presencia Siegfried'
+                   : 'sobre las farmacias del <b>núcleo Pareto 80-20</b> del mercado con presencia Siegfried';
+    var vista = 'Resumen';
+    if (currentView === 'evolution') vista = 'Evolución';
+    else if (currentView === 'crecimiento') vista = 'Crecimiento';
+    else if (currentView === 'mapa') vista = 'Mapa';
+    else if (currentView !== 'summary') vista = currentView;
+    var per = (typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : '';
+    var vent = (typeof currentWindow !== 'undefined' && typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || 'Trimestre') : 'Trimestre móvil';
+    bar.innerHTML = '<span class="ctx-tag">' + vista + '</span>' +
+        'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Ventana: <b>' + vent + '</b> · Período: <b>' + per + '</b>' +
+        ' <span class="ctx-def">— mide % ' + def + '</span>';
 }
 
 function setMetric(m) {
@@ -1028,17 +1080,70 @@ function showView(viewName) {
     }
     // Recalcular barras: los paneles ocultos miden 0 hasta que se muestran
     refreshTopScrollbars();
+    updateContext();
 }
 
 // === ZONE FILTER ===
-function buildZoneFilter() {
-    var sel = document.getElementById('zoneFilter');
-    for (var i = 0; i < zonesOrder.length; i++) {
-        var opt = document.createElement('option');
-        opt.value = zonesOrder[i];
-        opt.textContent = zonesOrder[i];
-        sel.appendChild(opt);
+// === MULTI-SELECT GENÉRICO (desplegable con checkboxes + Todos/Ninguno) ===
+function msToggle(panelId, e) {
+    if (e) e.stopPropagation();
+    var p = document.getElementById(panelId);
+    if (p) p.classList.toggle('open');
+}
+function msSelected(panelId) {
+    var out = [], b = document.querySelectorAll('#' + panelId + ' input[type=checkbox]');
+    for (var i = 0; i < b.length; i++) if (b[i].checked) out.push(b[i].value);
+    return out;
+}
+function msSetAll(panelId, on) {
+    var b = document.querySelectorAll('#' + panelId + ' input[type=checkbox]');
+    for (var i = 0; i < b.length; i++) b[i].checked = on;
+    if (!on && b.length) b[0].checked = true;   // dejar al menos uno
+}
+function msBuild(panelId, items, mode, onChange) {
+    var p = document.getElementById(panelId);
+    if (!p) return;
+    var h = '<div class="ms-tools"><button type="button" data-a="none">Ninguno</button><button type="button" data-a="all">Todos</button></div>';
+    var lg = null;
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (it.group && it.group !== lg) { h += '<div class="ms-group">' + it.group + '</div>'; lg = it.group; }
+        var chk = (mode === 'all') || (mode === 'first' && i === 0);
+        h += '<label class="ms-item"><input type="checkbox" value="' + String(it.v).replace(/"/g, '&quot;') + '"' + (chk ? ' checked' : '') + '> ' + it.label + '</label>';
     }
+    p.innerHTML = h;
+    p.addEventListener('change', function (ev) { if (ev.target.type === 'checkbox') onChange(); });
+    var btns = p.querySelectorAll('.ms-tools button');
+    btns[0].addEventListener('click', function () { msSetAll(panelId, false); onChange(); });
+    btns[1].addEventListener('click', function () { msSetAll(panelId, true); onChange(); });
+    document.addEventListener('click', function (ev) { if (p.parentNode && !p.parentNode.contains(ev.target)) p.classList.remove('open'); });
+}
+function msBtnLabel(btnId, panelId, allText, noun) {
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    var total = document.querySelectorAll('#' + panelId + ' input[type=checkbox]').length;
+    var sel = msSelected(panelId);
+    var t = (sel.length >= total && total) ? allText : (sel.length === 1 ? sel[0] : sel.length + ' ' + noun);
+    btn.innerHTML = t + ' &#9662;';
+}
+
+function buildZoneFilter() {
+    var items = zonesOrder.map(function (z) { return { v: z, label: z }; });
+    msBuild('zonePanel', items, 'all', function () {
+        msBtnLabel('zoneBtn', 'zonePanel', 'Todas las zonas', 'zonas'); applyFilters();
+    });
+    msBtnLabel('zoneBtn', 'zonePanel', 'Todas las zonas', 'zonas');
+}
+
+function limpiarFiltros() {
+    var sb = document.getElementById('searchBox'); if (sb) sb.value = '';
+    msSetAll('zonePanel', true); msBtnLabel('zoneBtn', 'zonePanel', 'Todas las zonas', 'zonas');
+    var th = document.getElementById('thresholdSelect'); if (th) th.value = '';
+    var cp = document.getElementById('compactToggle'); if (cp && cp.checked) { cp.checked = false; document.body.classList.remove('compact-tables'); }
+    activeKpiFilter = null;
+    var cA = document.getElementById('kpiCardAbove'), cB = document.getElementById('kpiCardBelow');
+    if (cA) cA.classList.remove('kpi-active'); if (cB) cB.classList.remove('kpi-active');
+    applyFilters();
 }
 
 // === HEATMAP COLOR ===
@@ -1356,7 +1461,10 @@ function getFilteredProducts() {
 // === FILTERS ===
 function applyFilters() {
     var searchVal = document.getElementById('searchBox').value.toLowerCase();
-    var zoneVal = document.getElementById('zoneFilter').value;
+    var selZones = msSelected('zonePanel');
+    var zoneAll = selZones.length === 0 || selZones.length >= zonesOrder.length;
+    var zoneSet = {};
+    for (var zz = 0; zz < selZones.length; zz++) zoneSet[selZones[zz].toLowerCase()] = true;
     var thSel = document.getElementById('thresholdSelect');
     var thresholdVal = thSel ? parseFloat(thSel.value) : NaN;
     var thresholdOn = !isNaN(thresholdVal);
@@ -1396,7 +1504,7 @@ function applyFilters() {
             if (searchVal && region.indexOf(searchVal) === -1 && zona.indexOf(searchVal) === -1) {
                 show = false;
             }
-            if (zoneVal && zona !== zoneVal.toLowerCase()) {
+            if (!zoneAll && !zoneSet[zona]) {
                 show = false;
             }
         }
@@ -1441,7 +1549,7 @@ function applyFilters() {
             if (searchVal && region.indexOf(searchVal) === -1 && zona.indexOf(searchVal) === -1) {
                 show = false;
             }
-            if (zoneVal && zona !== zoneVal.toLowerCase()) {
+            if (!zoneAll && !zoneSet[zona]) {
                 show = false;
             }
 
@@ -1473,6 +1581,12 @@ function setupTooltip() {
                 tooltip.innerHTML = '<strong>' + product + '</strong><br>Region: ' + region + '<br>' + metricLabel + ': ' + pct + '%';
                 tooltip.style.display = 'block';
             }
+            return;
+        }
+        var mp = e.target.closest('#mapSvg path');
+        if (mp) {
+            var html = mapTooltipHtml(mp);
+            if (html) { tooltip.innerHTML = html; tooltip.style.display = 'block'; }
         }
     });
 
@@ -1484,19 +1598,39 @@ function setupTooltip() {
     });
 
     document.addEventListener('mouseout', function(e) {
-        var td = e.target.closest('td[data-product][data-region]');
-        if (td) {
+        if (e.target.closest('td[data-product][data-region]') || e.target.closest('#mapSvg path')) {
             tooltip.style.display = 'none';
         }
     });
+}
+
+function mapTooltipHtml(el) {
+    var product = document.getElementById('mapProduct') ? document.getElementById('mapProduct').value : '';
+    function fmt(v) { return (v === undefined || v === null) ? 's/d' : (v * 100).toFixed(1) + '%'; }
+    var last = evolDataDP.labels.length - 1;
+    var prov = el.getAttribute('data-prov');
+    if (prov) {
+        var dp = (evolDataDP.series[product] && evolDataDP.series[product]['PROV:' + prov]) ? evolDataDP.series[product]['PROV:' + prov][last] : null;
+        var df = (evolDataDF.series[product] && evolDataDF.series[product]['PROV:' + prov]) ? evolDataDF.series[product]['PROV:' + prov][last] : null;
+        return '<strong>' + prov + '</strong> &middot; ' + product + '<br>Ponderada (DP%): <b>' + fmt(dp) + '</b><br>F&iacute;sica (DF%): ' + fmt(df);
+    }
+    var k = el.getAttribute('data-k');
+    if (k && typeof provGeoDepto !== 'undefined') {
+        var feat = null;
+        for (var i = 0; i < provGeoDepto.feats.length; i++) if (provGeoDepto.feats[i].k === k) { feat = provGeoDepto.feats[i]; break; }
+        var dp2 = (typeof mapaPartido !== 'undefined' && mapaPartido.DP[product]) ? mapaPartido.DP[product][k] : null;
+        var df2 = (typeof mapaPartido !== 'undefined' && mapaPartido.DF[product]) ? mapaPartido.DF[product][k] : null;
+        return '<strong>' + (feat ? feat.depto : k) + '</strong><br><small style="opacity:.8">' + (feat ? feat.prov : '') + '</small> &middot; ' + product +
+            '<br>Ponderada (DP%): <b>' + fmt(dp2) + '</b><br>F&iacute;sica (DF%): ' + fmt(df2);
+    }
+    return '';
 }
 
 // === EVOLUCION ===
 function initEvolution() {
     if (typeof evolData === 'undefined' || !evolData.labels) return;
     var panel = document.getElementById('evolProductPanel');
-    var selR = document.getElementById('evolRegion');
-    if (!panel || !selR) return;
+    if (!panel) return;
     var prods = evolData.products || productNames;   // 1ro "TOTAL COMPAÑÍA", luego cada producto
     var ph = '<div class="ms-tools"><button type="button" onclick="selectAllProducts(false)">Ninguno</button>' +
              '<button type="button" onclick="selectAllProducts(true)">Todos</button></div>';
@@ -1507,12 +1641,13 @@ function initEvolution() {
     }
     panel.innerHTML = ph;
     updateProductBtn();
-    // cerrar el desplegable al hacer clic afuera
     document.addEventListener('click', function (e) {
         var dd = document.getElementById('evolProductDD');
         if (dd && !dd.contains(e.target)) panel.classList.remove('open');
     });
-    selR.innerHTML = buildRegionOptions();
+    // regiones multi
+    msBuild('evolRegionPanel', regionItems(), 'first', onRegionChange);
+    msBtnLabel('evolRegionBtn', 'evolRegionPanel', 'Todas las ubicaciones', 'ubicaciones');
     var selF = document.getElementById('evolFrom'), selT = document.getElementById('evolTo');
     if (selF && selT) {
         var oh = '';
@@ -1523,6 +1658,25 @@ function initEvolution() {
     }
 }
 
+function regionItems() {
+    var items = [{ v: 'TOTAL', label: 'TOTAL (Nacional)' }];
+    for (var z = 0; z < zonesOrder.length; z++) items.push({ v: 'ZONA:' + zonesOrder[z], label: 'Zona ' + zonesOrder[z], group: 'Zonas' });
+    for (var z2 = 0; z2 < zonesOrder.length; z2++) {
+        var regs = zoneRegions[zonesOrder[z2]];
+        for (var r = 0; r < regs.length; r++) items.push({ v: regs[r], label: regs[r], group: 'Regiones' });
+    }
+    return items;
+}
+function getSelectedRegions() {
+    var s = msSelected('evolRegionPanel');
+    return s.length ? s : ['TOTAL'];
+}
+function onRegionChange() {
+    msBtnLabel('evolRegionBtn', 'evolRegionPanel', 'Todas las ubicaciones', 'ubicaciones');
+    renderEvolution();
+}
+
+// <option> HTML para el <select> nativo de Crecimiento (scope único)
 function buildRegionOptions() {
     var h = '<option value="TOTAL">TOTAL (Nacional)</option><optgroup label="Zonas">';
     for (var z = 0; z < zonesOrder.length; z++) h += '<option value="ZONA:' + zonesOrder[z] + '">Zona ' + zonesOrder[z] + '</option>';
@@ -1587,7 +1741,7 @@ function evolStat(lbl, val) {
 function renderEvolution() {
     if (typeof evolData === 'undefined' || !evolData.labels) return;
     var products = getSelectedProducts();
-    var region = document.getElementById('evolRegion').value;
+    var regions = getSelectedRegions();
     var allLabels = evolData.labels;
     var fEl = document.getElementById('evolFrom'), tEl = document.getElementById('evolTo');
     var f = fEl ? parseInt(fEl.value, 10) : 0;
@@ -1600,17 +1754,28 @@ function renderEvolution() {
     var chart = document.getElementById('evolChart');
     var legend = document.getElementById('evolLegend');
     var statsEl = document.getElementById('evolStats');
-    var single = products.length === 1;
 
-    var seriesList = products.map(function (p, idx) {
-        var s = ((evolData.series[p] && evolData.series[p][region]) || []).slice(f, t + 1);
-        return { name: p, data: s, color: EVOL_PALETTE[idx % EVOL_PALETTE.length] };
-    });
+    // Una línea por cada combinación producto × ubicación
+    var oneProd = products.length === 1, oneReg = regions.length === 1;
+    var seriesList = [], ci = 0;
+    for (var pi = 0; pi < products.length; pi++) {
+        for (var ri = 0; ri < regions.length; ri++) {
+            var p = products[pi], region = regions[ri];
+            var data = ((evolData.series[p] && evolData.series[p][region]) || []).slice(f, t + 1);
+            var nm = oneProd && oneReg ? p
+                   : oneProd ? regionLabel(region)
+                   : oneReg ? p
+                   : p + ' · ' + regionLabel(region);
+            seriesList.push({ name: nm, data: data, color: EVOL_PALETTE[ci % EVOL_PALETTE.length] });
+            ci++;
+        }
+    }
+    var single = seriesList.length === 1;
     var anyData = seriesList.some(function (s) {
         return s.data.some(function (v) { return v !== null && v !== undefined; });
     });
     if (!anyData) {
-        chart.innerHTML = '<div class="evol-empty">Sin datos para la selecci&oacute;n en ' + region + '.</div>';
+        chart.innerHTML = '<div class="evol-empty">Sin datos para la selecci&oacute;n.</div>';
         legend.innerHTML = ''; statsEl.innerHTML = '';
         return;
     }
@@ -1628,7 +1793,9 @@ function renderEvolution() {
             evolStat('M&iacute;nimo', (Math.min.apply(null, vv) * 100).toFixed(1) + '%') +
             evolStat('&Delta; vs ' + labels[pts[0].i], '<span style="color:' + dc + '">' + dsg + (delta * 100).toFixed(1) + ' pp</span>');
     } else {
-        statsEl.innerHTML = evolStat('Productos comparados', String(products.length));
+        statsEl.innerHTML = evolStat('Series comparadas', String(seriesList.length)) +
+            evolStat('Productos', String(products.length)) +
+            evolStat('Ubicaciones', String(regions.length));
     }
 
     var W = Math.max(680, n * 54), H = 340, padL = 46, padR = 20, padT = 18, padB = 50;
@@ -1659,7 +1826,10 @@ function renderEvolution() {
     }
     svg += '</svg>';
     chart.innerHTML = svg;
-    legend.innerHTML = '<strong style="margin-right:8px">Regi&oacute;n: ' + regionLabel(region) + '</strong>' + legHtml;
+    var hdr = oneReg ? ('Ubicaci&oacute;n: ' + regionLabel(regions[0]))
+            : oneProd ? (products[0] + ' &mdash; ' + regions.length + ' ubicaciones')
+            : (products.length + ' productos &times; ' + regions.length + ' ubicaciones');
+    legend.innerHTML = '<strong style="margin-right:8px">' + hdr + '</strong>' + legHtml;
 }
 
 // === CRECIMIENTO / CAÍDA ===
@@ -1726,10 +1896,55 @@ function initMap() {
     sel.innerHTML = h;
     var buckets = [[0.95, '&ge;90%'], [0.85, '80-90'], [0.75, '70-80'], [0.65, '60-70'], [0.55, '50-60'], [0.45, '40-50'], [0.35, '30-40'], [0.25, '20-30'], [0.10, '&lt;20']];
     var leg = document.getElementById('mapLegend');
-    if (leg) leg.innerHTML = buckets.map(function (b) { return '<span><i style="background:' + heatmapColor(b[0]).bg + '"></i>' + b[1] + '</span>'; }).join('') + '<span><i style="background:#e8dcdd"></i>s/d</span>';
+    if (leg) leg.innerHTML = buckets.map(function (b) { return '<span><i style="background:' + heatmapColor(b[0]).bg + '"></i>' + b[1] + '</span>'; }).join('') +
+        '<span><i style="background:#b7a9c9"></i>merc. marginal</span><span><i style="background:#efe6e6"></i>sin mercado</span>';
 }
 
+// --- zoom / pan del mapa (manipula el viewBox del SVG) ---
+var _mapZ = null;
+var mapDragged = false;
+function attachMapZoom(svg, baseVB) {
+    if (!svg) return;
+    var b = baseVB.split(' ').map(Number);
+    var vb = b.slice();
+    function apply() { svg.setAttribute('viewBox', vb.join(' ')); }
+    function zoomAt(cx, cy, f) {
+        var nw = vb[2] * f;
+        if (nw > b[2] * 1.02 || nw < b[2] * 0.006) return;   // límites de zoom (hasta ~160x, sirve para CABA/GBA)
+        vb[0] = cx - (cx - vb[0]) * f; vb[1] = cy - (cy - vb[1]) * f;
+        vb[2] = nw; vb[3] = vb[3] * f; apply();
+    }
+    function toSvg(clientX, clientY) {
+        var r = svg.getBoundingClientRect();
+        return [vb[0] + (clientX - r.left) / r.width * vb[2], vb[1] + (clientY - r.top) / r.height * vb[3]];
+    }
+    svg.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        var p = toSvg(e.clientX, e.clientY);
+        zoomAt(p[0], p[1], e.deltaY < 0 ? 0.82 : 1.22);
+    }, { passive: false });
+    var d = null;
+    function endDrag() { d = null; svg.style.cursor = 'grab'; }
+    svg.addEventListener('mousedown', function (e) { d = { x: e.clientX, y: e.clientY, vx: vb[0], vy: vb[1] }; mapDragged = false; svg.style.cursor = 'grabbing'; });
+    svg.addEventListener('mousemove', function (e) {
+        if (!d) return;
+        var r = svg.getBoundingClientRect(), dx = e.clientX - d.x, dy = e.clientY - d.y;
+        if (Math.abs(dx) + Math.abs(dy) > 4) mapDragged = true;
+        vb[0] = d.vx - dx / r.width * vb[2]; vb[1] = d.vy - dy / r.height * vb[3]; apply();
+    });
+    svg.addEventListener('mouseup', endDrag);
+    svg.addEventListener('mouseleave', endDrag);
+    svg.style.cursor = 'grab';
+    _mapZ = {
+        center: function (f) { zoomAt(vb[0] + vb[2] / 2, vb[1] + vb[3] / 2, f); },
+        reset: function () { vb = b.slice(); apply(); }
+    };
+}
+function mapZoomBy(f) { if (_mapZ) _mapZ.center(f); }
+function mapZoomReset() { if (_mapZ) _mapZ.reset(); }
+
 function mapClick(prov) {
+    if (mapDragged) { mapDragged = false; return; }
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-prov') === prov);
     renderMapDetail(prov);
@@ -1753,6 +1968,7 @@ function renderMap() {
     }
     svg += '</svg>';
     document.getElementById('mapSvg').innerHTML = svg;
+    attachMapZoom(document.querySelector('#mapSvg svg'), provGeo.viewBox);
     var mt = document.getElementById('mapTitle');
     if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + ' · ' + PERIODO_LBL;
     // ranking al costado
@@ -1820,6 +2036,12 @@ function renderMapDetail(prov) {
 }
 
 // === MAPA POR DEPARTAMENTO ===
+function deptoTieneMercado(product, k) {
+    if (typeof mapaPartido === 'undefined') return false;
+    return (mapaPartido.DP[product] && mapaPartido.DP[product][k] != null) ||
+           (mapaPartido.DF[product] && mapaPartido.DF[product][k] != null);
+}
+
 function renderMapDepto() {
     var svgc = document.getElementById('mapSvg');
     if (typeof provGeoDepto === 'undefined' || typeof mapaPartido === 'undefined') {
@@ -1833,12 +2055,19 @@ function renderMapDepto() {
     for (var i = 0; i < provGeoDepto.feats.length; i++) {
         var f = provGeoDepto.feats[i];
         var v = data[f.k];
-        var fill = (v === undefined || v === null) ? '#e8dcdd' : heatmapColor(v).bg;
-        var pct = (v === undefined || v === null) ? 's/d' : (v * 100).toFixed(1) + '%';
+        var fill, pct;
+        if (v !== undefined && v !== null) {
+            fill = heatmapColor(v).bg; pct = (v * 100).toFixed(1) + '%';
+        } else if (deptoTieneMercado(product, f.k)) {
+            fill = '#b7a9c9'; pct = 'mercado marginal (sin núcleo 80-20)';   // existe pero sin core
+        } else {
+            fill = '#efe6e6'; pct = 'sin mercado en la zona';
+        }
         svg += '<path d="' + f.d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.35" data-k="' + f.k + '" onclick="mapClickDepto(\'' + f.k.replace(/'/g, "\\'") + '\')"><title>' + f.depto + ' (' + f.prov + '): ' + pct + '</title></path>';
     }
     svg += '</svg>';
     svgc.innerHTML = svg;
+    attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
     document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL;
     var rows = provGeoDepto.feats.map(function (f) { return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k] }; })
         .filter(function (x) { return x.v !== undefined && x.v !== null; })
@@ -1852,6 +2081,7 @@ function renderMapDepto() {
 }
 
 function mapClickDepto(k) {
+    if (mapDragged) { mapDragged = false; return; }
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-k') === k);
     renderDeptoDetail(k);
