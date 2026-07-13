@@ -49,7 +49,9 @@ def wset(S, sie=False):
     return ("{<" + lab + "Flag_Rollback={0},MesesRollBack=,DescMercadoTipo=,"
             "[AñoMes_Num]={\">=$(=max(AñoMes_Num)-%d)<=$(=max(AñoMes_Num)-0)\"}>}" % S)
 def u_tot(S): return "sum(%s MensualUnidades)" % wset(S)
+def u_sie(S): return "sum(%s MensualUnidades)" % wset(S, True)
 def u_gap(S): return "sum(aggr(if(sum(%s MensualUnidades)=0, sum(%s MensualUnidades), 0), CPA))" % (wset(S, True), wset(S))
+FLD_IDX = {"tot": 0, "gap": 1, "sie": 2}
 
 
 def main():
@@ -72,6 +74,7 @@ def main():
         for wn, S in windows_for(P).items():
             ms.append({"qDef": {"qDef": u_tot(S)}}); order.append((wn, "tot"))
             ms.append({"qDef": {"qDef": u_gap(S)}}); order.append((wn, "gap"))
+            ms.append({"qDef": {"qDef": u_sie(S)}}); order.append((wn, "sie"))
         W = 2 + len(ms); PAGE = max(1, 9000 // W)
         for i, (prod, merc) in enumerate(mapping.items(), 1):
             if prod in done and done[prod].get("_ok"):
@@ -102,13 +105,13 @@ def main():
                     time.sleep(3); q = Qix(); doc = q.open_doc()
             if rows is None:
                 done[prod] = {"_ok": False}; save_json(STORE, store); continue
-            agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0]))  # geokey->win->[tot,gap]
+            agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))  # geokey->win->[tot,gap,sie]
             for r in rows:
                 k = geo_match.key(r[0]["qText"], r[1]["qText"])
                 for idx, (wn, fld) in enumerate(order):
-                    v = num(r[idx + 2]); j = 0 if fld == "tot" else 1
+                    v = num(r[idx + 2]); j = FLD_IDX[fld]
                     agg[k][wn][j] += v
-            done[prod] = {k: {w: {"tot": round(v[0], 1), "gap": round(v[1], 1)} for w, v in wv.items()} for k, wv in agg.items()}
+            done[prod] = {k: {w: {"tot": round(v[0], 1), "gap": round(v[1], 1), "sie": round(v[2], 1)} for w, v in wv.items()} for k, wv in agg.items()}
             done[prod]["_ok"] = True
             save_json(STORE, store)
             print(f"  [{C.periodo_label(P)}] {i:>2}/{len(mapping)} {prod:<14} deptos={len(agg)} ({time.time()-t1:.0f}s)")

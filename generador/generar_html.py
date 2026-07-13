@@ -291,19 +291,19 @@ def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
                     continue
                 c = wins.get(W)
                 if c:
-                    rmap[loc] = {"tot": int(round(c["tot"])), "gap": int(round(c["gap"]))}
+                    rmap[loc] = {"tot": int(round(c["tot"])), "gap": int(round(c["gap"])), "sie": int(round(c.get("sie", 0)))}
             reg_out[pn] = rmap
             pmap = {}
             for prov, regs in prov_regions.items():
                 if not prov:
                     continue
-                tot = gap = 0.0; any_ = False
+                tot = gap = sie = 0.0; any_ = False
                 for r in regs:
                     c = pd.get(r, {}).get(W)
                     if c:
-                        any_ = True; tot += c["tot"]; gap += c["gap"]
+                        any_ = True; tot += c["tot"]; gap += c["gap"]; sie += c.get("sie", 0)
                 if any_:
-                    pmap[prov] = {"tot": int(round(tot)), "gap": int(round(gap))}
+                    pmap[prov] = {"tot": int(round(tot)), "gap": int(round(gap)), "sie": int(round(sie))}
             prov_out[pn] = pmap
         out["win"][W] = {"reg": reg_out, "prov": prov_out}
     return out
@@ -331,7 +331,7 @@ def build_unidades_depto(store, productNames):
             for W in WIN_ORDER:
                 c = wins.get(W)
                 if c and (c["tot"] or c["gap"]):
-                    wm[W] = {"t": int(round(c["tot"])), "g": int(round(c["gap"]))}
+                    wm[W] = {"t": int(round(c["tot"])), "g": int(round(c["gap"])), "s": int(round(c.get("sie", 0)))}
             if wm:
                 gkmap[k] = wm
         prod[pn] = gkmap

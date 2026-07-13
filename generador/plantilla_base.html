@@ -649,13 +649,15 @@ body {
 @media (max-width:900px) { .map-layout { grid-template-columns:1fr; } }
 .map-table-card { max-height:74vh; overflow-y:auto; }
 .maprow { display:grid; grid-template-columns:14px 1fr auto; align-items:center; gap:8px; padding:5px 6px; border-radius:5px; cursor:pointer; font-size:0.82rem; }
-.maprow.rk { grid-template-columns:14px minmax(60px,1fr) auto auto 48px; gap:6px; }
+.maprow.rk { grid-template-columns:14px minmax(52px,1fr) auto 44px auto; gap:6px; }
 .maprow:hover { background:#f7ebec; }
 .mapdot { width:12px; height:12px; border-radius:3px; }
 .maprow-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .maprow-val { font-weight:700; color:#3a2022; text-align:right; }
 .maprow-u { text-align:right; font-variant-numeric:tabular-nums; color:#4a3436; font-size:0.78rem; white-space:nowrap; }
 .maprow-u.gap { color:#95232C; }
+.maprow-u.ms { color:#1f6feb; font-weight:700; }
+.u-cell.ms { color:#1f6feb; font-weight:700; }
 .maprow.rk.hdr { cursor:default; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px; color:#a58589; border-bottom:1px solid #f0e4e5; padding-bottom:4px; }
 .maprow.rk.hdr:hover { background:none; }
 .maprow.rk.hdr .maprow-u, .maprow.rk.hdr .maprow-val { color:#a58589; font-weight:600; }
@@ -878,6 +880,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                         <label class="maprank-sort">Ordenar por
                             <select id="mapRankSort" onchange="renderMap()">
                                 <option value="tot">Unid. mercado</option>
+                                <option value="ms">MS% (share)</option>
                                 <option value="gap">Potencial no capt.</option>
                                 <option value="dp">DP% / DF%</option>
                             </select>
@@ -1034,7 +1037,7 @@ function productDataFromWin(w) {
             return { zona: r.zona, region: r.region,
                      act: (r.act == null ? 0 : r.act),
                      ant: (cmp == null ? 0 : cmp),
-                     tot: uu ? uu.tot : null, gap: uu ? uu.gap : null };
+                     tot: uu ? uu.tot : null, gap: uu ? uu.gap : null, sie: uu ? uu.sie : null };
         });
     }
     return out;
@@ -1343,6 +1346,11 @@ function fmtUnits(n) {
     if (a >= 1e3) return (n / 1e3).toLocaleString('es-AR', { maximumFractionDigits: 0 }) + ' K';
     return n.toLocaleString('es-AR');
 }
+// Market share en unidades (Siegfried / mercado)
+function fmtMs(sie, tot) {
+    if (sie == null || tot == null || !tot) return '<span style="color:#c9b6b8">&mdash;</span>';
+    return (100 * sie / tot).toFixed(1) + '%';
+}
 
 // === HEATMAP COLOR ===
 function heatmapColor(val) {
@@ -1469,7 +1477,9 @@ function buildProductTable(pn, color) {
     html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 4)">Variaci&oacute;n<span class="sort-arrow"></span></th>';
     html += '<th style="background:' + hdrBg + '">Tendencia</th>';
     html += '<th class="sortable" style="background:' + hdrBg + '" title="Unidades totales del mercado (todos los laboratorios) en la ventana" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 6)">Unid. mercado<span class="sort-arrow"></span></th>';
-    html += '<th class="sortable" style="background:' + hdrBg + '" title="Potencial no capturado: unidades del mercado en farmacias donde Siegfried no está presente" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 7)">Pot. no capt.<span class="sort-arrow"></span></th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" title="Unidades que vende Siegfried en la ventana" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 7)">Unid. Siegfried<span class="sort-arrow"></span></th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" title="Market Share en unidades: Siegfried / mercado" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 8)">MS%<span class="sort-arrow"></span></th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" title="Potencial no capturado: unidades del mercado en farmacias donde Siegfried no está presente" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 9)">Pot. no capt.<span class="sort-arrow"></span></th>';
     html += '</tr></thead>';
     html += '<tbody id="prodBody-' + pn.replace(/ /g, '_') + '">';
     html += renderProductBody(data);
@@ -1500,6 +1510,8 @@ function renderProductBody(data) {
     html += '<span class="var-bar-container"><span class="var-bar" style="width:' + barWidth + '%;background:' + barColor + '"></span></span></td>';
     html += '<td>' + trendHtml + '</td>';
     html += '<td class="u-cell">' + fmtUnits(total.tot) + '</td>';
+    html += '<td class="u-cell">' + fmtUnits(total.sie) + '</td>';
+    html += '<td class="u-cell ms">' + fmtMs(total.sie, total.tot) + '</td>';
     html += '<td class="u-cell">' + fmtUnits(total.gap) + '</td>';
     html += '</tr>';
 
@@ -1547,6 +1559,8 @@ function renderProductBody(data) {
         html += '<span class="var-bar-container"><span class="var-bar" style="width:' + barWidth + '%;background:' + barColor + '"></span></span></td>';
         html += '<td>' + trendHtml + '</td>';
         html += '<td class="u-cell">' + fmtUnits(row.tot) + '</td>';
+        html += '<td class="u-cell">' + fmtUnits(row.sie) + '</td>';
+        html += '<td class="u-cell ms">' + fmtMs(row.sie, row.tot) + '</td>';
         html += '<td class="u-cell">' + fmtUnits(row.gap) + '</td>';
         html += '</tr>';
     }
@@ -1629,7 +1643,9 @@ function sortProdTable(pn, colIdx) {
         else if (colIdx === 3) { va = a.act; vb = b.act; }
         else if (colIdx === 4) { va = a.act - a.ant; vb = b.act - b.ant; }
         else if (colIdx === 6) { va = a.tot == null ? -1 : a.tot; vb = b.tot == null ? -1 : b.tot; }
-        else if (colIdx === 7) { va = a.gap == null ? -1 : a.gap; vb = b.gap == null ? -1 : b.gap; }
+        else if (colIdx === 7) { va = a.sie == null ? -1 : a.sie; vb = b.sie == null ? -1 : b.sie; }
+        else if (colIdx === 8) { va = (a.tot ? a.sie / a.tot : -1); vb = (b.tot ? b.sie / b.tot : -1); }
+        else if (colIdx === 9) { va = a.gap == null ? -1 : a.gap; vb = b.gap == null ? -1 : b.gap; }
         else { va = 0; vb = 0; }
 
         if (typeof va === 'string') {
@@ -2246,26 +2262,26 @@ function renderMap() {
     for (var j = 0; j < provinciasOrden.length; j++) {
         var pr = provinciasOrden[j];
         var u = provUnits(product, pr);
-        rows.push({ name: pr, v: provVal(product, pr), tot: u ? u.tot : null, gap: u ? u.gap : null });
+        rows.push({ name: pr, v: provVal(product, pr), tot: u ? u.tot : null, gap: u ? u.gap : null, sie: u ? u.sie : null });
     }
     var keyf = function (r) {
         if (sortBy === 'gap') return r.gap == null ? -1 : r.gap;
+        if (sortBy === 'ms') return r.tot ? r.sie / r.tot : -1;
         if (sortBy === 'dp') return r.v == null ? -1 : r.v;
         return r.tot == null ? -1 : r.tot;
     };
     rows.sort(function (a, b) { return keyf(b) - keyf(a); });
     var thtml = '<div class="maprow rk hdr"><span></span><span class="maprow-name">Provincia</span>' +
-                '<span class="maprow-u">Mercado</span><span class="maprow-u gap">No capt.</span>' +
-                '<span class="maprow-val">' + metricLabel + '</span></div>';
+                '<span class="maprow-u">Mercado</span><span class="maprow-u ms">MS%</span><span class="maprow-u gap">No capt.</span></div>';
     for (var t = 0; t < rows.length; t++) {
         var col = (rows[t].v == null) ? '#e8dcdd' : heatmapColor(rows[t].v).bg;
         var pc = (rows[t].v == null) ? 's/d' : (rows[t].v * 100).toFixed(1) + '%';
-        thtml += '<div class="maprow rk" onclick="mapClick(\'' + rows[t].name.replace(/'/g, "\\'") + '\')">' +
+        thtml += '<div class="maprow rk" onclick="mapClick(\'' + rows[t].name.replace(/'/g, "\\'") + '\')" title="' + metricLabel + ': ' + pc + '">' +
                  '<span class="mapdot" style="background:' + col + '"></span>' +
                  '<span class="maprow-name">' + rows[t].name + '</span>' +
                  '<span class="maprow-u" title="Unidades del mercado">' + fmtUnits(rows[t].tot) + '</span>' +
-                 '<span class="maprow-u gap" title="Potencial no capturado">' + fmtUnits(rows[t].gap) + '</span>' +
-                 '<span class="maprow-val">' + pc + '</span></div>';
+                 '<span class="maprow-u ms" title="Market share en unidades">' + fmtMs(rows[t].sie, rows[t].tot) + '</span>' +
+                 '<span class="maprow-u gap" title="Potencial no capturado">' + fmtUnits(rows[t].gap) + '</span></div>';
     }
     var tbl = document.getElementById('mapTable');
     if (tbl) tbl.innerHTML = thtml;
@@ -2293,8 +2309,11 @@ function renderMapDetail(prov) {
     var ps = evolData.series[product] && evolData.series[product]['PROV:' + prov];
     var pv = provVal(product, prov);
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : 'Trimestre';
+    var pu = provUnits(product, prov);
     var html = '<h3 class="growth-h" style="color:#95232C">' + prov + ' &mdash; ' + product + '</h3>';
     html += '<div class="evol-stats">' + evolStat(metricLabel + ' &middot; ' + ventLbl + ' (' + (winCurLabel || labels[last]) + ')', (pv !== null && pv !== undefined) ? (pv * 100).toFixed(1) + '%' : 's/d');
+    if (pu) html += evolStat('Unid. mercado', fmtUnits(pu.tot)) + evolStat('Unid. Siegfried', fmtUnits(pu.sie)) +
+                    evolStat('MS% (share)', fmtMs(pu.sie, pu.tot)) + evolStat('Potencial no capturado', fmtUnits(pu.gap));
     if (ps) {
         var f = null; for (var i = 0; i < ps.length; i++) { if (ps[i] !== null && ps[i] !== undefined) { f = ps[i]; break; } }
         if (f !== null && pv !== null && pv !== undefined) {
@@ -2354,27 +2373,27 @@ function renderMapDepto() {
     var sortBy = document.getElementById('mapRankSort') ? document.getElementById('mapRankSort').value : 'tot';
     var rows = provGeoDepto.feats.map(function (f) {
         var u = deptoUnits(product, f.k);
-        return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k], tot: u ? u.tot : null, gap: u ? u.gap : null };
+        return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k], tot: u ? u.tot : null, gap: u ? u.gap : null, sie: u ? u.sie : null };
     }).filter(function (x) { return (x.v != null) || (x.tot != null); });
     var keyf = function (r) {
         if (sortBy === 'gap') return r.gap == null ? -1 : r.gap;
+        if (sortBy === 'ms') return r.tot ? r.sie / r.tot : -1;
         if (sortBy === 'dp') return r.v == null ? -1 : r.v;
         return r.tot == null ? -1 : r.tot;
     };
     rows.sort(function (a, b) { return keyf(b) - keyf(a); });
     var rtd = document.getElementById('mapRankTitle'); if (rtd) rtd.textContent = 'Ranking por departamento';
     var hdr = '<div class="maprow rk hdr"><span></span><span class="maprow-name">Departamento</span>' +
-              '<span class="maprow-u">Mercado</span><span class="maprow-u gap">No capt.</span>' +
-              '<span class="maprow-val">' + metricLabel + '</span></div>';
+              '<span class="maprow-u">Mercado</span><span class="maprow-u ms">MS%</span><span class="maprow-u gap">No capt.</span></div>';
     document.getElementById('mapTable').innerHTML = rows.length ? (hdr + rows.map(function (x) {
         var col = (x.v == null) ? '#e8dcdd' : heatmapColor(x.v).bg;
         var pc = (x.v == null) ? 's/d' : (x.v * 100).toFixed(1) + '%';
-        return '<div class="maprow rk" onclick="mapClickDepto(\'' + x.k.replace(/'/g, "\\'") + '\')">' +
+        return '<div class="maprow rk" onclick="mapClickDepto(\'' + x.k.replace(/'/g, "\\'") + '\')" title="' + metricLabel + ': ' + pc + '">' +
             '<span class="mapdot" style="background:' + col + '"></span>' +
             '<span class="maprow-name">' + x.name + ' <small style="color:#a88">' + x.prov + '</small></span>' +
             '<span class="maprow-u" title="Unidades del mercado">' + fmtUnits(x.tot) + '</span>' +
-            '<span class="maprow-u gap" title="Potencial no capturado">' + fmtUnits(x.gap) + '</span>' +
-            '<span class="maprow-val">' + pc + '</span></div>';
+            '<span class="maprow-u ms" title="Market share en unidades">' + fmtMs(x.sie, x.tot) + '</span>' +
+            '<span class="maprow-u gap" title="Potencial no capturado">' + fmtUnits(x.gap) + '</span></div>';
     }).join('')) : '<div class="evol-empty">Sin datos.</div>';
 }
 
@@ -2383,7 +2402,7 @@ function deptoUnits(product, k) {
     if (typeof WINU_DEPTO !== 'undefined' && WINU_DEPTO && WINU_DEPTO.prod) {
         var pm = WINU_DEPTO.prod[product];
         var e = pm && pm[k] ? pm[k][currentWindow] : null;
-        return e ? { tot: e.t, gap: e.g } : null;
+        return e ? { tot: e.t, gap: e.g, sie: e.s } : null;
     }
     return null;
 }
@@ -2405,6 +2424,8 @@ function renderDeptoDetail(k) {
     var u = deptoUnits(product, k);
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
     var uStats = u ? (evolStat('Unid. mercado &middot; ' + ventLbl, fmtUnits(u.tot)) +
+                      evolStat('Unid. Siegfried', fmtUnits(u.sie)) +
+                      evolStat('MS% (share)', fmtMs(u.sie, u.tot)) +
                       evolStat('Potencial no capturado', fmtUnits(u.gap))) : '';
     document.getElementById('mapDetail').innerHTML =
         '<h3 class="growth-h" style="color:#95232C">' + feat.depto + ' &mdash; ' + product + '</h3>' +

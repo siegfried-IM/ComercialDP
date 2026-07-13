@@ -66,8 +66,13 @@ def wset(S, sie=False):
 def u_tot(S):
     return "sum(%s MensualUnidades)" % wset(S)
 
+def u_sie(S):   # unidades que vende Siegfried
+    return "sum(%s MensualUnidades)" % wset(S, True)
+
 def u_gap(S):   # unidades del mercado en farmacias sin Siegfried (validado)
     return "sum(aggr(if(sum(%s MensualUnidades)=0, sum(%s MensualUnidades), 0), CPA))" % (wset(S, True), wset(S))
+
+FLD_IDX = {"tot": 0, "gap": 1, "sie": 2}
 
 
 def main():
@@ -86,6 +91,7 @@ def main():
         for wn, S in windows_for(P).items():
             ms.append({"qDef": {"qDef": u_tot(S)}}); order.append((wn, "tot"))
             ms.append({"qDef": {"qDef": u_gap(S)}}); order.append((wn, "gap"))
+            ms.append({"qDef": {"qDef": u_sie(S)}}); order.append((wn, "sie"))
         return ms, order
 
     store = load_json(STORE, {"meta": {}, "datos": {}})
@@ -122,19 +128,20 @@ def main():
                     time.sleep(3); q = Qix(); doc = q.open_doc()
             if rows is None:
                 done[prod] = {"_ok": False}; save_json(STORE, store); continue
-            agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0]))  # region->win->[tot,gap]
-            tot = defaultdict(lambda: [0.0, 0.0])
+            agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))  # region->win->[tot,gap,sie]
+            tot = defaultdict(lambda: [0.0, 0.0, 0.0])
             for r in rows:
                 region = C.REGIONCUP_TO_REGION.get(r[0]["qText"])
                 if not region:
                     continue
                 for idx, (wn, fld) in enumerate(order):
-                    v = num(r[idx + 1]); j = 0 if fld == "tot" else 1
+                    v = num(r[idx + 1]); j = FLD_IDX[fld]
                     agg[region][wn][j] += v
                     tot[wn][j] += v
-            out = {reg: {w: {"tot": round(v[0], 1), "gap": round(v[1], 1)} for w, v in wins.items()}
-                   for reg, wins in agg.items()}
-            out["TOTAL"] = {w: {"tot": round(v[0], 1), "gap": round(v[1], 1)} for w, v in tot.items()}
+            def cell(v):
+                return {"tot": round(v[0], 1), "gap": round(v[1], 1), "sie": round(v[2], 1)}
+            out = {reg: {w: cell(v) for w, v in wins.items()} for reg, wins in agg.items()}
+            out["TOTAL"] = {w: cell(v) for w, v in tot.items()}
             out["_ok"] = True
             done[prod] = out
             save_json(STORE, store)
