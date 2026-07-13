@@ -613,8 +613,12 @@ body {
 .ms-item { display:flex; align-items:center; gap:8px; padding:5px 8px; font-size:0.85rem; cursor:pointer; border-radius:4px; white-space:nowrap; }
 .ms-item:hover { background:#f7ebec; }
 /* === MAPA === */
-.map-card { text-align:center; }
-#mapSvg svg { max-height:74vh; width:auto; max-width:100%; }
+.map-card { text-align:center; position:relative; }
+.map-zoom-ctrl { position:absolute; top:12px; right:12px; display:flex; flex-direction:column; gap:5px; z-index:5; }
+.map-zoom-ctrl button { width:30px; height:30px; border:1px solid #d9c2c4; background:#fff; color:#95232C; border-radius:6px; font-size:1.05rem; font-weight:700; line-height:1; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,0.12); }
+.map-zoom-ctrl button:hover { background:#f7ebec; }
+#mapSvg { overflow:hidden; }
+#mapSvg svg { max-height:74vh; width:auto; max-width:100%; -webkit-user-select:none; user-select:none; }
 #mapSvg path { transition:fill .15s, stroke .1s; }
 #mapSvg path:hover { stroke:#3a2022; stroke-width:1.3; }
 #mapSvg path.sel { stroke:#111; stroke-width:1.8; }
@@ -809,6 +813,11 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             </div>
             <div class="map-layout">
                 <div class="evol-card map-card">
+                    <div class="map-zoom-ctrl">
+                        <button type="button" onclick="mapZoomBy(0.8)" title="Acercar">+</button>
+                        <button type="button" onclick="mapZoomBy(1.25)" title="Alejar">&minus;</button>
+                        <button type="button" onclick="mapZoomReset()" title="Restablecer">&#8635;</button>
+                    </div>
                     <div id="mapSvg"></div>
                     <div class="map-legend" id="mapLegend"></div>
                 </div>
@@ -828,7 +837,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
 
     <!-- Footer -->
     <div class="footer">
-        Generado el 13/07/2026 09:32 | DP% Report - Datos Mayo 2026
+        Generado el 13/07/2026 09:36 | DP% Report - Datos Mayo 2026
     </div>
 </div>
 
@@ -1744,7 +1753,51 @@ function initMap() {
     if (leg) leg.innerHTML = buckets.map(function (b) { return '<span><i style="background:' + heatmapColor(b[0]).bg + '"></i>' + b[1] + '</span>'; }).join('') + '<span><i style="background:#e8dcdd"></i>s/d</span>';
 }
 
+// --- zoom / pan del mapa (manipula el viewBox del SVG) ---
+var _mapZ = null;
+var mapDragged = false;
+function attachMapZoom(svg, baseVB) {
+    if (!svg) return;
+    var b = baseVB.split(' ').map(Number);
+    var vb = b.slice();
+    function apply() { svg.setAttribute('viewBox', vb.join(' ')); }
+    function zoomAt(cx, cy, f) {
+        var nw = vb[2] * f;
+        if (nw > b[2] * 1.02 || nw < b[2] * 0.08) return;   // límites de zoom
+        vb[0] = cx - (cx - vb[0]) * f; vb[1] = cy - (cy - vb[1]) * f;
+        vb[2] = nw; vb[3] = vb[3] * f; apply();
+    }
+    function toSvg(clientX, clientY) {
+        var r = svg.getBoundingClientRect();
+        return [vb[0] + (clientX - r.left) / r.width * vb[2], vb[1] + (clientY - r.top) / r.height * vb[3]];
+    }
+    svg.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        var p = toSvg(e.clientX, e.clientY);
+        zoomAt(p[0], p[1], e.deltaY < 0 ? 0.82 : 1.22);
+    }, { passive: false });
+    var d = null;
+    function endDrag() { d = null; svg.style.cursor = 'grab'; }
+    svg.addEventListener('mousedown', function (e) { d = { x: e.clientX, y: e.clientY, vx: vb[0], vy: vb[1] }; mapDragged = false; svg.style.cursor = 'grabbing'; });
+    svg.addEventListener('mousemove', function (e) {
+        if (!d) return;
+        var r = svg.getBoundingClientRect(), dx = e.clientX - d.x, dy = e.clientY - d.y;
+        if (Math.abs(dx) + Math.abs(dy) > 4) mapDragged = true;
+        vb[0] = d.vx - dx / r.width * vb[2]; vb[1] = d.vy - dy / r.height * vb[3]; apply();
+    });
+    svg.addEventListener('mouseup', endDrag);
+    svg.addEventListener('mouseleave', endDrag);
+    svg.style.cursor = 'grab';
+    _mapZ = {
+        center: function (f) { zoomAt(vb[0] + vb[2] / 2, vb[1] + vb[3] / 2, f); },
+        reset: function () { vb = b.slice(); apply(); }
+    };
+}
+function mapZoomBy(f) { if (_mapZ) _mapZ.center(f); }
+function mapZoomReset() { if (_mapZ) _mapZ.reset(); }
+
 function mapClick(prov) {
+    if (mapDragged) { mapDragged = false; return; }
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-prov') === prov);
     renderMapDetail(prov);
@@ -1768,6 +1821,7 @@ function renderMap() {
     }
     svg += '</svg>';
     document.getElementById('mapSvg').innerHTML = svg;
+    attachMapZoom(document.querySelector('#mapSvg svg'), provGeo.viewBox);
     var mt = document.getElementById('mapTitle');
     if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + ' · ' + PERIODO_LBL;
     // ranking al costado
@@ -1854,6 +1908,7 @@ function renderMapDepto() {
     }
     svg += '</svg>';
     svgc.innerHTML = svg;
+    attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
     document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL;
     var rows = provGeoDepto.feats.map(function (f) { return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k] }; })
         .filter(function (x) { return x.v !== undefined && x.v !== null; })
@@ -1867,6 +1922,7 @@ function renderMapDepto() {
 }
 
 function mapClickDepto(k) {
+    if (mapDragged) { mapDragged = false; return; }
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-k') === k);
     renderDeptoDetail(k);
