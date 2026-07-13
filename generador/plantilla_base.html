@@ -593,6 +593,15 @@ body {
 .metric-btn + .metric-btn { border-left:1px solid #d9c2c4; }
 .metric-btn:hover { background:#f7ebec; }
 .metric-btn.active { background:#95232C; color:#fff; }
+/* selector de ventana temporal + variación (misma estética que metric-toggle) */
+.win-toggle, .var-toggle { display:inline-flex; border:1px solid #d9c2c4; border-radius:8px; overflow:hidden; }
+.win-btn, .var-btn { border:none; background:#fff; color:#7a1e24; padding:8px 12px; font-size:0.8rem; font-weight:600; cursor:pointer; transition:background 0.15s; white-space:nowrap; }
+.win-btn + .win-btn, .var-btn + .var-btn { border-left:1px solid #d9c2c4; }
+.win-btn:hover, .var-btn:hover { background:#f7ebec; }
+.win-btn.active, .var-btn.active { background:#7a1e24; color:#fff; }
+.var-btn.disabled, .var-btn:disabled { opacity:0.4; cursor:not-allowed; background:#f4eeee; color:#b9a0a3; }
+.var-btn.disabled:hover, .var-btn:disabled:hover { background:#f4eeee; }
+.filter-group-label { font-size:0.62rem; text-transform:uppercase; letter-spacing:1px; color:#a58589; font-weight:700; margin:0 4px 0 8px; align-self:center; }
 .evol-field .hint { font-weight:400; text-transform:none; color:#a88; font-size:0.68rem; }
 #evolProduct[multiple] { min-width:230px; padding:4px; }
 #evolProduct[multiple] option { padding:3px 6px; }
@@ -703,6 +712,13 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
         <div class="metric-toggle" role="group" aria-label="M&eacute;trica">
             <button type="button" id="btnDP" class="metric-btn active" onclick="setMetric('DP')">Ponderada (DP%)</button>
             <button type="button" id="btnDF" class="metric-btn" onclick="setMetric('DF')">F&iacute;sica (DF%)</button>
+        </div>
+        <span class="filter-group-label" id="winGroupLabel" style="display:none">Ventana</span>
+        <div class="win-toggle" id="winToggle" role="group" aria-label="Ventana temporal" style="display:none"></div>
+        <span class="filter-group-label" id="varGroupLabel" style="display:none">Comparar</span>
+        <div class="var-toggle" id="varToggle" role="group" aria-label="Variaci&oacute;n" style="display:none">
+            <button type="button" id="btnVarAy" class="var-btn active" onclick="setVariation('ay')">vs a&ntilde;o ant.</button>
+            <button type="button" id="btnVarAp" class="var-btn" onclick="setVariation('ap')">vs per&iacute;odo ant.</button>
         </div>
         <input type="text" class="search-box" id="searchBox" placeholder="Buscar region..." oninput="applyFilters()">
         <div class="ms-dropdown" id="zoneDD">
@@ -877,6 +893,10 @@ var zoneRegions = {"CABA": ["CABA"], "BUENOS AIRES": ["BUENOS AIRES", "LA PLATA"
 var groupColors = {"#00B0F0": ["Acemuk", "Alidial", "Hexaler cort", "Aireal", "Mometax", "Acantex", "Bactrim", "Cefalexiona", "Macromax", "Decadron"], "#FFC000": ["Calcio Base", "ISIS Free", "Siderblut", "Trip D3", "Deltrox"], "#FF0000": ["Dilatrend", "Empax", "Metglucon", "Roxolan", "Siltran", "Sintrom", "Terloc", "Pixaban", "Exforge", "Entresto", "Diovan", "Dauran", "Telpres"], "#92D050": ["Levital", "PGB", "QTP", "Valquir", "Valium", "Madopar"], "#7030A0": ["Acneclin", "Clobesol", "Micomazol", "Microsona", "Paldar", "Roaccutan"]};
 
 var currentView = 'summary';
+var currentWindow = 'TRI';       // ventana temporal activa: MEN/TRI/SEM/MAT/YTD
+var currentVariation = 'ay';     // 'ay' = vs año anterior · 'ap' = vs período anterior
+var winCurLabel = '';            // etiqueta del período actual de la ventana
+var winCmpLabel = '';            // etiqueta del período de comparación activo
 var sortState = {};
 var activeKpiFilter = null; // 'above80', 'below50', or null
 
@@ -887,20 +907,22 @@ var productsBelow50 = [];
 var metricLabel = 'DP%';
 
 function computeKpiSegments() {
+    // Se calcula desde el dataset activo (dpData) para que sea correcto en
+    // cualquier ventana/métrica, no desde valores precomputados de un período fijo.
     totalRow = dpData[0];
     productsAbove80 = [];
     productsBelow50 = [];
+    var sum = 0, cnt = 0, above = 0, below = 0;
     for (var i = 0; i < productNames.length; i++) {
         var val = totalRow.values[productNames[i]] || 0;
-        if (val >= 0.80) productsAbove80.push(productNames[i]);
-        if (val > 0 && val < 0.50) productsBelow50.push(productNames[i]);
+        if (val > 0) { sum += val; cnt++; }
+        if (val >= 0.80) { productsAbove80.push(productNames[i]); above++; }
+        if (val > 0 && val < 0.50) { productsBelow50.push(productNames[i]); below++; }
     }
-    if (typeof kpiData !== 'undefined' && kpiData[currentMetric]) {
-        var k = kpiData[currentMetric];
-        document.getElementById('kpiAvg').textContent = (k.avg * 100).toFixed(1) + '%';
-        document.getElementById('kpiAbove').textContent = k.above;
-        document.getElementById('kpiBelow').textContent = k.below;
-    }
+    var avg = cnt ? sum / cnt : 0;
+    var ka = document.getElementById('kpiAvg'); if (ka) ka.textContent = (avg * 100).toFixed(1) + '%';
+    var kb = document.getElementById('kpiAbove'); if (kb) kb.textContent = above;
+    var kc = document.getElementById('kpiBelow'); if (kc) kc.textContent = below;
 }
 
 function updateMetricLabels() {
@@ -928,19 +950,20 @@ function updateContext() {
     else if (currentView === 'crecimiento') vista = 'Crecimiento';
     else if (currentView === 'mapa') vista = 'Mapa';
     else if (currentView !== 'summary') vista = currentView;
-    var per = (typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : '';
-    var vent = (typeof currentWindow !== 'undefined' && typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || 'Trimestre') : 'Trimestre móvil';
+    var per = (winCurLabel || ((typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : ''));
+    var vent = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || 'Trimestre') : 'Trimestre móvil';
+    var cmp = (typeof WIN !== 'undefined' && WIN && winCmpLabel)
+        ? ' · Comparaci&oacute;n: <b>vs ' + winCmpLabel + '</b> (' + (currentVariation === 'ap' ? 'per&iacute;odo ant.' : 'a&ntilde;o ant.') + ')'
+        : '';
     bar.innerHTML = '<span class="ctx-tag">' + vista + '</span>' +
-        'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Ventana: <b>' + vent + '</b> · Período: <b>' + per + '</b>' +
+        'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Ventana: <b>' + vent + '</b> · Per&iacute;odo: <b>' + per + '</b>' + cmp +
         ' <span class="ctx-def">— mide % ' + def + '</span>';
 }
 
 function setMetric(m) {
     if (typeof currentMetric !== 'undefined' && m === currentMetric) return;
     currentMetric = m;
-    dpData = (m === 'DP') ? dpDataDP : dpDataDF;
-    productData = (m === 'DP') ? productDataDP : productDataDF;
-    evolData = (m === 'DP') ? evolDataDP : evolDataDF;
+    evolData = (m === 'DP') ? evolDataDP : evolDataDF;   // la evolución siempre es por métrica
     var bDP = document.getElementById('btnDP'), bDF = document.getElementById('btnDF');
     if (bDP) bDP.classList.toggle('active', m === 'DP');
     if (bDF) bDF.classList.toggle('active', m === 'DF');
@@ -951,28 +974,130 @@ function setMetric(m) {
     if (cB) cB.classList.remove('kpi-active');
     sortState = {};
     updateMetricLabels();
-    computeKpiSegments();
-    buildDPTable();
-    buildAllProductViews();
-    if (currentView !== 'summary' && currentView !== 'evolution') {
-        var panel = document.getElementById('view-' + currentView.replace(/ /g, '_'));
-        if (panel) panel.classList.add('active');
-    }
-    applyFilters();
+    applyWindow(false);   // fija dpData/productData según ventana+métrica, recalcula KPIs, arma tablas, aplica filtros y contexto
     if (currentView === 'evolution') renderEvolution();
     if (currentView === 'crecimiento') renderGrowth();
     if (currentView === 'mapa') renderMap();
     refreshTopScrollbars();
 }
 
+// === SELECTOR DE VENTANA TEMPORAL (MEN/TRI/SEM/MAT/YTD) + variación ===
+function winDataFor(w, m) {
+    return (typeof WIN !== 'undefined' && WIN && WIN.win[w] && WIN.win[w][m]) ? WIN.win[w][m] : null;
+}
+
+function productDataFromWin(w) {
+    // Convierte el dataset de ventana (act/ay/ap por región) al formato {ant,act}
+    // que consumen las tablas de producto, según la variación activa.
+    var useAp = (currentVariation === 'ap');
+    var out = {};
+    for (var p = 0; p < productNames.length; p++) {
+        var pn = productNames[p];
+        var src = w.prod[pn] || [];
+        out[pn] = src.map(function (r) {
+            var cmp = useAp ? r.ap : r.ay;
+            return { zona: r.zona, region: r.region,
+                     act: (r.act == null ? 0 : r.act),
+                     ant: (cmp == null ? 0 : cmp) };
+        });
+    }
+    return out;
+}
+
+function applyWindow(doMap) {
+    var w = winDataFor(currentWindow, currentMetric);
+    if (w) {
+        dpData = w.dp;
+        productData = productDataFromWin(w);
+        winCurLabel = WIN.curLabel;
+        winCmpLabel = (currentVariation === 'ap') ? w.prevLabel : w.antLabel;
+    } else {
+        // sin datos de ventana: comportamiento TRIM original
+        dpData = (currentMetric === 'DP') ? dpDataDP : dpDataDF;
+        productData = (currentMetric === 'DP') ? productDataDP : productDataDF;
+        winCurLabel = (typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : '';
+        winCmpLabel = '';
+    }
+    computeKpiSegments();
+    buildDPTable();
+    buildAllProductViews();
+    // buildAllProductViews resetea las clases de los paneles de producto: reactivar el actual
+    if (currentView !== 'summary' && currentView !== 'evolution' && currentView !== 'crecimiento' && currentView !== 'mapa') {
+        var panel = document.getElementById('view-' + currentView.replace(/ /g, '_'));
+        if (panel) panel.classList.add('active');
+    }
+    applyFilters();
+    updateContext();
+    if (doMap && currentView === 'mapa') renderMap();
+    refreshTopScrollbars();
+}
+
+function buildWindowControls() {
+    if (typeof WIN === 'undefined' || !WIN) return;   // sin datos de ventana => controles ocultos
+    var box = document.getElementById('winToggle');
+    if (!box) return;
+    var order = WIN.order || ['MEN', 'TRI', 'SEM', 'MAT', 'YTD'];
+    var h = '';
+    for (var i = 0; i < order.length; i++) {
+        var w = order[i];
+        var lbl = (WIN.label && WIN.label[w]) ? WIN.label[w] : w;
+        h += '<button type="button" class="win-btn' + (w === currentWindow ? ' active' : '') +
+             '" data-win="' + w + '" onclick="setWindow(\'' + w + '\')">' + lbl + '</button>';
+    }
+    box.innerHTML = h;
+    box.style.display = '';
+    var wl = document.getElementById('winGroupLabel'); if (wl) wl.style.display = '';
+    var vt = document.getElementById('varToggle'); if (vt) vt.style.display = '';
+    var vl = document.getElementById('varGroupLabel'); if (vl) vl.style.display = '';
+    markVarActive();
+    enforceVariationForWindow();
+}
+
+function markWinActive() {
+    var btns = document.querySelectorAll('#winToggle .win-btn');
+    for (var i = 0; i < btns.length; i++) btns[i].classList.toggle('active', btns[i].getAttribute('data-win') === currentWindow);
+}
+function markVarActive() {
+    var a = document.getElementById('btnVarAy'), b = document.getElementById('btnVarAp');
+    if (a) a.classList.toggle('active', currentVariation === 'ay');
+    if (b) b.classList.toggle('active', currentVariation === 'ap');
+}
+
+// YTD acumula el año en curso: sólo tiene sentido compararlo contra el mismo YTD
+// del año anterior (no hay "período anterior" equivalente). Se deshabilita esa opción.
+function enforceVariationForWindow() {
+    var apBtn = document.getElementById('btnVarAp');
+    if (!apBtn) return;
+    var disabled = (currentWindow === 'YTD');
+    apBtn.disabled = disabled;
+    apBtn.classList.toggle('disabled', disabled);
+    apBtn.title = disabled ? 'No aplica para YTD: se compara contra el mismo acumulado del año anterior.' : '';
+    if (disabled && currentVariation === 'ap') { currentVariation = 'ay'; markVarActive(); }
+}
+
+function setWindow(w) {
+    if (w === currentWindow) return;
+    currentWindow = w;
+    markWinActive();
+    enforceVariationForWindow();
+    sortState = {};
+    applyWindow(true);
+}
+function setVariation(v) {
+    if (v === currentVariation) return;
+    if (v === 'ap' && currentWindow === 'YTD') return;   // combinación no válida
+    currentVariation = v;
+    markVarActive();
+    applyWindow(true);
+}
+
 // === INIT ===
 function init() {
     updateMetricLabels();
-    computeKpiSegments();
     buildSidebar();
     buildZoneFilter();
-    buildDPTable();
-    buildAllProductViews();
+    buildWindowControls();
+    applyWindow(false);   // fija datos por ventana, KPIs, arma tablas de resumen + producto, aplica filtros y contexto
     initEvolution();
     initGrowth();
     initMap();
@@ -1247,7 +1372,8 @@ function buildAllProductViews() {
         var safeId = pn.replace(/ /g, '_');
         var color = productColor[pn] || '#404040';
         html += '<div class="view-panel" id="view-' + safeId + '">';
-        html += '<div class="view-title"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';margin-right:8px;vertical-align:middle"></span>' + pn + ' - Comparativo ene-2025 vs ene-2026</div>';
+        var cmpTxt = (winCmpLabel || 'per&iacute;odo ant.') + ' vs ' + (winCurLabel || (typeof PERIODO_LBL !== 'undefined' ? PERIODO_LBL : ''));
+        html += '<div class="view-title"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:' + color + ';margin-right:8px;vertical-align:middle"></span>' + pn + ' &mdash; Comparativo ' + cmpTxt + '</div>';
         html += '<div class="table-container">';
         html += buildProductTable(pn, color);
         html += '</div></div>';
@@ -1264,9 +1390,10 @@ function buildProductTable(pn, color) {
     html += '<thead><tr>';
     html += '<th class="col-zona sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 0)">Zona<span class="sort-arrow"></span></th>';
     html += '<th class="col-region sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 1)">Region<span class="sort-arrow"></span></th>';
-    html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 2)">Ant. ene-2025<span class="sort-arrow"></span></th>';
-    html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 3)">Act. ene-2026<span class="sort-arrow"></span></th>';
-    html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 4)">Variacion<span class="sort-arrow"></span></th>';
+    var antHdr = winCmpLabel || 'Anterior', actHdr = winCurLabel || (typeof PERIODO_LBL !== 'undefined' ? PERIODO_LBL : 'Actual');
+    html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 2)">' + antHdr + '<span class="sort-arrow"></span></th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 3)">' + actHdr + '<span class="sort-arrow"></span></th>';
+    html += '<th class="sortable" style="background:' + hdrBg + '" onclick="sortProdTable(\'' + pn.replace(/'/g, "\\'") + '\', 4)">Variaci&oacute;n<span class="sort-arrow"></span></th>';
     html += '<th style="background:' + hdrBg + '">Tendencia</th>';
     html += '</tr></thead>';
     html += '<tbody id="prodBody-' + pn.replace(/ /g, '_') + '">';
@@ -1950,18 +2077,26 @@ function mapClick(prov) {
     renderMapDetail(prov);
 }
 
+// Valor por provincia para la ventana/métrica activa (con fallback a la serie TRIM)
+function provVal(product, prov) {
+    if (typeof WIN !== 'undefined' && WIN && WIN.prov[currentWindow] && WIN.prov[currentWindow][currentMetric]) {
+        var pd = WIN.prov[currentWindow][currentMetric][product];
+        return (pd && pd[prov] && pd[prov].act != null) ? pd[prov].act : null;
+    }
+    var s = evolData.series[product] && evolData.series[product]['PROV:' + prov];
+    return s ? s[s.length - 1] : null;
+}
+
 function renderMap() {
     var level = document.getElementById('mapLevel') ? document.getElementById('mapLevel').value : 'prov';
     if (level === 'depto') { renderMapDepto(); return; }
     if (typeof provGeo === 'undefined' || typeof evolData === 'undefined') return;
     var product = document.getElementById('mapProduct').value;
-    var last = evolData.labels.length - 1;
     var svg = '<svg viewBox="' + provGeo.viewBox + '" preserveAspectRatio="xMidYMin meet">';
     for (var i = 0; i < provinciasOrden.length; i++) {
         var prov = provinciasOrden[i];
         var d = provGeo.paths[prov]; if (!d) continue;
-        var s = evolData.series[product] && evolData.series[product]['PROV:' + prov];
-        var v = s ? s[last] : null;
+        var v = provVal(product, prov);
         var fill = (v === null || v === undefined) ? '#e8dcdd' : heatmapColor(v).bg;
         var pct = (v === null || v === undefined) ? 's/d' : (v * 100).toFixed(1) + '%';
         svg += '<path d="' + d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.7" data-prov="' + prov + '" onclick="mapClick(\'' + prov.replace(/'/g, "\\'") + '\')"><title>' + prov + ': ' + pct + '</title></path>';
@@ -1970,13 +2105,13 @@ function renderMap() {
     document.getElementById('mapSvg').innerHTML = svg;
     attachMapZoom(document.querySelector('#mapSvg svg'), provGeo.viewBox);
     var mt = document.getElementById('mapTitle');
-    if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + ' · ' + PERIODO_LBL;
+    var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
+    if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
     // ranking al costado
     var rows = [];
     for (var j = 0; j < provinciasOrden.length; j++) {
         var pr = provinciasOrden[j];
-        var ss = evolData.series[product] && evolData.series[product]['PROV:' + pr];
-        rows.push({ name: pr, v: ss ? ss[last] : null });
+        rows.push({ name: pr, v: provVal(product, pr) });
     }
     rows.sort(function (a, b) { return (b.v == null ? -1 : b.v) - (a.v == null ? -1 : a.v); });
     var thtml = '';
@@ -2011,9 +2146,10 @@ function renderMapDetail(prov) {
     var labels = evolData.labels, last = labels.length - 1;
     var det = document.getElementById('mapDetail');
     var ps = evolData.series[product] && evolData.series[product]['PROV:' + prov];
-    var pv = ps ? ps[last] : null;
+    var pv = provVal(product, prov);
+    var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : 'Trimestre';
     var html = '<h3 class="growth-h" style="color:#95232C">' + prov + ' &mdash; ' + product + '</h3>';
-    html += '<div class="evol-stats">' + evolStat(metricLabel + ' (' + labels[last] + ')', (pv !== null && pv !== undefined) ? (pv * 100).toFixed(1) + '%' : 's/d');
+    html += '<div class="evol-stats">' + evolStat(metricLabel + ' &middot; ' + ventLbl + ' (' + (winCurLabel || labels[last]) + ')', (pv !== null && pv !== undefined) ? (pv * 100).toFixed(1) + '%' : 's/d');
     if (ps) {
         var f = null; for (var i = 0; i < ps.length; i++) { if (ps[i] !== null && ps[i] !== undefined) { f = ps[i]; break; } }
         if (f !== null && pv !== null && pv !== undefined) {
@@ -2022,7 +2158,7 @@ function renderMapDetail(prov) {
         }
     }
     html += '</div>';
-    if (ps) html += '<div class="evol-chart-wrap">' + miniLine(ps, labels) + '</div>';
+    if (ps) html += '<h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n trimestral</h4><div class="evol-chart-wrap">' + miniLine(ps, labels) + '</div>';
     var regs = []; for (var r in regionProvincia) if (regionProvincia[r] === prov) regs.push(r);
     if (regs.length > 1) {
         html += '<h4 style="margin:14px 0 6px;color:#7a1e24">Regiones de la provincia</h4>';
@@ -2068,7 +2204,8 @@ function renderMapDepto() {
     svg += '</svg>';
     svgc.innerHTML = svg;
     attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
-    document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL;
+    document.getElementById('mapTitle').innerHTML = 'Mapa ' + metricLabel + ' por departamento — ' + product + ' · ' + PERIODO_LBL +
+        ' <span style="font-size:0.7rem;color:#a58589;font-weight:400">(m&aacute;ximo detalle &middot; per&iacute;odo actual)</span>';
     var rows = provGeoDepto.feats.map(function (f) { return { k: f.k, name: f.depto, prov: f.prov, v: data[f.k] }; })
         .filter(function (x) { return x.v !== undefined && x.v !== null; })
         .sort(function (a, b) { return b.v - a.v; });
