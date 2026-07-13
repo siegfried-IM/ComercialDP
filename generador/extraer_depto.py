@@ -30,8 +30,24 @@ WIN_LEN = {"MEN": 0, "TRI": 2, "SEM": 5, "MAT": 11}
 
 def load_json(p, d): return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else d
 def save_json(p, o):
+    """Guardado atómico resistente a locks transitorios (OneDrive/AV/lectores)."""
     os.makedirs(os.path.dirname(p), exist_ok=True); t = p + ".tmp"
-    json.dump(o, open(t, "w", encoding="utf-8"), ensure_ascii=False); os.replace(t, p)
+    with open(t, "w", encoding="utf-8") as fh:
+        json.dump(o, fh, ensure_ascii=False)
+    for attempt in range(10):
+        try:
+            os.replace(t, p); return
+        except PermissionError:
+            time.sleep(min(2.0 * (attempt + 1), 10))
+    for attempt in range(10):
+        try:
+            with open(p, "w", encoding="utf-8") as fh:
+                json.dump(o, fh, ensure_ascii=False)
+            break
+        except PermissionError:
+            time.sleep(min(2.0 * (attempt + 1), 10))
+    try: os.remove(t)
+    except OSError: pass
 def num(c):
     v = c.get("qNum"); return v if isinstance(v, (int, float)) else 0.0
 def month_of(p):

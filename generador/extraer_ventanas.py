@@ -35,10 +35,31 @@ def load_json(p, d):
     return json.load(open(p, encoding="utf-8")) if os.path.exists(p) else d
 
 def save_json(p, o):
+    """Guardado atómico resistente a locks transitorios (OneDrive/AV/lectores).
+    os.replace puede fallar con WinError 5 si el destino está abierto/sincronizando;
+    reintenta con backoff y, como último recurso, escribe directo (no atómico)."""
     os.makedirs(os.path.dirname(p), exist_ok=True)
     tmp = p + ".tmp"
-    json.dump(o, open(tmp, "w", encoding="utf-8"), ensure_ascii=False)
-    os.replace(tmp, p)
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(o, fh, ensure_ascii=False)
+    for attempt in range(10):
+        try:
+            os.replace(tmp, p)
+            return
+        except PermissionError:
+            time.sleep(min(2.0 * (attempt + 1), 10))
+    # fallback: escritura directa reintentada (OneDrive persistente)
+    for attempt in range(10):
+        try:
+            with open(p, "w", encoding="utf-8") as fh:
+                json.dump(o, fh, ensure_ascii=False)
+            break
+        except PermissionError:
+            time.sleep(min(2.0 * (attempt + 1), 10))
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
 
 def num(c):
     v = c.get("qNum")
