@@ -110,7 +110,16 @@ def main():
                     print(f"  {prod} intento {att+1}: {e}")
                     try: q.close()
                     except Exception: pass
-                    time.sleep(3); q = Qix(); doc = q.open_doc()
+                    # Reconexión resistente a blips de red/DNS (getaddrinfo): reintenta
+                    # con backoff en vez de crashear todo el run.
+                    for _rc in range(40):
+                        try:
+                            time.sleep(3 if _rc == 0 else 15)
+                            q = Qix(); doc = q.open_doc(); break
+                        except Exception as e2:
+                            print(f"    reconexión falló ({e2}); reintento en 15s ({_rc+1}/40)")
+                    else:
+                        raise RuntimeError("no se pudo reconectar tras varios intentos")
             if rows is None:
                 done[prod] = {"_ok": False}; save_json(STORE, store); continue
             agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))
