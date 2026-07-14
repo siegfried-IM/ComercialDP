@@ -2476,12 +2476,25 @@ function renderDeptoDetail(k) {
     var uStats = u ? (evolStat('Unid. mercado', fmtUnits(u.tot)) +
                       evolStat('Unid. Siegfried', fmtUnits(u.sie)) +
                       evolStat('MS% (share)', fmtMs(u.sie, u.tot))) : '';
+    // serie de evolución DP% trimestral del departamento (todos los períodos)
+    var es = (typeof DEPTO_EVOL !== 'undefined' && DEPTO_EVOL && DEPTO_EVOL.prod[product]) ? DEPTO_EVOL.prod[product][k] : null;
+    var evolHtml = '';
+    if (es && DEPTO_EVOL.labels) {
+        var fi = -1, li = -1;
+        for (var j = 0; j < es.length; j++) { if (es[j] != null) { if (fi < 0) fi = j; li = j; } }
+        var dHtml = '';
+        if (fi >= 0 && li > fi) {
+            var dd = es[li] - es[fi], dc = dd >= 0 ? '#198754' : '#dc3545';
+            dHtml = evolStat('&Delta; ' + DEPTO_EVOL.labels[fi] + ' &rarr; ' + DEPTO_EVOL.labels[li], '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
+        }
+        evolHtml = dHtml + '</div><h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n DP% trimestral</h4><div class="evol-chart-wrap">' + miniLine(es, DEPTO_EVOL.labels) + '</div><p';
+    }
     document.getElementById('mapDetail').innerHTML =
         '<h3 class="growth-h" style="color:#95232C">' + feat.depto + ' &mdash; ' + product + '</h3>' +
         '<div class="evol-stats">' + evolStat('Provincia', feat.prov) +
         evolStat(metricLabel + ' &middot; ' + ventLbl, (v !== undefined && v !== null) ? (v * 100).toFixed(1) + '%' : 's/d') +
         uStats +
-        '</div><p style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">M&aacute;ximo detalle por departamento &middot; per&iacute;odo ' + (winCurLabel || PERIODO_LBL) + ', ventana <b>' + ventLbl + '</b>.</p>';
+        (evolHtml || '</div><p') + ' style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">M&aacute;ximo detalle por departamento &middot; ventana <b>' + ventLbl + '</b> (per&iacute;odo ' + (winCurLabel || PERIODO_LBL) + '). Evoluci&oacute;n en DP% trimestral.</p>';
 }
 
 // === RUN ===

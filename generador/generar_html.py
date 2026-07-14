@@ -392,6 +392,39 @@ def build_depto_dp(store, productNames):
     return {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "prod": prod}
 
 
+def build_depto_evol(store, productNames):
+    """Serie trimestral (DP% = s/p) por producto y departamento a lo largo de todos
+    los períodos, para el gráfico de evolución al hacer clic en un depto.
+    DP% solo (métrica principal) para acotar el tamaño; se omiten series con < 2 puntos.
+    Estructura: prod[producto][geokey] = [dp por período (o null)]. Geokeys se re-clavean."""
+    datos = store.get("datos", {})
+    if not datos:
+        return None
+    periods = sorted((int(p) for p in datos), key=lambda x: x)
+    labels = [period_label(p) for p in periods]
+    n = len(periods)
+    prod = {}
+    for pn in productNames:
+        series = {}   # geokey -> [dp por período]
+        for i, p in enumerate(periods):
+            pd = datos[str(p)].get(pn)
+            if not pd or not pd.get("_ok"):
+                continue
+            for k, wins in pd.items():
+                if k == "_ok":
+                    continue
+                tri = wins.get("TRI")
+                if not tri:
+                    continue
+                pp = tri.get("p", 0)
+                if pp > 0:
+                    series.setdefault(k, [None] * n)[i] = round(tri.get("s", 0) / pp, 3)
+        gk = {k: arr for k, arr in series.items() if sum(1 for x in arr if x is not None) >= 2}
+        if gk:
+            prod[pn] = gk
+    return {"labels": labels, "prod": prod}
+
+
 def compute_kpis(dpTotalRow, productNames, n_regions):
     vals = [dpTotalRow["values"].get(pn, 0) for pn in productNames]
     nonzero = [v for v in vals if v > 0]
@@ -435,6 +468,7 @@ def main():
 
     unidepobj = build_unidades_depto(unidepstore, productNames) if unidepstore else None
     windepobj = build_depto_dp(deptowinstore, productNames) if deptowinstore else None
+    deptoevolobj = build_depto_evol(deptowinstore, productNames) if deptowinstore else None
 
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
@@ -478,6 +512,9 @@ def main():
         if windepobj:
             for prod in windepobj["prod"]:
                 allk.update(windepobj["prod"][prod].keys())
+        if deptoevolobj:
+            for prod in deptoevolobj["prod"]:
+                allk.update(deptoevolobj["prod"][prod].keys())
         resmap = {k: resolve(k) for k in allk}
         fuzzy = {k: v for k, v in resmap.items() if v and v != k}
         unres = sorted(k for k, v in resmap.items() if not v)
@@ -490,6 +527,9 @@ def main():
         if windepobj:
             for prod in list(windepobj["prod"].keys()):
                 windepobj["prod"][prod] = {resmap[k]: v for k, v in windepobj["prod"][prod].items() if resmap.get(k)}
+        if deptoevolobj:
+            for prod in list(deptoevolobj["prod"].keys()):
+                deptoevolobj["prod"][prod] = {resmap[k]: v for k, v in deptoevolobj["prod"][prod].items() if resmap.get(k)}
         print(f"[mapa depto] claves: {len(allk)} | fuzzy: {len(fuzzy)} | sin resolver: {len(unres)}")
         if unres:
             print("  sin resolver:", unres[:20])
@@ -563,7 +603,8 @@ def main():
               ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n") +
               ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n") +
               ("var WINU_DEPTO = " + dump(unidepobj) + ";\n" if unidepobj else "var WINU_DEPTO = null;\n") +
-              ("var WINDEP = " + dump(windepobj) + ";\n" if windepobj else "var WINDEP = null;\n"))
+              ("var WINDEP = " + dump(windepobj) + ";\n" if windepobj else "var WINDEP = null;\n") +
+              ("var DEPTO_EVOL = " + dump(deptoevolobj) + ";\n" if deptoevolobj else "var DEPTO_EVOL = null;\n"))
     html = html.replace("var currentView = 'summary';", inject + "var currentView = 'summary';", 1)
 
     with open(OUT, "w", encoding="utf-8") as f:
