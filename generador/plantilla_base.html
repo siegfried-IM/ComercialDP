@@ -2261,7 +2261,9 @@ function resetMapDetail() {
 var mapEvolFrom = null, mapEvolTo = null;
 function mapEvolClip(n) {
     var f = (mapEvolFrom == null ? 0 : mapEvolFrom), t = (mapEvolTo == null ? n - 1 : mapEvolTo);
-    if (f < 0) f = 0; if (t > n - 1) t = n - 1; if (f > t) { var tmp = f; f = t; t = tmp; }
+    if (f < 0) f = 0; if (f > n - 1) f = n - 1;   // clamp AMBOS extremos (las series prov/depto pueden diferir en largo)
+    if (t < 0) t = 0; if (t > n - 1) t = n - 1;
+    if (f > t) { var tmp = f; f = t; t = tmp; }
     return [f, t];
 }
 function mapEvolRangeCtl(labels, f, t) {
@@ -2321,6 +2323,7 @@ function mapZoomReset() { if (_mapZ) _mapZ.reset(); }
 
 function mapClick(prov) {
     if (mapDragged) { mapDragged = false; return; }
+    if (mapSelDepto) { mapEvolFrom = mapEvolTo = null; }   // depto->prov: series distintas, reset del rango
     mapSelProv = prov; mapSelDepto = null;
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-prov') === prov);
@@ -2448,9 +2451,13 @@ function renderMapDetail(prov) {
     if (ps) html += '<h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n trimestral</h4>' + mapEvolRangeCtl(labels, fP, tP) + '<div class="evol-chart-wrap">' + miniLine(psC, lblP) + '</div>';
     var regs = []; for (var r in regionProvincia) if (regionProvincia[r] === prov) regs.push(r);
     if (regs.length > 1) {
-        html += '<h4 style="margin:14px 0 6px;color:#7a1e24">Regiones de la provincia</h4>';
-        var rows = regs.map(function (rg) { var rs = evolData.series[product] && evolData.series[product][rg]; return { name: rg, v: rs ? rs[last] : null }; })
-            .filter(function (x) { return x.v !== null && x.v !== undefined; }).sort(function (a, b) { return b.v - a.v; });
+        html += '<h4 style="margin:14px 0 6px;color:#7a1e24">Regiones de la provincia &middot; ' + metricLabel + ' ' + ventLbl + '</h4>';
+        var rows = regs.map(function (rg) {
+            // valor por región de la VENTANA activa (winLocRatios), con fallback a la serie trimestral
+            var rr = winLocRatios(product, rg);
+            var val = (rr && rr.act != null) ? rr.act : ((evolData.series[product] && evolData.series[product][rg]) ? evolData.series[product][rg][last] : null);
+            return { name: rg, v: val };
+        }).filter(function (x) { return x.v !== null && x.v !== undefined; }).sort(function (a, b) { return b.v - a.v; });
         html += rows.map(function (x) {
             return '<div class="gbar-row"><span class="gbar-name">' + x.name + '</span><span class="gbar-track"><span class="gbar-fill" style="width:' + (x.v * 100) + '%;background:' + heatmapColor(x.v).bg + '"></span></span><span class="gbar-val">' + (x.v * 100).toFixed(1) + '%</span></div>';
         }).join('');
@@ -2565,6 +2572,7 @@ function deptoUnits(product, k) {
 
 function mapClickDepto(k) {
     if (mapDragged) { mapDragged = false; return; }
+    if (mapSelProv) { mapEvolFrom = mapEvolTo = null; }   // prov->depto: series distintas, reset del rango
     mapSelDepto = k; mapSelProv = null;
     var paths = document.querySelectorAll('#mapSvg path');
     for (var i = 0; i < paths.length; i++) paths[i].classList.toggle('sel', paths[i].getAttribute('data-k') === k);

@@ -423,6 +423,7 @@ def build_depto_evol(store, productNames):
     labels = [period_label(p) for p in periods]
     n = len(periods)
     prod = {}
+    comp = {}   # geokey -> [ [Σs, Σp] por período ]  (TOTAL COMPAÑÍA, ratio de sumas)
     for pn in productNames:
         series = {}   # geokey -> [dp por período]
         for i, p in enumerate(periods):
@@ -435,12 +436,21 @@ def build_depto_evol(store, productNames):
                 tri = wins.get("TRI")
                 if not tri:
                     continue
-                pp = tri.get("p", 0)
+                s = tri.get("s", 0); pp = tri.get("p", 0)
                 if pp > 0:
-                    series.setdefault(k, [None] * n)[i] = round(tri.get("s", 0) / pp, 3)
+                    series.setdefault(k, [None] * n)[i] = round(s / pp, 3)
+                cc = comp.setdefault(k, [[0.0, 0.0] for _ in range(n)])
+                cc[i][0] += s; cc[i][1] += pp
         gk = {k: arr for k, arr in series.items() if sum(1 for x in arr if x is not None) >= 2}
         if gk:
             prod[pn] = gk
+    # TOTAL COMPAÑÍA: ratio de sumas Σs/Σp por período/geokey (consistente con build_depto_dp)
+    compOut = {}
+    for k, arr in comp.items():
+        ser = [round(sp[0] / sp[1], 3) if sp[1] > 0 else None for sp in arr]
+        if sum(1 for x in ser if x is not None) >= 2:
+            compOut[k] = ser
+    prod["TOTAL COMPAÑÍA"] = compOut
     return {"labels": labels, "prod": prod}
 
 
@@ -492,7 +502,7 @@ def main():
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
     # misma provincia. Robusto y sin alias frágiles.
-    if depto_geo and mapa_part:
+    if depto_geo:
         import difflib
         geoset = set(f["k"] for f in depto_geo["feats"])
         by_prov = {}
@@ -521,9 +531,10 @@ def main():
             return best if bestsc >= 0.72 else None
 
         allk = set()
-        for met in ("DP", "DF"):
-            for prod in mapa_part[met]:
-                allk.update(mapa_part[met][prod].keys())
+        if mapa_part:
+            for met in ("DP", "DF"):
+                for prod in mapa_part[met]:
+                    allk.update(mapa_part[met][prod].keys())
         # incluir claves de unidades y DP por depto para resolverlas con el mismo criterio
         if unidepobj:
             for prod in unidepobj["prod"]:
@@ -537,9 +548,10 @@ def main():
         resmap = {k: resolve(k) for k in allk}
         fuzzy = {k: v for k, v in resmap.items() if v and v != k}
         unres = sorted(k for k, v in resmap.items() if not v)
-        for met in ("DP", "DF"):
-            for prod in list(mapa_part[met].keys()):
-                mapa_part[met][prod] = {resmap[k]: v for k, v in mapa_part[met][prod].items() if resmap.get(k)}
+        if mapa_part:
+            for met in ("DP", "DF"):
+                for prod in list(mapa_part[met].keys()):
+                    mapa_part[met][prod] = {resmap[k]: v for k, v in mapa_part[met][prod].items() if resmap.get(k)}
         if unidepobj:
             for prod in list(unidepobj["prod"].keys()):
                 unidepobj["prod"][prod] = {resmap[k]: v for k, v in unidepobj["prod"][prod].items() if resmap.get(k)}
