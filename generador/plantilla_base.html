@@ -2435,7 +2435,8 @@ function renderMapDetail(prov) {
     var html = '<h3 class="growth-h" style="color:#95232C">' + prov + ' &mdash; ' + product + '</h3>';
     html += '<div class="evol-stats">' + evolStat(metricLabel + ' &middot; ' + ventLbl + ' (' + (winCurLabel || labels[last]) + ')', (pv !== null && pv !== undefined) ? (pv * 100).toFixed(1) + '%' : 's/d');
     if (pu) html += evolStat('Unid. mercado', fmtUnits(pu.tot)) + evolStat('Unid. Siegfried', fmtUnits(pu.sie)) +
-                    evolStat('MS% (share)', fmtMs(pu.sie, pu.tot));
+                    evolStat('MS% (share)', fmtMs(pu.sie, pu.tot)) +
+                    evolStat('1 pp de MS% vale', fmtUnits(pu.tot / 100) + ' u.');
     var fP = 0, tP = labels.length - 1, psC = ps, lblP = labels;
     if (ps) {
         // Rango Desde/Hasta + Δ sobre la MISMA serie trimestral (clip aplicado),
@@ -2593,7 +2594,8 @@ function renderDeptoDetail(k) {
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
     var uStats = u ? (evolStat('Unid. mercado', fmtUnits(u.tot)) +
                       evolStat('Unid. Siegfried', fmtUnits(u.sie)) +
-                      evolStat('MS% (share)', fmtMs(u.sie, u.tot))) : '';
+                      evolStat('MS% (share)', fmtMs(u.sie, u.tot)) +
+                      evolStat('1 pp de MS% vale', fmtUnits(u.tot / 100) + ' u.')) : '';
     // serie de evolución DP% trimestral del departamento (todos los períodos)
     var es = (typeof DEPTO_EVOL !== 'undefined' && DEPTO_EVOL && DEPTO_EVOL.prod[product]) ? DEPTO_EVOL.prod[product][k] : null;
     var evolHtml = '';
