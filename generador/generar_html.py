@@ -281,6 +281,7 @@ def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
     out = {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "win": {}}
     for W in WIN_ORDER:
         reg_out, prov_out = {}, {}
+        comp_prov = {}   # provincia -> [Σtot, Σgap, Σsie] sobre todos los productos (TOTAL COMPAÑÍA)
         for pn in productNames:
             pd = cur.get(pn)
             if not pd or not pd.get("_ok"):
@@ -304,7 +305,11 @@ def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
                         any_ = True; tot += c["tot"]; gap += c["gap"]; sie += c.get("sie", 0)
                 if any_:
                     pmap[prov] = {"tot": int(round(tot)), "gap": int(round(gap)), "sie": int(round(sie))}
+                    cp = comp_prov.setdefault(prov, [0.0, 0.0, 0.0])
+                    cp[0] += tot; cp[1] += gap; cp[2] += sie
             prov_out[pn] = pmap
+        prov_out["TOTAL COMPAÑÍA"] = {prov: {"tot": int(round(v[0])), "gap": int(round(v[1])), "sie": int(round(v[2]))}
+                                       for prov, v in comp_prov.items()}
         out["win"][W] = {"reg": reg_out, "prov": prov_out}
     return out
 

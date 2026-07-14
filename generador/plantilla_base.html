@@ -668,6 +668,9 @@ body {
 .maprank-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
 .maprank-sort { font-size:0.72rem; color:#8a6d6f; display:flex; align-items:center; gap:5px; }
 .maprank-sort select { font-size:0.75rem; padding:3px 6px; border:1px solid #d9c2c4; border-radius:5px; background:#fff; color:#3a2022; }
+.mev-range { display:flex; gap:10px; margin:2px 0 8px; flex-wrap:wrap; }
+.mev-range label { font-size:0.72rem; color:#8a6d6f; display:flex; align-items:center; gap:4px; }
+.mev-range select { font-size:0.75rem; padding:2px 5px; border:1px solid #d9c2c4; border-radius:5px; background:#fff; color:#3a2022; }
 /* === MODO COMPACTO (más columnas visibles) === */
 body.compact-tables .dp-table th, body.compact-tables .dp-table td { padding:2px 5px; font-size:0.66rem; }
 body.compact-tables .dp-table thead th.col-product { height:86px; padding-bottom:6px; }
@@ -2254,6 +2257,28 @@ function resetMapDetail() {
     var d = document.getElementById('mapDetail');
     if (d) d.innerHTML = '<div class="evol-empty">Hac&eacute; clic en una provincia o departamento (mapa o tabla) para ver el detalle.</div>';
 }
+// Rango (Desde/Hasta) para las mini-evoluciones del detalle del mapa (prov + depto)
+var mapEvolFrom = null, mapEvolTo = null;
+function mapEvolClip(n) {
+    var f = (mapEvolFrom == null ? 0 : mapEvolFrom), t = (mapEvolTo == null ? n - 1 : mapEvolTo);
+    if (f < 0) f = 0; if (t > n - 1) t = n - 1; if (f > t) { var tmp = f; f = t; t = tmp; }
+    return [f, t];
+}
+function mapEvolRangeCtl(labels, f, t) {
+    var o1 = '', o2 = '';
+    for (var i = 0; i < labels.length; i++) {
+        o1 += '<option value="' + i + '"' + (i === f ? ' selected' : '') + '>' + labels[i] + '</option>';
+        o2 += '<option value="' + i + '"' + (i === t ? ' selected' : '') + '>' + labels[i] + '</option>';
+    }
+    return '<div class="mev-range"><label>Desde <select onchange="setMapEvolRange(0,this.value)">' + o1 + '</select></label>' +
+           '<label>Hasta <select onchange="setMapEvolRange(1,this.value)">' + o2 + '</select></label></div>';
+}
+function setMapEvolRange(which, val) {
+    val = parseInt(val, 10);
+    if (which === 0) mapEvolFrom = val; else mapEvolTo = val;
+    if (mapSelDepto) renderDeptoDetail(mapSelDepto);
+    else if (mapSelProv) renderMapDetail(mapSelProv);
+}
 function attachMapZoom(svg, baseVB) {
     if (!svg) return;
     var b = baseVB.split(' ').map(Number);
@@ -2406,18 +2431,21 @@ function renderMapDetail(prov) {
     html += '<div class="evol-stats">' + evolStat(metricLabel + ' &middot; ' + ventLbl + ' (' + (winCurLabel || labels[last]) + ')', (pv !== null && pv !== undefined) ? (pv * 100).toFixed(1) + '%' : 's/d');
     if (pu) html += evolStat('Unid. mercado', fmtUnits(pu.tot)) + evolStat('Unid. Siegfried', fmtUnits(pu.sie)) +
                     evolStat('MS% (share)', fmtMs(pu.sie, pu.tot));
+    var fP = 0, tP = labels.length - 1, psC = ps, lblP = labels;
     if (ps) {
-        // Δ sobre la MISMA serie trimestral (primer vs último período con dato),
+        // Rango Desde/Hasta + Δ sobre la MISMA serie trimestral (clip aplicado),
         // consistente con el gráfico de abajo — no mezcla la ventana activa.
+        var ftP = mapEvolClip(labels.length); fP = ftP[0]; tP = ftP[1];
+        psC = ps.slice(fP, tP + 1); lblP = labels.slice(fP, tP + 1);
         var fi = -1, li = -1;
-        for (var i = 0; i < ps.length; i++) { if (ps[i] !== null && ps[i] !== undefined) { if (fi < 0) fi = i; li = i; } }
+        for (var i = 0; i < psC.length; i++) { if (psC[i] !== null && psC[i] !== undefined) { if (fi < 0) fi = i; li = i; } }
         if (fi >= 0 && li > fi) {
-            var dd = ps[li] - ps[fi], dc = dd >= 0 ? '#198754' : '#dc3545';
-            html += evolStat('&Delta; ' + labels[fi] + ' &rarr; ' + labels[li] + ' (trim.)', '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
+            var dd = psC[li] - psC[fi], dc = dd >= 0 ? '#198754' : '#dc3545';
+            html += evolStat('&Delta; ' + lblP[fi] + ' &rarr; ' + lblP[li] + ' (trim.)', '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
         }
     }
     html += '</div>';
-    if (ps) html += '<h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n trimestral</h4><div class="evol-chart-wrap">' + miniLine(ps, labels) + '</div>';
+    if (ps) html += '<h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n trimestral</h4>' + mapEvolRangeCtl(labels, fP, tP) + '<div class="evol-chart-wrap">' + miniLine(psC, lblP) + '</div>';
     var regs = []; for (var r in regionProvincia) if (regionProvincia[r] === prov) regs.push(r);
     if (regs.length > 1) {
         html += '<h4 style="margin:14px 0 6px;color:#7a1e24">Regiones de la provincia</h4>';
@@ -2558,15 +2586,17 @@ function renderDeptoDetail(k) {
     // serie de evolución DP% trimestral del departamento (todos los períodos)
     var es = (typeof DEPTO_EVOL !== 'undefined' && DEPTO_EVOL && DEPTO_EVOL.prod[product]) ? DEPTO_EVOL.prod[product][k] : null;
     var evolHtml = '';
-    if (es && DEPTO_EVOL.labels) {
+    if (es && DEPTO_EVOL.labels && es.length) {
+        var L = DEPTO_EVOL.labels, ft = mapEvolClip(L.length), f = ft[0], t = ft[1];
+        var esC = es.slice(f, t + 1), lblC = L.slice(f, t + 1);
         var fi = -1, li = -1;
-        for (var j = 0; j < es.length; j++) { if (es[j] != null) { if (fi < 0) fi = j; li = j; } }
+        for (var j = 0; j < esC.length; j++) { if (esC[j] != null) { if (fi < 0) fi = j; li = j; } }
         var dHtml = '';
         if (fi >= 0 && li > fi) {
-            var dd = es[li] - es[fi], dc = dd >= 0 ? '#198754' : '#dc3545';
-            dHtml = evolStat('&Delta; ' + DEPTO_EVOL.labels[fi] + ' &rarr; ' + DEPTO_EVOL.labels[li], '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
+            var dd = esC[li] - esC[fi], dc = dd >= 0 ? '#198754' : '#dc3545';
+            dHtml = evolStat('&Delta; ' + lblC[fi] + ' &rarr; ' + lblC[li], '<span style="color:' + dc + '">' + (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp</span>');
         }
-        evolHtml = dHtml + '</div><h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n DP% trimestral</h4><div class="evol-chart-wrap">' + miniLine(es, DEPTO_EVOL.labels) + '</div><p';
+        evolHtml = dHtml + '</div><h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n DP% trimestral</h4>' + mapEvolRangeCtl(L, f, t) + '<div class="evol-chart-wrap">' + miniLine(esC, lblC) + '</div><p';
     }
     document.getElementById('mapDetail').innerHTML =
         '<h3 class="growth-h" style="color:#95232C">' + feat.depto + ' &mdash; ' + product + '</h3>' +
