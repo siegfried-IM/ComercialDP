@@ -622,6 +622,10 @@ body {
 .ms-toggle.mini { min-width:150px; max-width:210px; padding:7px 10px; }
 .ms-panel { display:none; position:absolute; z-index:60; top:100%; left:0; margin-top:4px; background:#fff; border:1px solid #d9c2c4; border-radius:6px; box-shadow:0 6px 18px rgba(0,0,0,0.15); max-height:300px; overflow-y:auto; min-width:250px; padding:4px; }
 .ms-panel.open { display:block; }
+.ms-search { width:100%; box-sizing:border-box; padding:6px 8px; margin:0 0 5px; border:1px solid #d9c2c4; border-radius:5px; font-size:0.82rem; position:sticky; top:0; }
+.ss-item { padding:6px 9px; font-size:0.85rem; cursor:pointer; border-radius:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ss-item:hover { background:#f7ebec; }
+.ss-item.sel { background:#f2e6e7; font-weight:600; color:#95232C; }
 .ms-tools { display:flex; gap:8px; padding:4px 6px 6px; border-bottom:1px solid #f0e4e5; margin-bottom:4px; }
 .ms-tools button { border:none; background:#f2e6e7; color:#95232C; border-radius:4px; padding:3px 8px; font-size:0.72rem; cursor:pointer; }
 .ms-tools button:hover { background:#e7d2d4; }
@@ -825,8 +829,12 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <div class="view-title" id="growthTitle">Crecimiento / Ca&iacute;da</div>
             <div class="evol-controls">
                 <div class="evol-field">
-                    <label>Ubicaci&oacute;n</label>
-                    <select id="growthRegion" onchange="renderGrowth()"></select>
+                    <label>Ubicaci&oacute;n <span class="hint">(buscable)</span></label>
+                    <input type="hidden" id="growthRegion">
+                    <div class="ms-dropdown" id="growthRegionDD">
+                        <button type="button" class="ms-toggle" id="growthRegionBtn" onclick="ssToggle('growthRegionPanel', event)">&#9662;</button>
+                        <div class="ms-panel" id="growthRegionPanel"></div>
+                    </div>
                 </div>
                 <div class="evol-field">
                     <span class="hint">Ventana y comparaci&oacute;n se controlan arriba (barra de filtros).</span>
@@ -853,8 +861,12 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <div class="view-title" id="mapTitle">Mapa por provincia</div>
             <div class="evol-controls">
                 <div class="evol-field">
-                    <label>Producto</label>
-                    <select id="mapProduct" onchange="renderMap()"></select>
+                    <label>Producto <span class="hint">(buscable)</span></label>
+                    <input type="hidden" id="mapProduct">
+                    <div class="ms-dropdown" id="mapProductDD">
+                        <button type="button" class="ms-toggle" id="mapProductBtn" onclick="ssToggle('mapProductPanel', event)">&#9662;</button>
+                        <div class="ms-panel" id="mapProductPanel"></div>
+                    </div>
                 </div>
                 <div class="evol-field">
                     <label>Nivel</label>
@@ -1281,7 +1293,63 @@ function showView(viewName) {
 function msToggle(panelId, e) {
     if (e) e.stopPropagation();
     var p = document.getElementById(panelId);
-    if (p) p.classList.toggle('open');
+    if (!p) return;
+    p.classList.toggle('open');
+    if (p.classList.contains('open')) { var s = p.querySelector('.ms-search'); if (s) { s.value = ''; msFilter(s); s.focus(); } }
+}
+// Filtra opciones (.ms-item multi / .ss-item single) del panel según el texto tipeado
+function msFilter(inp) {
+    var q = inp.value.toLowerCase(), p = inp.parentNode;
+    var items = p.querySelectorAll('.ms-item, .ss-item');
+    for (var i = 0; i < items.length; i++) {
+        items[i].style.display = (items[i].textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+    }
+    var groups = p.querySelectorAll('.ms-group');   // ocultar encabezados de grupo vacíos
+    for (var g = 0; g < groups.length; g++) {
+        var el = groups[g].nextElementSibling, any = false;
+        while (el && !el.classList.contains('ms-group')) {
+            if ((el.classList.contains('ms-item') || el.classList.contains('ss-item')) && el.style.display !== 'none') { any = true; break; }
+            el = el.nextElementSibling;
+        }
+        groups[g].style.display = any ? '' : 'none';
+    }
+}
+// Desplegable de selección ÚNICA con buscador (reemplaza <select> largos). Mantiene
+// el valor en un <input type=hidden> con el mismo id, así el resto del código que lee
+// .value no cambia.
+function ssToggle(panelId, e) {
+    if (e) e.stopPropagation();
+    var p = document.getElementById(panelId);
+    if (!p) return;
+    p.classList.toggle('open');
+    if (p.classList.contains('open')) { var s = p.querySelector('.ms-search'); if (s) { s.value = ''; msFilter(s); s.focus(); } }
+}
+function ssBuild(panelId, btnId, hiddenId, items, current, onSelect) {
+    var p = document.getElementById(panelId); if (!p) return;
+    var h = '<input type="text" class="ms-search" placeholder="Buscar..." oninput="msFilter(this)">';
+    var lg = null, cur = null;
+    for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (it.group && it.group !== lg) { h += '<div class="ms-group">' + it.group + '</div>'; lg = it.group; }
+        var isCur = (String(it.v) === String(current));
+        if (isCur) cur = it;
+        h += '<div class="ss-item' + (isCur ? ' sel' : '') + '" data-v="' + String(it.v).replace(/"/g, '&quot;') + '">' + it.label + '</div>';
+    }
+    p.innerHTML = h;
+    var hid = document.getElementById(hiddenId); if (hid) hid.value = current;
+    var btn = document.getElementById(btnId); if (btn) btn.innerHTML = (cur ? cur.label : current) + ' &#9662;';
+    var picks = p.querySelectorAll('.ss-item');
+    for (var k = 0; k < picks.length; k++) {
+        picks[k].addEventListener('click', function () {
+            var v = this.getAttribute('data-v');
+            if (hid) hid.value = v;
+            if (btn) btn.innerHTML = this.textContent + ' &#9662;';
+            var sib = p.querySelectorAll('.ss-item'); for (var m = 0; m < sib.length; m++) sib[m].classList.toggle('sel', sib[m] === this);
+            p.classList.remove('open');
+            onSelect(v);
+        });
+    }
+    document.addEventListener('click', function (ev) { if (p.parentNode && !p.parentNode.contains(ev.target)) p.classList.remove('open'); });
 }
 function msSelected(panelId) {
     var out = [], b = document.querySelectorAll('#' + panelId + ' input[type=checkbox]');
@@ -1296,7 +1364,8 @@ function msSetAll(panelId, on) {
 function msBuild(panelId, items, mode, onChange) {
     var p = document.getElementById(panelId);
     if (!p) return;
-    var h = '<div class="ms-tools"><button type="button" data-a="none">Ninguno</button><button type="button" data-a="all">Todos</button></div>';
+    var h = (items.length > 12) ? '<input type="text" class="ms-search" placeholder="Buscar..." oninput="msFilter(this)">' : '';
+    h += '<div class="ms-tools"><button type="button" data-a="none">Ninguno</button><button type="button" data-a="all">Todos</button></div>';
     var lg = null;
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
@@ -1855,7 +1924,8 @@ function initEvolution() {
     var panel = document.getElementById('evolProductPanel');
     if (!panel) return;
     var prods = evolData.products || productNames;   // 1ro "TOTAL COMPAÑÍA", luego cada producto
-    var ph = '<div class="ms-tools"><button type="button" onclick="selectAllProducts(false)">Ninguno</button>' +
+    var ph = '<input type="text" class="ms-search" placeholder="Buscar producto..." oninput="msFilter(this)">' +
+             '<div class="ms-tools"><button type="button" onclick="selectAllProducts(false)">Ninguno</button>' +
              '<button type="button" onclick="selectAllProducts(true)">Todos</button></div>';
     for (var i = 0; i < prods.length; i++) {
         var pv = prods[i].replace(/"/g, '&quot;');
@@ -1937,7 +2007,9 @@ function onProductChange() { updateProductBtn(); renderEvolution(); }
 function toggleProductDD(e) {
     e.stopPropagation();
     var p = document.getElementById('evolProductPanel');
-    if (p) p.classList.toggle('open');
+    if (!p) return;
+    p.classList.toggle('open');
+    if (p.classList.contains('open')) { var s = p.querySelector('.ms-search'); if (s) { s.value = ''; msFilter(s); s.focus(); } }
 }
 
 function selectAllProducts(on) {
@@ -2058,14 +2130,16 @@ function renderEvolution() {
 // === CRECIMIENTO / CAÍDA ===
 function initGrowth() {
     if (typeof evolData === 'undefined' || !evolData.labels) return;
-    var selR = document.getElementById('growthRegion');
+    if (document.getElementById('growthRegionPanel')) {
+        ssBuild('growthRegionPanel', 'growthRegionBtn', 'growthRegion', regionItems(), 'TOTAL', function () { renderGrowth(); });
+    }
     var selB = document.getElementById('growthBaseline');
-    if (!selR || !selB) return;
-    selR.innerHTML = buildRegionOptions();
-    var bhtml = '';
-    for (var i = 0; i < evolData.labels.length - 1; i++) bhtml += '<option value="' + i + '">' + evolData.labels[i] + '</option>';
-    selB.innerHTML = bhtml;
-    if (selB.options.length) selB.selectedIndex = 0;
+    if (selB) {
+        var bhtml = '';
+        for (var i = 0; i < evolData.labels.length - 1; i++) bhtml += '<option value="' + i + '">' + evolData.labels[i] + '</option>';
+        selB.innerHTML = bhtml;
+        if (selB.options.length) selB.selectedIndex = 0;
+    }
 }
 
 function growthBar(name, delta, maxAbs, positive) {
@@ -2154,12 +2228,10 @@ function renderGrowth() {
 // === MAPA POR PROVINCIA ===
 function initMap() {
     if (typeof provGeo === 'undefined') return;
-    var sel = document.getElementById('mapProduct');
-    if (!sel) return;
     var prods = evolData.products || productNames;
-    var h = '';
-    for (var i = 0; i < prods.length; i++) h += '<option value="' + prods[i].replace(/"/g, '&quot;') + '">' + prods[i] + '</option>';
-    sel.innerHTML = h;
+    if (document.getElementById('mapProductPanel')) {
+        ssBuild('mapProductPanel', 'mapProductBtn', 'mapProduct', prods.map(function (p) { return { v: p, label: p }; }), prods[0], function () { renderMap(); });
+    }
     var buckets = [[0.95, '&ge;90%'], [0.85, '80-90'], [0.75, '70-80'], [0.65, '60-70'], [0.55, '50-60'], [0.45, '40-50'], [0.35, '30-40'], [0.25, '20-30'], [0.10, '&lt;20']];
     var leg = document.getElementById('mapLegend');
     if (leg) leg.innerHTML = buckets.map(function (b) { return '<span><i style="background:' + heatmapColor(b[0]).bg + '"></i>' + b[1] + '</span>'; }).join('') +
