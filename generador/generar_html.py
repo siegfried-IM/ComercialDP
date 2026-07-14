@@ -319,6 +319,7 @@ def build_unidades_depto(store, productNames):
     CUR = max(int(k) for k in datos)
     cur = datos[str(CUR)]
     prod = {}
+    comp = {}   # geokey -> W -> [Σtot, Σgap, Σsie]  (TOTAL COMPAÑÍA: unidades son aditivas)
     for pn in productNames:
         pd = cur.get(pn)
         if not pd or not pd.get("_ok"):
@@ -330,11 +331,24 @@ def build_unidades_depto(store, productNames):
             wm = {}
             for W in WIN_ORDER:
                 c = wins.get(W)
-                if c and (c["tot"] or c["gap"]):
+                if not c:
+                    continue
+                if c["tot"] or c["gap"]:
                     wm[W] = {"t": int(round(c["tot"])), "g": int(round(c["gap"])), "s": int(round(c.get("sie", 0)))}
+                cc = comp.setdefault(k, {}).setdefault(W, [0.0, 0.0, 0.0])
+                cc[0] += c["tot"]; cc[1] += c["gap"]; cc[2] += c.get("sie", 0)
             if wm:
                 gkmap[k] = wm
         prod[pn] = gkmap
+    compOut = {}
+    for k, wm in comp.items():
+        o = {}
+        for W, v in wm.items():
+            if v[0] or v[1]:
+                o[W] = {"t": int(round(v[0])), "g": int(round(v[1])), "s": int(round(v[2]))}
+        if o:
+            compOut[k] = o
+    prod["TOTAL COMPAÑÍA"] = compOut
     return {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "prod": prod}
 
 

@@ -1899,20 +1899,27 @@ function setupTooltip() {
 function mapTooltipHtml(el) {
     var product = document.getElementById('mapProduct') ? document.getElementById('mapProduct').value : '';
     function fmt(v) { return (v === undefined || v === null) ? 's/d' : (v * 100).toFixed(1) + '%'; }
-    var last = evolDataDP.labels.length - 1;
+    var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
     var prov = el.getAttribute('data-prov');
     if (prov) {
-        var dp = (evolDataDP.series[product] && evolDataDP.series[product]['PROV:' + prov]) ? evolDataDP.series[product]['PROV:' + prov][last] : null;
-        var df = (evolDataDF.series[product] && evolDataDF.series[product]['PROV:' + prov]) ? evolDataDF.series[product]['PROV:' + prov][last] : null;
-        return '<strong>' + prov + '</strong> &middot; ' + product + '<br>Ponderada (DP%): <b>' + fmt(dp) + '</b><br>F&iacute;sica (DF%): ' + fmt(df);
+        // por provincia: DP y DF de la ventana activa (WIN.prov)
+        function pv(M) {
+            if (typeof WIN !== 'undefined' && WIN && WIN.prov[currentWindow] && WIN.prov[currentWindow][M]) {
+                var pd = WIN.prov[currentWindow][M][product];
+                return (pd && pd[prov] && pd[prov].act != null) ? pd[prov].act : null;
+            }
+            return null;
+        }
+        return '<strong>' + prov + '</strong> &middot; ' + product + ' <small style="opacity:.7">(' + ventLbl + ')</small><br>Ponderada (DP%): <b>' + fmt(pv('DP')) + '</b><br>F&iacute;sica (DF%): ' + fmt(pv('DF'));
     }
     var k = el.getAttribute('data-k');
     if (k && typeof provGeoDepto !== 'undefined') {
         var feat = null;
         for (var i = 0; i < provGeoDepto.feats.length; i++) if (provGeoDepto.feats[i].k === k) { feat = provGeoDepto.feats[i]; break; }
-        var dp2 = (typeof mapaPartido !== 'undefined' && mapaPartido.DP[product]) ? mapaPartido.DP[product][k] : null;
-        var df2 = (typeof mapaPartido !== 'undefined' && mapaPartido.DF[product]) ? mapaPartido.DF[product][k] : null;
-        return '<strong>' + (feat ? feat.depto : k) + '</strong><br><small style="opacity:.8">' + (feat ? feat.prov : '') + '</small> &middot; ' + product +
+        // por departamento: DP y DF de la ventana activa (WINDEP)
+        var e = (typeof WINDEP !== 'undefined' && WINDEP && WINDEP.prod[product] && WINDEP.prod[product][k]) ? WINDEP.prod[product][k][currentWindow] : null;
+        var dp2 = e ? e[0] : null, df2 = e ? e[1] : null;
+        return '<strong>' + (feat ? feat.depto : k) + '</strong><br><small style="opacity:.8">' + (feat ? feat.prov : '') + '</small> &middot; ' + product + ' <small style="opacity:.7">(' + ventLbl + ')</small>' +
             '<br>Ponderada (DP%): <b>' + fmt(dp2) + '</b><br>F&iacute;sica (DF%): ' + fmt(df2);
     }
     return '';
