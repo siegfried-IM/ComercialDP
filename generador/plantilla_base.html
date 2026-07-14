@@ -2362,7 +2362,7 @@ function renderMap() {
         var v = provVal(product, prov);
         var fill = (v === null || v === undefined) ? '#e8dcdd' : heatmapColor(v).bg;
         var pct = (v === null || v === undefined) ? 's/d' : (v * 100).toFixed(1) + '%';
-        svg += '<path d="' + d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.7" data-prov="' + prov + '" onclick="mapClick(\'' + prov.replace(/'/g, "\\'") + '\')"><title>' + prov + ': ' + pct + '</title></path>';
+        svg += '<path d="' + d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.7" data-prov="' + prov + '" onclick="mapClick(\'' + prov.replace(/'/g, "\\'") + '\')"></path>';
     }
     svg += '</svg>';
     document.getElementById('mapSvg').innerHTML = svg;
@@ -2521,7 +2521,7 @@ function renderMapDepto() {
         } else {
             fill = '#efe6e6'; pct = 'sin mercado en la zona';
         }
-        svg += '<path d="' + f.d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.35" data-k="' + f.k + '" onclick="mapClickDepto(\'' + f.k.replace(/'/g, "\\'") + '\')"><title>' + f.depto + ' (' + f.prov + '): ' + pct + '</title></path>';
+        svg += '<path d="' + f.d + '" fill="' + fill + '" stroke="#fff" stroke-width="0.35" data-k="' + f.k + '" onclick="mapClickDepto(\'' + f.k.replace(/'/g, "\\'") + '\')"></path>';
     }
     svg += '</svg>';
     svgc.innerHTML = svg;
