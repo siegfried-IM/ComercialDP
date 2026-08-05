@@ -185,17 +185,21 @@ def g3(P, H):
     except Exception as e:
         chequeo("línea base desde git", None, f"no se pudo leer: {e}")
         return
-    viejos = sorted(set(base["datos"]) & set(H["datos"]), key=int)
-    movidos = [pk for pk in viejos if pk != str(P) and base["datos"][pk] != H["datos"][pk]]
-    chequeo("períodos previos idénticos al commit", not movidos,
-            f"{len(viejos)} períodos comparados" + (f" · se movieron: {movidos}" if movidos else ""))
-    nuevos = sorted(set(H["datos"]) - set(base["datos"]), key=int)
-    chequeo("períodos nuevos", nuevos == [str(P)], f"agregados: {nuevos or 'ninguno'}")
+    # El invariante es "sólo se movió P", y vale tanto antes como después de
+    # commitear P: mirar sólo los períodos agregados daba FAIL una vez commiteado.
+    otros = sorted((set(base["datos"]) | set(H["datos"])) - {str(P)}, key=int)
+    movidos = [pk for pk in otros if base["datos"].get(pk) != H["datos"].get(pk)]
+    chequeo("sólo se movió el período en curso", not movidos,
+            f"{len(otros)} períodos ajenos comparados" + (f" · se movieron: {movidos}" if movidos else ""))
+    en_base = str(P) in base["datos"]
+    chequeo(f"período {P} en el store", str(P) in H["datos"],
+            "ya commiteado" if en_base else "nuevo respecto del commit")
     # forma: cantidad de productos y de regiones
     prods = len(ok_prods(H, str(P)))
     regs = len({r for v in ok_prods(H, str(P)).values()
                 for r in v if r not in ("TOTAL", "_ok", "_mercado")})
-    base_regs = len({r for pk in viejos[-1:] for v in ok_prods(base, pk).values()
+    ref = [pk for pk in otros if pk in base["datos"]][-1:]   # último período del commit
+    base_regs = len({r for pk in ref for v in ok_prods(base, pk).values()
                      for r in v if r not in ("TOTAL", "_ok", "_mercado")})
     chequeo("forma · productos y regiones", prods == 42 and regs == base_regs,
             f"{prods} productos, {regs} regiones (base: {base_regs})")

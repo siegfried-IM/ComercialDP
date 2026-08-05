@@ -666,6 +666,10 @@ body {
 .maprow.rk.hdr { cursor:default; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.5px; color:#a58589; border-bottom:1px solid #f0e4e5; padding-bottom:4px; }
 .maprow.rk.hdr:hover { background:none; }
 .maprow.rk.hdr .maprow-u, .maprow.rk.hdr .maprow-val { color:#a58589; font-weight:600; }
+/* Encabezados clickeables: ordenan la tabla; la columna activa marca el sentido */
+.maprow.rk.hdr .sortable { cursor:pointer; user-select:none; }
+.maprow.rk.hdr .sortable:hover { color:#95232C; text-decoration:underline; }
+.maprow.rk.hdr .sortable.active, .maprow.rk.hdr .maprow-u.sortable.active { color:#95232C; font-weight:700; }
 .maprank-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin:0 0 8px; flex-wrap:wrap; }
 .maprank-sort { font-size:0.72rem; color:#8a6d6f; display:flex; align-items:center; gap:5px; }
 .maprank-sort select { font-size:0.75rem; padding:3px 6px; border:1px solid #d9c2c4; border-radius:5px; background:#fff; color:#3a2022; }
@@ -894,10 +898,12 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                     <div class="maprank-head">
                         <h4 class="growth-h" id="mapRankTitle" style="color:#7a1e24;margin:0">Ranking</h4>
                         <label class="maprank-sort">Ordenar por
-                            <select id="mapRankSort" onchange="renderMap()">
+                            <select id="mapRankSort" onchange="mapRankFromSelect(this.value)">
                                 <option value="tot">Unid. mercado</option>
+                                <option value="sie">Unid. Siegfried</option>
                                 <option value="ms">MS% (share)</option>
                                 <option value="dp">DP% / DF%</option>
+                                <option value="name">Nombre (A-Z)</option>
                             </select>
                         </label>
                     </div>
@@ -1426,6 +1432,68 @@ function fmtUnits(n) {
 function fmtMs(sie, tot) {
     if (sie == null || tot == null || !tot) return '<span style="color:#c9b6b8">&mdash;</span>';
     return (100 * sie / tot).toFixed(1) + '%';
+}
+
+// === ORDEN DEL RANKING DEL MAPA (provincia y departamento) ===
+// Una sola fuente de verdad para las dos tablas: el <select> y los encabezados
+// clickeables escriben acá, así no pueden quedar desincronizados. Las claves son
+// las mismas que los value= del <select>.
+var mapRank = { key: 'tot', dir: -1 };   // dir: -1 descendente, 1 ascendente
+
+function mapRankVal(r, k) {
+    if (k === 'ms') return (r.tot ? r.sie / r.tot : null);
+    if (k === 'dp') return (r.v == null ? null : r.v);
+    if (k === 'sie') return (r.sie == null ? null : r.sie);
+    return (r.tot == null ? null : r.tot);
+}
+
+// Clic en el mismo encabezado invierte el sentido; en otro, arranca con el
+// sentido útil (texto A-Z, números de mayor a menor).
+function mapRankSetKey(key) {
+    if (mapRank.key === key) mapRank.dir = -mapRank.dir;
+    else { mapRank.key = key; mapRank.dir = (key === 'name') ? 1 : -1; }
+    var sel = document.getElementById('mapRankSort');
+    if (sel) sel.value = key;
+    renderMap();
+}
+
+function mapRankFromSelect(key) {
+    mapRank.key = key;
+    mapRank.dir = (key === 'name') ? 1 : -1;
+    renderMap();
+}
+
+function mapRankCmp() {
+    var k = mapRank.key, d = mapRank.dir;
+    return function (a, b) {
+        if (k === 'name') return String(a.name).localeCompare(String(b.name), 'es') * d;
+        var va = mapRankVal(a, k), vb = mapRankVal(b, k);
+        // "sin dato" siempre al fondo, se ordene ascendente o descendente
+        if (va === null && vb === null) return 0;
+        if (va === null) return 1;
+        if (vb === null) return -1;
+        return (va - vb) * d;
+    };
+}
+
+function mapRankHdr(nameLabel) {
+    function th(key, label, cls) {
+        var act = (mapRank.key === key);
+        var flecha = act ? (mapRank.dir < 0 ? ' &#9662;' : ' &#9652;') : '';
+        return '<span class="' + cls + ' sortable' + (act ? ' active' : '') + '"' +
+               ' onclick="mapRankSetKey(\'' + key + '\')"' +
+               ' title="Ordenar por ' + label + '">' + label + flecha + '</span>';
+    }
+    // La primera columna es el cuadrito de color = DP%/DF%; se ordena por ahí también.
+    var actDp = (mapRank.key === 'dp');
+    return '<div class="maprow rk hdr">' +
+        '<span class="sortable' + (actDp ? ' active' : '') + '" onclick="mapRankSetKey(\'dp\')"' +
+        ' title="Ordenar por ' + metricLabel + '">' + (actDp ? (mapRank.dir < 0 ? '&#9662;' : '&#9652;') : '&#9642;') + '</span>' +
+        th('name', nameLabel, 'maprow-name') +
+        th('tot', 'Mercado', 'maprow-u') +
+        th('sie', 'Siegf.', 'maprow-u sie') +
+        th('ms', 'MS%', 'maprow-u ms') +
+        '</div>';
 }
 
 // === HEATMAP COLOR ===
@@ -2375,21 +2443,14 @@ function renderMap() {
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
     if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
     // ranking al costado (con unidades del mercado + potencial no capturado)
-    var sortBy = document.getElementById('mapRankSort') ? document.getElementById('mapRankSort').value : 'tot';
     var rows = [];
     for (var j = 0; j < provinciasOrden.length; j++) {
         var pr = provinciasOrden[j];
         var u = provUnits(product, pr);
         rows.push({ name: pr, v: provVal(product, pr), tot: u ? u.tot : null, gap: u ? u.gap : null, sie: u ? u.sie : null });
     }
-    var keyf = function (r) {
-        if (sortBy === 'ms') return r.tot ? r.sie / r.tot : -1;
-        if (sortBy === 'dp') return r.v == null ? -1 : r.v;
-        return r.tot == null ? -1 : r.tot;
-    };
-    rows.sort(function (a, b) { return keyf(b) - keyf(a); });
-    var thtml = '<div class="maprow rk hdr"><span></span><span class="maprow-name">Provincia</span>' +
-                '<span class="maprow-u">Mercado</span><span class="maprow-u sie">Siegf.</span><span class="maprow-u ms">MS%</span></div>';
+    rows.sort(mapRankCmp());
+    var thtml = mapRankHdr('Provincia');
     for (var t = 0; t < rows.length; t++) {
         var col = (rows[t].v == null) ? '#e8dcdd' : heatmapColor(rows[t].v).bg;
         var pc = (rows[t].v == null) ? 's/d' : (rows[t].v * 100).toFixed(1) + '%';
@@ -2533,21 +2594,14 @@ function renderMapDepto() {
     attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
     var ventLbl = (typeof WIN !== 'undefined' && WIN) ? (WIN.label[currentWindow] || '') : '';
     document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
-    var sortBy = document.getElementById('mapRankSort') ? document.getElementById('mapRankSort').value : 'tot';
     var rows = provGeoDepto.feats.map(function (f) {
         var u = deptoUnits(product, f.k);
         var r = deptoDP(product, f.k);
         return { k: f.k, name: f.depto, prov: f.prov, v: r ? r.v : null, tot: u ? u.tot : null, sie: u ? u.sie : null };
     }).filter(function (x) { return (x.v != null) || (x.tot != null); });
-    var keyf = function (r) {
-        if (sortBy === 'ms') return r.tot ? r.sie / r.tot : -1;
-        if (sortBy === 'dp') return r.v == null ? -1 : r.v;
-        return r.tot == null ? -1 : r.tot;
-    };
-    rows.sort(function (a, b) { return keyf(b) - keyf(a); });
+    rows.sort(mapRankCmp());
     var rtd = document.getElementById('mapRankTitle'); if (rtd) rtd.textContent = 'Ranking por departamento';
-    var hdr = '<div class="maprow rk hdr"><span></span><span class="maprow-name">Departamento</span>' +
-              '<span class="maprow-u">Mercado</span><span class="maprow-u sie">Siegf.</span><span class="maprow-u ms">MS%</span></div>';
+    var hdr = mapRankHdr('Departamento');
     document.getElementById('mapTable').innerHTML = rows.length ? (hdr + rows.map(function (x) {
         var col = (x.v == null) ? '#e8dcdd' : heatmapColor(x.v).bg;
         var pc = (x.v == null) ? 's/d' : (x.v * 100).toFixed(1) + '%';
