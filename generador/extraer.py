@@ -11,7 +11,7 @@ Uso:
 """
 import json, os, sys, time, datetime
 from collections import defaultdict
-from qlik_client import Qix
+from qlik_client import Qix, connect_retry
 import config as C
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -30,11 +30,31 @@ def load_json(path, default):
 
 
 def save_json(path, obj):
+    """Guardado atómico resistente a locks transitorios (OneDrive/AV/lectores).
+    os.replace puede fallar con WinError 5 si el destino está abierto/sincronizando;
+    reintenta con backoff y, como último recurso, escribe directo (no atómico).
+    Mismo criterio que extraer_ventanas.py / extraer_depto.py."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=1)
-    os.replace(tmp, path)
+    for attempt in range(10):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            time.sleep(min(2.0 * (attempt + 1), 10))
+    for attempt in range(10):
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(obj, f, ensure_ascii=False, indent=1)
+            break
+        except PermissionError:
+            time.sleep(min(2.0 * (attempt + 1), 10))
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
 
 
 def num(cell):
@@ -48,6 +68,7 @@ def extract_market(q, doc, period_num, min_period, mercado):
     q.select_text(doc, "TipoMercado", C.TIPO_MERCADO)
     q.select_num(doc, "AñoMes_Num", range(min_period, period_num + 1))
     q.select_text(doc, "DescripcionMercado", mercado)
+    q.check_selection(doc, "DescripcionMercado")
     rows = q.hypercube(doc, [C.DIM_REGIONCUP], [C.MEAS[k] for k in MEAS_ORDER])
     agg = defaultdict(lambda: {k: 0.0 for k in MEAS_ORDER})
     total = {k: 0.0 for k in MEAS_ORDER}
@@ -73,7 +94,7 @@ def main():
         sys.exit(f"Falta {MAPJS} (mapeo producto->mercado). Corré resolver primero.")
     store = load_json(STORE, {"meta": {}, "periodos": {}, "datos": {}})
 
-    q = Qix(); doc = q.open_doc(); q.clear_all(doc)
+    q, doc = connect_retry(); q.clear_all(doc)
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
 
@@ -113,8 +134,7 @@ def main():
                         q.close()
                     except Exception:
                         pass
-                    time.sleep(3)
-                    q = Qix(); doc = q.open_doc()
+                    q, doc = connect_retry(pausa_inicial=3)
             if data is None:
                 print(f"  [{C.periodo_label(p)}] {prod!r} FALLO tras 3 intentos -- se saltea")
                 done[prod] = {"_ok": False, "_mercado": mercado}

@@ -14,7 +14,7 @@ Serial y resumible (checkpoint por producto). Uso:
 """
 import json, os, sys, time
 from collections import defaultdict
-from qlik_client import Qix
+from qlik_client import Qix, connect_retry
 import config as C
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -72,7 +72,7 @@ def month_of(p):
 
 def main():
     mapping = load_json(MAPJS, None)
-    q = Qix(); doc = q.open_doc(); q.clear_all(doc)
+    q, doc = connect_retry(); q.clear_all(doc)
 
     def mdef(mid):
         h = q.rpc("GetMeasure", doc, [mid])["qReturn"]["qHandle"]
@@ -125,6 +125,7 @@ def main():
                     q.select_text(doc, "TipoMercado", C.TIPO_MERCADO)
                     q.select_num(doc, "AñoMes_Num", range(min_p, P + 1))
                     q.select_text(doc, "DescripcionMercado", merc)
+                    q.check_selection(doc, "DescripcionMercado")
                     obj = {"qInfo": {"qType": "v"}, "qHyperCubeDef": {
                         "qDimensions": [{"qLibraryId": DIM_REGION, "qNullSuppression": True}],
                         "qMeasures": ms,
@@ -136,7 +137,7 @@ def main():
                     print(f"  {prod} intento {attempt+1}: {e}")
                     try: q.close()
                     except Exception: pass
-                    time.sleep(3); q = Qix(); doc = q.open_doc()
+                    q, doc = connect_retry(pausa_inicial=3)
             if rows is None:
                 done[prod] = {"_ok": False}; save_json(STORE, store); continue
             agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))  # region->win->[s,p,t]

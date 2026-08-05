@@ -14,10 +14,14 @@ def plabel(p):
     if m == 0: a -= 1; m = 12
     return f"{MESES[m]}-{a}"
 
-REGION_TARGET = ["24317", "24316", "24314", "24311", "24305"]              # 5 períodos × 41
-DEPTO_WIN_TARGET = ["24317", "24305", "24316", "24314", "24311", "24313"]  # 6 períodos × 41 (mapa, ambas variaciones)
-NPROD = 41
-DEPTO_HIST_PERIODOS = 18   # períodos restantes para el histórico Trimestre por depto
+NPROD = 42   # 41 + Roxolan Plus
+
+# --- Corrida mensual en curso: período actual y los que faltaban extraer ---
+# Actualizar estas 3 listas cada mes (el resto se deriva solo).
+PERIODO = "24318"                                            # Jun-2026
+WIN_TARGET = ["24318", "24315", "24312", "24306"]            # ventanas región que faltaban
+                                                             # (24317 ya estaba: comparación MEN)
+DEPTO_WIN_TARGET = ["24318"]                                 # depto × 5 ventanas (mapa)
 
 
 def count_ok(store, pk):
@@ -47,30 +51,34 @@ def phase_html(titulo, subtitulo, done, total, mtime):
 
 
 def build():
+    hist, hmt = load("historico.json")
     win, wmt = load("historico_win.json")
+    uni, umt = load("unidades_region.json")
+    unid, udmt = load("unidades_depto.json")
     dep, dmt = load("depto_win.json")
-    # Fase 1: región ventanas
-    r_done = sum(count_ok(win, pk) for pk in REGION_TARGET) if win else 0
-    r_total = len(REGION_TARGET) * NPROD
-    r_detail = " · ".join(f"{plabel(pk)} {count_ok(win, pk) if win else 0}/41" for pk in REGION_TARGET)
-    # Fase 2: depto ventanas (mapa)
+    # Fase 1: región TRIM (historico.json) — heatmap + evolución
+    h_done = count_ok(hist, PERIODO) if hist else 0
+    # Fase 2: región × 5 ventanas
+    r_done = sum(count_ok(win, pk) for pk in WIN_TARGET) if win else 0
+    r_total = len(WIN_TARGET) * NPROD
+    r_detail = " · ".join(f"{plabel(pk)} {count_ok(win, pk) if win else 0}/{NPROD}" for pk in WIN_TARGET)
+    # Fase 3 y 4: unidades (región y departamento) del período actual
+    u_done = count_ok(uni, PERIODO) if uni else 0
+    ud_done = count_ok(unid, PERIODO) if unid else 0
+    # Fase 5: depto × ventanas (mapa)
     d2_done = sum(count_ok(dep, pk) for pk in DEPTO_WIN_TARGET) if dep else 0
     d2_total = len(DEPTO_WIN_TARGET) * NPROD
-    # Fase 3: depto histórico (períodos != los 2 del mapa)
-    d3_done = 0; d3_total = 20 * NPROD
-    if dep:
-        for pk in dep.get("datos", {}):
-            if pk not in DEPTO_WIN_TARGET:
-                d3_done += count_ok(dep, pk)
-    ph = (phase_html("1 · Región × 5 ventanas", r_detail, r_done, r_total, wmt) +
-          phase_html("2 · Departamento × ventanas (mapa)", "Actual + año anterior", d2_done, d2_total, dmt) +
-          phase_html("3 · Departamento × histórico (evolución)", "Trimestre, 24 meses", d3_done, d3_total, dmt))
-    overall_done = r_done + d2_done + d3_done
-    overall_total = r_total + d2_total + d3_total
+    ph = (phase_html("1 · Región × Trimestre", f"{plabel(PERIODO)} — heatmap y evolución", h_done, NPROD, hmt) +
+          phase_html("2 · Región × 5 ventanas", r_detail, r_done, r_total, wmt) +
+          phase_html("3 · Unidades × región", f"{plabel(PERIODO)} — mercado y potencial", u_done, NPROD, umt) +
+          phase_html("4 · Unidades × departamento", f"{plabel(PERIODO)} — ranking del mapa", ud_done, NPROD, udmt) +
+          phase_html("5 · Departamento × 5 ventanas", f"{plabel(PERIODO)} — mapa depto", d2_done, d2_total, dmt))
+    overall_done = h_done + r_done + u_done + ud_done + d2_done
+    overall_total = NPROD * 3 + r_total + d2_total
     opct = overall_done * 100 // overall_total
     ts = datetime.datetime.now().strftime("%H:%M:%S")
     return f"""<!doctype html><html lang="es"><head><meta charset="utf-8">
-<meta http-equiv="refresh" content="8">
+<meta http-equiv="refresh" content="15">
 <title>Extracción en vivo — {opct}%</title>
 <style>
  body{{font-family:'Segoe UI',sans-serif;background:#f9f4f4;color:#3a2022;margin:0;padding:28px;}}
@@ -93,7 +101,7 @@ def build():
  .note{{color:#8a6d6f;font-size:.78rem;margin-top:16px;}}
 </style></head><body>
 <h1>&#128225; Extracci&oacute;n QlikCloud en vivo</h1>
-<div class="ts">Actualiza cada 8 s &middot; {ts}</div>
+<div class="ts">Actualiza cada 15 s &middot; {ts}</div>
 <div class="overall"><div>Avance total</div><div class="big">{opct}%</div>
   <div>{overall_done} / {overall_total} consultas</div>
   <div class="obar"><span style="width:{opct}%"></span></div></div>
@@ -111,7 +119,9 @@ def main():
             os.replace(tmp, OUT)
         except Exception:
             pass
-        time.sleep(8)
+        # 15 s (no 8): abrir los stores para leerlos bloquea el os.replace de los
+        # extractores en Windows; menos frecuencia = menos colisiones.
+        time.sleep(15)
 
 
 if __name__ == "__main__":

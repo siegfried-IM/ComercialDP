@@ -11,7 +11,7 @@ Serial, resumible (checkpoint por producto).
 """
 import json, os, sys, time
 from collections import defaultdict
-from qlik_client import Qix
+from qlik_client import Qix, connect_retry
 import config as C
 import geo_match
 
@@ -57,7 +57,7 @@ def month_of(p):
 def main():
     wins = sys.argv[1].split(",")
     mapping = json.load(open(MAPJS, encoding="utf-8"))
-    q = Qix(); doc = q.open_doc(); q.clear_all(doc)
+    q, doc = connect_retry(); q.clear_all(doc)
     def mdef(mid):
         h = q.rpc("GetMeasure", doc, [mid])["qReturn"]["qHandle"]
         return q.rpc("GetLayout", h, [])["qLayout"]["qMeasure"]["qDef"]
@@ -90,6 +90,7 @@ def main():
                 try:
                     q.clear_all(doc); q.select_text(doc, "TipoMercado", C.TIPO_MERCADO)
                     q.select_num(doc, "AñoMes_Num", range(min_p, P + 1)); q.select_text(doc, "DescripcionMercado", merc)
+                    q.check_selection(doc, "DescripcionMercado")
                     W = 2 + len(ms)
                     PAGE = max(1, 9000 // W)   # Qlik limita ~10k celdas por página: W(17)*529 < 10000
                     obj = {"qInfo": {"qType": "v"}, "qHyperCubeDef": {
@@ -110,16 +111,9 @@ def main():
                     print(f"  {prod} intento {att+1}: {e}")
                     try: q.close()
                     except Exception: pass
-                    # Reconexión resistente a blips de red/DNS (getaddrinfo): reintenta
-                    # con backoff en vez de crashear todo el run.
-                    for _rc in range(40):
-                        try:
-                            time.sleep(3 if _rc == 0 else 15)
-                            q = Qix(); doc = q.open_doc(); break
-                        except Exception as e2:
-                            print(f"    reconexión falló ({e2}); reintento en 15s ({_rc+1}/40)")
-                    else:
-                        raise RuntimeError("no se pudo reconectar tras varios intentos")
+                    # Reconexión resistente a blips de red/DNS (getaddrinfo), compartida
+                    # por todos los extractores en qlik_client.connect_retry.
+                    q, doc = connect_retry(pausa_inicial=3)
             if rows is None:
                 done[prod] = {"_ok": False}; save_json(STORE, store); continue
             agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))

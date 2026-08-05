@@ -9,7 +9,7 @@ Uso:  python extraer_unidades_depto.py            # período actual
 """
 import json, os, sys, time
 from collections import defaultdict
-from qlik_client import Qix
+from qlik_client import Qix, connect_retry
 import config as C
 import geo_match
 
@@ -56,7 +56,7 @@ FLD_IDX = {"tot": 0, "gap": 1, "sie": 2}
 
 def main():
     mapping = json.load(open(MAPJS, encoding="utf-8"))
-    q = Qix(); doc = q.open_doc(); q.clear_all(doc)
+    q, doc = connect_retry(); q.clear_all(doc)
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
     periods = [int(x) for x in sys.argv[1:]] or [max_p]
@@ -84,6 +84,7 @@ def main():
                 try:
                     q.clear_all(doc); q.select_text(doc, "TipoMercado", C.TIPO_MERCADO)
                     q.select_num(doc, "AñoMes_Num", range(min_p, P + 1)); q.select_text(doc, "DescripcionMercado", merc)
+                    q.check_selection(doc, "DescripcionMercado")
                     obj = {"qInfo": {"qType": "v"}, "qHyperCubeDef": {
                         "qDimensions": [{"qLibraryId": DIM_PROV}, {"qLibraryId": DIM_PART}],
                         "qMeasures": ms, "qInitialDataFetch": [{"qLeft": 0, "qTop": 0, "qWidth": W, "qHeight": PAGE}]}}
@@ -102,7 +103,7 @@ def main():
                     print(f"  {prod} intento {att+1}: {e}")
                     try: q.close()
                     except Exception: pass
-                    time.sleep(3); q = Qix(); doc = q.open_doc()
+                    q, doc = connect_retry(pausa_inicial=3)
             if rows is None:
                 done[prod] = {"_ok": False}; save_json(STORE, store); continue
             agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))  # geokey->win->[tot,gap,sie]
