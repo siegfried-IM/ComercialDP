@@ -123,7 +123,7 @@ def g1(P, H, W, D):
                 f"{n} celdas · peor desvío {peor*100:.2f}%" + (f" ({peor_det})" if peor > TOL_REEXPRESION else ""))
 
 
-def g2(P, H, W, U, UD):
+def g2(P, H, W, U, UD, D):
     """Coherencia interna de cada artefacto."""
     print("\nG2 · Consistencia interna")
     pk = str(P)
@@ -174,6 +174,31 @@ def g2(P, H, W, U, UD):
     chequeo("historico · núcleo 80-20 <= mercado total", not malos,
             f"{len(malos)} violaciones" + (f": {malos[:3]}" if malos else ""))
 
+    # Ventana más ancha => más farmacias distintas. Es el chequeo que caza el
+    # segundo modo de falla silenciosa visto en Jun-2026: bajo contención, la
+    # ventana de la medida maestra colapsa a un mes y devuelve un numero
+    # plausible (una TRIM que en realidad trae el mensual).
+    # Solo aplica a 't' (conteo puro de CPA). 's' y 'p' dependen del nucleo
+    # Pareto, que se recalcula en cada ventana y legitimamente no es monotono.
+    for store, nombre, agg in ((W, "historico_win", False), (D, "depto_win", True)):
+        malos, n = [], 0
+        for p in sorted(store.get("datos", {}), key=int):
+            for pn, v in ok_prods(store, p).items():
+                if agg:
+                    celdas = {}
+                    for w in WINS[:4]:
+                        if any(w in x for gk, x in v.items() if gk != "_ok"):
+                            celdas[w] = sum(x.get(w, {}).get("t", 0) for gk, x in v.items() if gk != "_ok")
+                else:
+                    celdas = {w: v["TOTAL"][w]["t"] for w in WINS[:4] if w in v.get("TOTAL", {})}
+                ws = [w for w in WINS[:4] if w in celdas]
+                for i in range(len(ws) - 1):
+                    n += 1
+                    if celdas[ws[i]] > celdas[ws[i + 1]] + 0.5:
+                        malos.append(f"{p} {pn}: {ws[i]}={celdas[ws[i]]:.0f} > {ws[i+1]}={celdas[ws[i+1]]:.0f}")
+        chequeo(f"{nombre} · ventana más ancha => más farmacias", not malos,
+                f"{n} pares comparados" + (f" · {len(malos)} violaciones: {malos[:3]}" if malos else ""))
+
 
 def g3(P, H):
     """Diff contra la versión anterior: lo que no debe moverse, no se movió."""
@@ -223,7 +248,7 @@ def main():
               "unidades_depto": UD, "depto_win": D}
     g0(P, stores)
     g1(P, H, W, D)
-    g2(P, H, W, U, UD)
+    g2(P, H, W, U, UD, D)
     g3(P, H)
 
     print()
