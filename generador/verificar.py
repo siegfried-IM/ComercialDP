@@ -69,21 +69,32 @@ def g1(P, H, W, D):
     print("\nG1 · Cierre entre caminos independientes")
     pk = str(P)
 
-    # 1. ventana TRI (medida parametrizada) vs medida maestra TRIM. Mismo período,
-    #    ambos extraídos hoy -> deben coincidir exacto.
-    peor, peor_det = 0.0, ""
-    n = 0
-    for pn, h in ok_prods(H, pk).items():
-        w = ok_prods(W, pk).get(pn)
-        if not w:
-            continue
-        for k1, k2 in [("sie_act", "s"), ("p80_act", "p"), ("totmdo_act", "t")]:
-            a, b = h["TOTAL"][k1], w["TOTAL"]["TRI"][k2]
-            n += 1
-            if a and abs(b / a - 1) > peor:
-                peor, peor_det = abs(b / a - 1), f"{pn}/{k1}: {a:.0f} vs {b:.0f}"
-    chequeo("historico[TRIM] == historico_win[TRI]", peor <= 0.005,
-            f"{n} celdas · peor desvío {peor*100:.2f}%" + (f" ({peor_det})" if peor > 0.005 else ""))
+    # 1. ventana TRI (medida parametrizada) vs medida maestra TRIM, en TODOS los
+    #    períodos que están en los dos stores — no sólo en el que se publica.
+    #    El tablero lee TRI de historico.json y las otras ventanas de historico_win:
+    #    si un período quedó rezagado en uno de los dos, dos botones contiguos
+    #    (Trimestre y YTD en un cierre de trimestre) responden distinto a la misma
+    #    pregunta. Pasó en Jun-2026 con 24306/24312/24315.
+    compartidos = sorted(set(H["datos"]) & set(W["datos"]), key=int)
+    peor, peor_det, n, malos = 0.0, "", 0, []
+    for p in compartidos:
+        pdif = 0.0
+        for pn, h in ok_prods(H, p).items():
+            w = ok_prods(W, p).get(pn)
+            if not w or "TRI" not in w.get("TOTAL", {}):
+                continue
+            for k1, k2 in [("sie_act", "s"), ("p80_act", "p"), ("totmdo_act", "t")]:
+                a, b = h["TOTAL"][k1], w["TOTAL"]["TRI"][k2]
+                n += 1
+                d = abs(b / a - 1) if a else 0.0
+                pdif = max(pdif, d)
+                if d > peor:
+                    peor, peor_det = d, f"{p}/{pn}/{k1}: {a:.0f} vs {b:.0f}"
+        if pdif > 0.005:
+            malos.append(f"{p} ({pdif*100:.1f}%)")
+    chequeo("historico[TRIM] == historico_win[TRI] (todos)", not malos,
+            f"{len(compartidos)} períodos · {n} celdas · peor {peor*100:.2f}%" +
+            (f" · rezagados: {malos}" if malos else ""))
 
     # 2. depto sumado vs región. El depto suma un poco más (regiones sin mapear).
     peor, peor_det, n = 0.0, "", 0

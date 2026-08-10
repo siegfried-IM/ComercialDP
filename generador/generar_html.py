@@ -154,114 +154,74 @@ def _month(p):
     return 12 if m == 0 else m
 
 
-def build_windows(winstore, productNames, zonesOrder, zoneRegions):
-    """Desde historico_win.json (conteos por producto/región/ventana/período)
-    arma, por ventana y métrica, los datasets de período actual con 2 variaciones.
-    Devuelve dict listo para inyectar; ausencia de período de comparación => variación null."""
-    datos = winstore.get("datos", {})
-    if not datos:
-        return None
-    CUR = max(int(k) for k in datos)
+def build_counts(store, winstore, productNames, zonesOrder, zoneRegions):
+    """Conteos CRUDOS por período / producto / ubicación, para que el navegador
+    pueda armar cualquier período con cualquier ventana.
+
+    Reemplaza a WIN + dpData + productData, que traían ratios ya calculados y de
+    UN solo período (build_windows clavaba CUR = max del store e ignoraba el
+    argumento de período). Con los conteos el front calcula DP% y DF% y agrega a
+    zona / provincia / total como ratio de sumas, que es la única forma correcta
+    de agregar: un promedio de porcentajes da otro número.
+
+    Sale más liviano que lo que reemplaza porque no duplica la serie por métrica.
+
+      TRIM.prod[producto][ubicación] = [[sie, p80, mercado], ...]  # 1 por período
+      WINC.prod[producto][ubicación][ventana] = [[sie, p80, mercado], ...]
+
+    TRIM cubre los 23 períodos de historico.json; WINC los 9 de historico_win.
+    Las ubicaciones son TOTAL + las 29 regiones: zona, provincia y compañía se
+    derivan sumando regiones en el front.
+    """
     regions = [r for z in zonesOrder for r in zoneRegions[z]]
+    locs = ["TOTAL"] + regions
 
-    def counts(prod, region, win, period):
-        d = datos.get(str(period), {}).get(prod, {}).get(region)
-        if not d or win not in d:
-            return None
-        c = d[win]
-        return (c["s"], c["p"], c["t"])
+    def completo(st, pk):
+        pd = st["datos"][pk]
+        return sum(1 for v in pd.values() if isinstance(v, dict) and v.get("_ok")) >= len(productNames)
 
-    def ratio(prod, region_list, win, period, metric):
-        s = den = 0.0; any_ = False
-        for r in region_list:
-            c = counts(prod, r, win, period)
-            if c:
-                any_ = True; s += c[0]; den += c[1] if metric == "DP" else c[2]
-        if not any_ or den == 0:
-            return None
-        return round(s / den, 6)
+    # --- TRIM (medida maestra trimestral), todos los períodos completos ---
+    tper = sorted(int(p) for p in store["datos"] if completo(store, str(p)))
+    tprod = {}
+    for pn in productNames:
+        porloc = {}
+        for loc in locs:
+            serie = []
+            for p in tper:
+                d = store["datos"][str(p)].get(pn, {})
+                c = d.get(loc)
+                serie.append([int(round(c.get("sie_act", 0))), int(round(c.get("p80_act", 0))),
+                              int(round(c.get("totmdo_act", 0)))] if c else None)
+            if any(serie):
+                porloc[loc] = serie
+        tprod[pn] = porloc
+    TRIM = {"periodos": tper, "labels": [period_label(p) for p in tper],
+            "regions": regions, "prod": tprod}
 
-    def var_periods(win):
-        L = _month(CUR) if win == "YTD" else WIN_LEN[win]
-        return CUR - 12, CUR - L      # (año anterior, período anterior)
-
-    # regiones que componen cada ubicación
-    prov_regions = {}
-    for r in regions:
-        prov_regions.setdefault(C.REGION_TO_PROVINCE.get(r), []).append(r)
-
-    out = {"order": WIN_ORDER, "label": WIN_LABEL, "current": CUR, "curLabel": period_label(CUR),
-           "win": {}, "prov": {}, "provOrder": C.PROVINCES}
-    for W in WIN_ORDER:
-        ant_p, prev_p = var_periods(W)
-        out["win"][W] = {}
-        out["prov"][W] = {}
-        for M in ("DP", "DF"):
-            # heatmap: TOTAL + regiones, valor actual por producto
-            rows = []
-            total = {"zona": "", "region": "TOTAL", "values": {}}
-            for pn in productNames:
-                total["values"][pn] = ratio(pn, ["TOTAL"], W, CUR, M)
-            rows.append(total)
-            for z in zonesOrder:
-                for reg in zoneRegions[z]:
-                    row = {"zona": z, "region": reg, "values": {}}
-                    for pn in productNames:
-                        row["values"][pn] = ratio(pn, [reg], W, CUR, M)
-                    rows.append(row)
-            # product tables: por producto, por región: act / año ant / período ant
-            prod = {}
-            for pn in productNames:
-                arr = [{"zona": "", "region": "TOTAL",
-                        "act": ratio(pn, ["TOTAL"], W, CUR, M),
-                        "ay": ratio(pn, ["TOTAL"], W, ant_p, M),
-                        "ap": ratio(pn, ["TOTAL"], W, prev_p, M)}]
-                for z in zonesOrder:
-                    for reg in zoneRegions[z]:
-                        arr.append({"zona": z, "region": reg,
-                                    "act": ratio(pn, [reg], W, CUR, M),
-                                    "ay": ratio(pn, [reg], W, ant_p, M),
-                                    "ap": ratio(pn, [reg], W, prev_p, M)})
-                prod[pn] = arr
-            # zonas (para el ranking de Crecimiento por zona): Σ conteos de sus regiones
-            zn = {}
-            for pn in productNames:
-                zn[pn] = {}
-                for z in zonesOrder:
-                    regs = zoneRegions[z]
-                    zn[pn][z] = {"act": ratio(pn, regs, W, CUR, M),
-                                 "ay": ratio(pn, regs, W, ant_p, M),
-                                 "ap": ratio(pn, regs, W, prev_p, M)}
-            out["win"][W][M] = {"dp": rows, "prod": prod, "zone": zn, "antP": ant_p, "prevP": prev_p,
-                                "antLabel": period_label(ant_p), "prevLabel": period_label(prev_p)}
-            # provincias (para el mapa): por producto + TOTAL COMPAÑÍA
-            pv = {}
-            comp_regions = regions
-            for pn in productNames:
-                pv[pn] = {}
-                for prov, regs in prov_regions.items():
-                    if not prov:
-                        continue
-                    pv[pn][prov] = {"act": ratio(pn, regs, W, CUR, M),
-                                    "ay": ratio(pn, regs, W, ant_p, M),
-                                    "ap": ratio(pn, regs, W, prev_p, M)}
-            # TOTAL COMPAÑÍA por provincia = Σ conteos sobre todos los productos
-            comp = {}
-            for prov, regs in prov_regions.items():
-                if not prov:
-                    continue
-                def comp_ratio(period):
-                    s = den = 0.0; any_ = False
-                    for pn in productNames:
-                        for r in regs:
-                            c = counts(pn, r, W, period)
-                            if c:
-                                any_ = True; s += c[0]; den += c[1] if M == "DP" else c[2]
-                    return round(s / den, 6) if (any_ and den) else None
-                comp[prov] = {"act": comp_ratio(CUR), "ay": comp_ratio(ant_p), "ap": comp_ratio(prev_p)}
-            pv["TOTAL COMPAÑÍA"] = comp
-            out["prov"][W][M] = pv
-    return out
+    # --- 5 ventanas, sólo en los períodos que se extrajeron ---
+    WINC = None
+    if winstore and winstore.get("datos"):
+        wper = sorted(int(p) for p in winstore["datos"] if completo(winstore, str(p)))
+        wprod = {}
+        for pn in productNames:
+            porloc = {}
+            for loc in locs:
+                porwin = {}
+                # TRI no viaja: el front lo lee siempre de TRIM (la medida maestra de
+                # historico.json), que cubre los 23 períodos y no sólo estos 9.
+                for W in [x for x in WIN_ORDER if x != "TRI"]:
+                    serie = []
+                    for p in wper:
+                        c = winstore["datos"][str(p)].get(pn, {}).get(loc, {}).get(W)
+                        serie.append([int(round(c["s"])), int(round(c["p"])), int(round(c["t"]))] if c else None)
+                    if any(serie):
+                        porwin[W] = serie
+                if porwin:
+                    porloc[loc] = porwin
+            wprod[pn] = porloc
+        WINC = {"periodos": wper, "labels": [period_label(p) for p in wper],
+                "regions": regions, "prod": wprod}
+    return TRIM, WINC
 
 
 def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
@@ -451,7 +411,7 @@ def build_depto_evol(store, productNames):
         if sum(1 for x in ser if x is not None) >= 2:
             compOut[k] = ser
     prod["TOTAL COMPAÑÍA"] = compOut
-    return {"labels": labels, "prod": prod}
+    return {"labels": labels, "periods": periods, "prod": prod}
 
 
 def compute_kpis(dpTotalRow, productNames, n_regions):
@@ -573,9 +533,25 @@ def main():
         sys.exit(f"Período {P} ({period_label(P)}) no está en el store.")
     pdata = store["datos"][str(P)]
     n_regions = sum(len(v) for v in zoneRegions.values())
-    winobj = build_windows(winstore, productNames, zonesOrder, zoneRegions) if winstore else None
-    if winobj:
-        print(f"[ventanas] {winobj['order']} | período {winobj['curLabel']}")
+    trimc, wincobj = build_counts(store, winstore, productNames, zonesOrder, zoneRegions)
+    if P not in trimc["periodos"]:
+        sys.exit(f"Período {P} ({period_label(P)}) está en el store pero incompleto "
+                 f"(build_counts exige los {len(productNames)} productos con _ok). "
+                 f"Completá la extracción o generá para otro período.")
+    print(f"[conteos TRIM] {len(trimc['periodos'])} períodos: "
+          f"{trimc['labels'][0]}..{trimc['labels'][-1]}")
+    if wincobj:
+        print(f"[conteos ventanas] {len(wincobj['periodos'])} períodos: {', '.join(wincobj['labels'])}")
+    # Metadata del segmentador: qué períodos se pueden elegir con cada ventana.
+    # TRI sale de historico.json (todos); el resto sólo de los períodos extraídos.
+    winmeta = {"order": WIN_ORDER, "label": WIN_LABEL, "len": WIN_LEN,
+               "current": P, "curLabel": period_label(P),
+               "periodos": {W: (trimc["periodos"] if W == "TRI"
+                                else (wincobj["periodos"] if wincobj else []))
+                            for W in WIN_ORDER},
+               "labels": {W: (trimc["labels"] if W == "TRI"
+                              else (wincobj["labels"] if wincobj else []))
+                          for W in WIN_ORDER}}
     uniobj = build_unidades(unistore, productNames, zonesOrder, zoneRegions) if unistore else None
     if uniobj:
         nprod = len(uniobj["win"]["TRI"]["reg"])
@@ -619,11 +595,10 @@ def main():
                   "var productData = productDataDP;\n")
     html = re.sub(r"var productData = .*?;\n", lambda m: prod_block, html, count=1)
 
-    # evolData (DP/DF) + kpiData, antes de currentView
+    # evolData (DP/DF) + conteos por período, antes de currentView
     inject = ("var evolDataDP = " + dump(data["DP"]["evol"]) + ";\n"
               "var evolDataDF = " + dump(data["DF"]["evol"]) + ";\n"
               "var evolData = evolDataDP;\n"
-              "var kpiData = " + dump({"DP": kpiDP, "DF": kpiDF}) + ";\n"
               "var currentMetric = 'DP';\n"
               "var PERIODO_LBL = " + dump(lbl) + ";\n"
               "var provGeo = " + dump(prov_geo) + ";\n"
@@ -631,7 +606,12 @@ def main():
               "var provinciasOrden = " + dump(C.PROVINCES) + ";\n" +
               ("var provGeoDepto = " + dump(depto_geo) + ";\n" if depto_geo else "") +
               # mapaPartido reemplazado por WINDEP (DP/DF por depto y ventana, incl. TOTAL COMPAÑÍA)
-              ("var WIN = " + dump(winobj) + ";\n" if winobj else "var WIN = null;\n") +
+              # WIN ya no se inyecta: el front lo arma por período desde los conteos
+              # (WINp() en la plantilla), así el segmentador puede moverse sin
+              # multiplicar el payload por cada período.
+              "var WINMETA = " + dump(winmeta) + ";\n" +
+              "var TRIMC = " + dump(trimc) + ";\n" +
+              ("var WINC = " + dump(wincobj) + ";\n" if wincobj else "var WINC = null;\n") +
               ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n") +
               ("var WINU_DEPTO = " + dump(unidepobj) + ";\n" if unidepobj else "var WINU_DEPTO = null;\n") +
               ("var WINDEP = " + dump(windepobj) + ";\n" if windepobj else "var WINDEP = null;\n") +
