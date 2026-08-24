@@ -623,6 +623,8 @@ body {
 .gbar-hdr .sortable { cursor:pointer; user-select:none; }
 .gbar-hdr .sortable:hover { color:#95232C; text-decoration:underline; }
 .gbar-hdr .sortable.active { color:#95232C; font-weight:700; }
+.gbar-ord { font-size:0.85em; color:#95232C; margin-left:1px; }
+.growth-hint { font-size:0.7rem; color:#a58589; margin:0 0 6px; }
 .gbar-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#3a2022; }
 .gbar-track { background:#f0e4e5; border-radius:4px; height:14px; overflow:hidden; }
 .gbar-fill { display:block; height:100%; border-radius:4px; }
@@ -885,6 +887,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                     <select id="growthBaseline" onchange="renderGrowth()"></select>
                 </div>
             </div>
+            <div class="growth-hint">Clic en una columna para ordenar &middot; Shift+clic para ordenar por dos a la vez</div>
             <div class="growth-cols">
                 <div class="evol-card">
                     <h3 class="growth-h up">&#9650; M&aacute;s crecieron</h3>
@@ -2662,55 +2665,108 @@ function fmtPesos(v) {
 // MAGNITUD, no por signo: en "Mas cayeron" todos los valores son negativos, y
 // ordenarlos de mayor a menor pondria la caida mas chica arriba, que es lo
 // contrario de lo que se quiere leer.
-var growthSort = { key: 'pp', dir: -1 };   // -1 = mayor impacto primero
+// Hasta DOS criterios: el primero manda y el segundo desempata. Clic normal
+// reemplaza el orden; Shift+clic agrega la segunda columna, como en una planilla.
+// Sirve, por ejemplo, para ordenar por unidades y desempatar por pesos: dos
+// productos que aportan las mismas unidades no valen lo mismo.
+var growthSort = [{ key: 'pp', dir: -1 }];   // dir -1 = mayor impacto primero
+var growthHayExtra = true;   // lo fija renderGrowth con lo que realmente se dibujo
 
-// Si se pidio ordenar por una columna que esta vacia (DF%, o un periodo sin
-// unidades), ordenar por ella no diria nada: se cae a los pp.
-function growthEffKey(hayExtra) {
-    var k = growthSort.key;
-    if (!hayExtra && (k === 'unid' || k === 'valor')) return 'pp';
-    return k;
+// Una columna vacia (DF%, o un periodo sin unidades extraidas) no puede ordenar
+// nada: se descarta del criterio y, si no queda ninguna, se cae a los pp.
+function growthActiveKeys(hayExtra) {
+    var out = [];
+    for (var i = 0; i < growthSort.length; i++) {
+        var k = growthSort[i].key;
+        if (!hayExtra && (k === 'unid' || k === 'valor')) continue;
+        out.push(growthSort[i]);
+    }
+    return out.length ? out : [{ key: 'pp', dir: -1 }];
 }
 
-function growthSetSort(key) {
-    if (growthSort.key === key) growthSort.dir = -growthSort.dir;
-    else { growthSort.key = key; growthSort.dir = (key === 'name') ? 1 : -1; }
+function growthSetSort(key, ev) {
+    var shift = !!(ev && ev.shiftKey);
+    // Se opera sobre el criterio QUE SE VE, no sobre el guardado. Si el encabezado
+    // cayo al fallback por columnas vacias (DF%, o un periodo sin unidades), el
+    // array crudo todavia tiene claves invisibles: dejarlas hacia que el clic
+    // sobre la columna marcada activa no encontrara su posicion y se perdiera, y
+    // que esas claves ocuparan los dos cupos y reaparecieran como criterio
+    // principal al volver a DP%.
+    growthSort = growthActiveKeys(growthHayExtra).map(function (s) {
+        return { key: s.key, dir: s.dir };       // copia: growthActiveKeys puede
+    });                                          // devolver el literal de fallback
+    var pos = -1;
+    for (var i = 0; i < growthSort.length; i++) if (growthSort[i].key === key) pos = i;
+    if (shift) {
+        if (pos >= 0) growthSort[pos].dir = -growthSort[pos].dir;   // invertir ese nivel
+        else {
+            growthSort.push({ key: key, dir: (key === 'name') ? 1 : -1 });
+            if (growthSort.length > 2) growthSort.shift();          // se conservan 2
+        }
+    } else {
+        if (pos === 0 && growthSort.length === 1) growthSort[0].dir = -growthSort[0].dir;
+        else growthSort = [{ key: key, dir: (key === 'name') ? 1 : -1 }];
+    }
     renderGrowth();
 }
 
 function growthVal(r, k) {
-    if (k === 'pp') return Math.abs(r.delta);
+    // pp se compara con el valor QUE SE VE. Con la precision completa, dos filas
+    // que muestran "+0.1 pp" se ordenan por una diferencia invisible y el segundo
+    // criterio nunca llega a desempatar. Se usa el MISMO toFixed(1) del render:
+    // redondear por otro camino difiere en los bordes .05 y deja la clave de orden
+    // un decimo arriba del numero impreso.
+    if (k === 'pp') return Math.abs(Number((r.delta * 100).toFixed(1)));
     if (k === 'unid') return r.extra ? Math.abs(r.extra.unid) : null;
     if (k === 'valor') return (r.extra && r.extra.valor != null) ? Math.abs(r.extra.valor) : null;
     return null;
 }
 
+function growthCmpUno(k, d, a, b) {
+    if (k === 'name') return String(a.name).localeCompare(String(b.name), 'es') * d;
+    var va = growthVal(a, k), vb = growthVal(b, k);
+    if (va == null && vb == null) return 0;          // sin dato siempre al fondo
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    return (va - vb) * d;
+}
+
 function growthCmp(hayExtra) {
-    var k = growthEffKey(hayExtra), d = growthSort.dir;
+    var keys = growthActiveKeys(hayExtra);
     return function (a, b) {
-        if (k === 'name') return String(a.name).localeCompare(String(b.name), 'es') * d;
-        var va = growthVal(a, k), vb = growthVal(b, k);
-        if (va == null && vb == null) return 0;      // sin dato siempre al fondo
-        if (va == null) return 1;
-        if (vb == null) return -1;
-        return (va - vb) * d;
+        for (var i = 0; i < keys.length; i++) {
+            var r = growthCmpUno(keys[i].key, keys[i].dir, a, b);
+            if (r) return r;                          // el siguiente solo desempata
+        }
+        return 0;
     };
 }
 
 function growthHdr(hayExtra) {
-    var ef = growthEffKey(hayExtra);
+    var keys = growthActiveKeys(hayExtra);
     function th(key, label, extraAttr) {
-        var act = (ef === key);
-        var fl = act ? (growthSort.dir < 0 ? ' &#9662;' : ' &#9652;') : '';
+        var pos = -1;
+        for (var i = 0; i < keys.length; i++) if (keys[i].key === key) pos = i;
+        var act = pos >= 0;
+        var fl = act ? (keys[pos].dir < 0 ? ' &#9662;' : ' &#9652;') : '';
+        // el ordinal solo aparece si hay dos criterios: con uno solo seria ruido
+        var ord = (act && keys.length > 1) ? '<sup class="gbar-ord">' + (pos + 1) + '</sup>' : '';
+        // sobre una columna que ya esta en el criterio, Shift+clic invierte ese
+        // nivel en vez de sumarla: el tooltip tiene que decir lo que hace
+        var ayuda = act ? 'Shift+clic invierte este nivel'
+                        : 'Shift+clic la suma como segundo criterio';
         return '<span class="sortable' + (act ? ' active' : '') + '"' +
-               ' onclick="growthSetSort(\'' + key + '\')" title="Ordenar por ' + label + '"' +
-               (extraAttr || '') + '>' + label + fl + '</span>';
+               ' onclick="growthSetSort(\'' + key + '\', event)"' +
+               ' title="Ordenar por ' + label + ' &mdash; ' + ayuda + '"' +
+               (extraAttr || '') + '>' + label + fl + ord + '</span>';
     }
     if (!hayExtra) {
         return '<div class="gbar-hdr" style="grid-template-columns:120px 1fr 66px">' +
-               th('name', 'Producto') + '<span></span>' + th('pp', 'DP%') + '</div>';
+               th('name', 'Producto') + '<span></span>' + th('pp', metricLabel) + '</div>';
     }
-    return '<div class="gbar-hdr">' + th('name', 'Producto') + '<span></span>' + th('pp', 'DP%') +
+    // metricLabel y no 'DP%' fijo: en Fisica la columna muestra puntos de DF% y el
+    // titulo de la vista ya decia DF%, asi que el encabezado contradecia a la cifra.
+    return '<div class="gbar-hdr">' + th('name', 'Producto') + '<span></span>' + th('pp', metricLabel) +
         th('unid', 'Unidades', ' data-t="Unidades atribuibles al cambio de distribucion ponderada"') +
         th('valor', 'A PSL neto', ' data-t="Valorizadas a PSL neto, ponderado por el mix de presentaciones"') +
         '</div>';
@@ -2813,6 +2869,7 @@ function renderGrowth() {
     }
     if (!rows.length) {
         up.innerHTML = '<div class="evol-empty">Sin datos para la selecci&oacute;n.</div>'; down.innerHTML = '';
+        growthHayExtra = false;   // no se dibujo ningun encabezado con columnas extra
         // sin filas no hay neto: dejarlo visible mostraria el total del periodo anterior
         var vac = document.getElementById('growthTotal');
         if (vac) { vac.innerHTML = ''; vac.style.display = 'none'; }
@@ -2822,6 +2879,7 @@ function renderGrowth() {
         var ups = rows.filter(function (r) { return r.delta > 0; });
         var downs = rows.filter(function (r) { return r.delta < 0; });
         var hayExtra = rows.some(function (r) { return !!r.extra; });
+        growthHayExtra = hayExtra;      // el criterio visible es growthActiveKeys(hayExtra)
         var hdr = growthHdr(hayExtra);
         var cmp = growthCmp(hayExtra);
         ups.sort(cmp); downs.sort(cmp);
