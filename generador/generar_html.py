@@ -450,6 +450,7 @@ def main():
     unistore = load_opt("unidades_region.json")
     unidepstore = load_opt("unidades_depto.json")
     deptowinstore = load_opt("depto_win.json")
+    pslstore = load_opt("psl_ponderado.json")   # PSL ponderado por el mix de presentaciones
 
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
@@ -609,6 +610,13 @@ def main():
               # WIN ya no se inyecta: el front lo arma por período desde los conteos
               # (WINp() en la plantilla), así el segmentador puede moverse sin
               # multiplicar el payload por cada período.
+              # PSL ponderado por el mix real de unidades de cada presentacion:
+              # dentro de un mismo mercado los precios de lista llegan a diferir 45x,
+              # asi que un PSL unico por producto seria un numero elegido a dedo.
+              ("var PSL = " + dump({k: {"psl": v["psl_ponderado"], "cob": v["cobertura"]}
+                                    for k, v in pslstore["datos"].items()
+                                    if v.get("psl_ponderado")}) + ";\n"
+               if pslstore else "var PSL = null;\n") +
               "var WINMETA = " + dump(winmeta) + ";\n" +
               "var TRIMC = " + dump(trimc) + ";\n" +
               ("var WINC = " + dump(wincobj) + ";\n" if wincobj else "var WINC = null;\n") +

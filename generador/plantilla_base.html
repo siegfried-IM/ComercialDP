@@ -611,7 +611,13 @@ body {
 .growth-h { font-size:0.95rem; margin:0 0 10px; }
 .growth-h.up { color:#198754; }
 .growth-h.down { color:#dc3545; }
-.gbar-row { display:grid; grid-template-columns:130px 1fr 74px; align-items:center; gap:8px; padding:3px 0; font-size:0.8rem; }
+.gbar-row { display:grid; grid-template-columns:120px 1fr 66px; align-items:center; gap:8px; padding:3px 0; font-size:0.8rem; }
+.gbar-row.convalor, .gbar-hdr { grid-template-columns:120px 1fr 66px 76px 106px; }
+.gbar-u { text-align:right; font-variant-numeric:tabular-nums; font-size:0.74rem; color:#4a3436; white-space:nowrap; }
+.gbar-money { text-align:right; font-variant-numeric:tabular-nums; font-size:0.74rem; font-weight:700; white-space:nowrap; }
+.gbar-hdr { display:grid; gap:8px; font-size:0.62rem; text-transform:uppercase; letter-spacing:.5px; color:#a58589; border-bottom:1px solid #f0e4e5; padding-bottom:3px; margin-bottom:5px; }
+.gbar-hdr span:nth-child(n+3) { text-align:right; }
+.growth-total { margin:10px 0 0; padding:8px 12px; background:#f7ebec; border-radius:8px; font-size:0.82rem; color:#5a3f41; }
 .gbar-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#3a2022; }
 .gbar-track { background:#f0e4e5; border-radius:4px; height:14px; overflow:hidden; }
 .gbar-fill { display:block; height:100%; border-radius:4px; }
@@ -884,6 +890,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
                     <div id="growthDown"></div>
                 </div>
             </div>
+            <div class="growth-total" id="growthTotal" style="display:none"></div>
         </div>
 
         <!-- Map View -->
@@ -2599,13 +2606,67 @@ function initGrowth() {
     }
 }
 
-function growthBar(name, delta, maxAbs, positive) {
+// === UNIDADES Y PESOS ATRIBUIBLES AL CAMBIO DE DP% ===
+// La farmacia que se gana (o se pierde) es del nucleo Pareto 80-20, y ahi se
+// captura el share habitual del producto. Desarrollando:
+//    farmacias ganadas x unidades de mercado por farmacia del nucleo x share
+//  = (dDP% x 80-20) x (0,80 x mercado / 80-20) x (Siegfried / mercado)
+//  = dDP% x 0,80 x unidades Siegfried
+// El 0,80 es la definicion del nucleo: concentra el 80% de las unidades del
+// mercado. Solo vale para DP%, que se mide sobre ese nucleo; en DF% el
+// denominador es el mercado entero y el razonamiento no aplica.
+function unidsSie(product, location) {
+    if (!hayUnidades() || !WINU.win[currentWindow]) return null;
+    var reg = WINU.win[currentWindow].reg[product];
+    if (!reg) return null;
+    if (location === 'TOTAL') return reg.TOTAL ? reg.TOTAL.sie : null;
+    var regs;
+    if (location.indexOf('ZONA:') === 0) regs = zoneRegions[location.slice(5)] || [];
+    else if (location.indexOf('PROV:') === 0) {
+        var pv = location.slice(5), todas = allRegions();
+        regs = [];
+        for (var i = 0; i < todas.length; i++) if (regionProvincia[todas[i]] === pv) regs.push(todas[i]);
+    } else regs = [location];
+    var s = 0, hay = false;
+    for (var j = 0; j < regs.length; j++) {
+        var c = reg[regs[j]];
+        if (c) { hay = true; s += c.sie; }          // las unidades son aditivas
+    }
+    return hay ? s : null;
+}
+
+function atribuible(product, location, delta) {
+    if (currentMetric !== 'DP') return null;
+    var u = unidsSie(product, location);
+    if (u == null) return null;
+    var unid = delta * 0.80 * u;
+    var p = (typeof PSL !== 'undefined' && PSL && PSL[product]) ? PSL[product] : null;
+    return { unid: unid, valor: p ? unid * p.psl : null, cob: p ? p.cob : null };
+}
+
+function fmtPesos(v) {
+    if (v == null) return '<span class="sd">&mdash;</span>';
+    var a = Math.abs(v), sg = v < 0 ? '-' : '';
+    if (a >= 1e9) return sg + '$ ' + (a / 1e9).toLocaleString('es-AR', { maximumFractionDigits: 2 }) + ' MM';
+    if (a >= 1e6) return sg + '$ ' + (a / 1e6).toLocaleString('es-AR', { maximumFractionDigits: 1 }) + ' M';
+    return sg + '$ ' + Math.round(a).toLocaleString('es-AR');
+}
+
+function growthBar(name, delta, maxAbs, positive, extra) {
     var pct = maxAbs ? Math.min(100, Math.abs(delta) / maxAbs * 100) : 0;
     var color = positive ? '#198754' : '#dc3545';
     var sign = delta >= 0 ? '+' : '';
-    return '<div class="gbar-row"><span class="gbar-name" title="' + name + '">' + name + '</span>' +
+    var cols = '';
+    if (extra) {
+        var tit = (extra.cob != null && extra.cob < 0.98)
+            ? ' title="PSL ponderado con el ' + (extra.cob * 100).toFixed(0) + '% de las unidades del producto"' : '';
+        cols = '<span class="gbar-u">' + (extra.unid == null ? '<span class="sd">&mdash;</span>'
+                 : (extra.unid >= 0 ? '+' : '') + Math.round(extra.unid).toLocaleString('es-AR')) + '</span>' +
+               '<span class="gbar-money" style="color:' + color + '"' + tit + '>' + fmtPesos(extra.valor) + '</span>';
+    }
+    return '<div class="gbar-row' + (extra ? ' convalor' : '') + '"><span class="gbar-name" title="' + name + '">' + name + '</span>' +
         '<span class="gbar-track"><span class="gbar-fill" style="width:' + pct + '%;background:' + color + '"></span></span>' +
-        '<span class="gbar-val" style="color:' + color + '">' + sign + (delta * 100).toFixed(1) + ' pp</span></div>';
+        '<span class="gbar-val" style="color:' + color + '">' + sign + (delta * 100).toFixed(1) + ' pp</span>' + cols + '</div>';
 }
 
 // {act, cmp} del producto en una ubicación, para la ventana + variación activas.
@@ -2647,7 +2708,8 @@ function renderGrowth() {
             var r = winLocRatios(pn, region);
             if (!r || r.act == null || r.cmp == null) continue;
             if (!isNaN(thVal) && r.act >= thVal) continue;   // umbral sobre el valor actual
-            rows.push({ name: pn, delta: r.act - r.cmp });
+            rows.push({ name: pn, delta: r.act - r.cmp,
+                        extra: atribuible(pn, region, r.act - r.cmp) });
         }
     } else {
         // fallback TRIM (sin datos de ventana): último vs primer período de la serie
@@ -2666,12 +2728,36 @@ function renderGrowth() {
     }
     if (!rows.length) {
         up.innerHTML = '<div class="evol-empty">Sin datos para la selecci&oacute;n.</div>'; down.innerHTML = '';
+        // sin filas no hay neto: dejarlo visible mostraria el total del periodo anterior
+        var vac = document.getElementById('growthTotal');
+        if (vac) { vac.innerHTML = ''; vac.style.display = 'none'; }
     } else {
         var maxAbs = Math.max.apply(null, rows.map(function (r) { return Math.abs(r.delta); }).concat([0.0001]));
         var ups = rows.filter(function (r) { return r.delta > 0; }).sort(function (x, y) { return y.delta - x.delta; });
         var downs = rows.filter(function (r) { return r.delta < 0; }).sort(function (x, y) { return x.delta - y.delta; });
-        up.innerHTML = ups.length ? ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true); }).join('') : '<div class="evol-empty">Ninguno.</div>';
-        down.innerHTML = downs.length ? downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+        var hayExtra = rows.some(function (r) { return !!r.extra; });
+        var hdr = hayExtra ? '<div class="gbar-hdr"><span>Producto</span><span></span><span>DP%</span>' +
+                             '<span title="Unidades atribuibles al cambio de distribucion ponderada">Unidades</span>' +
+                             '<span title="Valorizadas a PSL neto, ponderado por el mix de presentaciones">A PSL neto</span></div>' : '';
+        up.innerHTML = ups.length ? hdr + ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true, r.extra); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+        down.innerHTML = downs.length ? hdr + downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false, r.extra); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+        // el neto es lo que se lleva a una reunion: ganado menos perdido
+        var tu = 0, tv = 0, hayV = false;
+        for (var q = 0; q < rows.length; q++) {
+            if (!rows[q].extra) continue;
+            tu += rows[q].extra.unid;
+            if (rows[q].extra.valor != null) { tv += rows[q].extra.valor; hayV = true; }
+        }
+        var res = document.getElementById('growthTotal');
+        if (res) {
+            res.innerHTML = hayExtra
+                ? 'Neto atribuible al cambio de distribuci&oacute;n: <b>' + (tu >= 0 ? '+' : '') +
+                  Math.round(tu).toLocaleString('es-AR') + ' unidades</b>' +
+                  (hayV ? ' &middot; <b>' + fmtPesos(tv) + '</b> a PSL neto' : '') +
+                  ' <span class="ctx-def">&mdash; s&oacute;lo la porci&oacute;n explicada por estar en m&aacute;s (o menos) farmacias del n&uacute;cleo 80-20</span>'
+                : '';
+            res.style.display = hayExtra ? '' : 'none';
+        }
     }
     var gt = document.getElementById('growthTitle');
     if (gt) {
