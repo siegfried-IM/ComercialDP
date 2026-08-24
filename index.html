@@ -618,6 +618,8 @@ body {
 .gbar-hdr { display:grid; gap:8px; font-size:0.62rem; text-transform:uppercase; letter-spacing:.5px; color:#a58589; border-bottom:1px solid #f0e4e5; padding-bottom:3px; margin-bottom:5px; }
 .gbar-hdr span:nth-child(n+3) { text-align:right; }
 .growth-total { margin:10px 0 0; padding:8px 12px; background:#f7ebec; border-radius:8px; font-size:0.82rem; color:#5a3f41; }
+.gbar-row.gbar-sub { border-top:1px solid #e4d3d5; margin-top:5px; padding-top:6px; font-weight:700; }
+.gbar-row.gbar-sub .gbar-name { color:#5a3f41; }
 .gbar-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#3a2022; }
 .gbar-track { background:#f0e4e5; border-radius:4px; height:14px; overflow:hidden; }
 .gbar-fill { display:block; height:100%; border-radius:4px; }
@@ -950,7 +952,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
 
     <!-- Footer -->
     <div class="footer">
-        Generado el 24/08/2026 13:32 | DP% Report - Datos Junio 2026
+        Generado el 24/08/2026 13:42 | DP% Report - Datos Junio 2026
     </div>
 </div>
 
@@ -2673,6 +2675,27 @@ function fmtPesos(v) {
     return sg + '$ ' + Math.round(a).toLocaleString('es-AR');
 }
 
+// Subtotal de una columna. NO suma los pp: los puntos de DP% de productos
+// distintos no son aditivos (cada uno se mide sobre el nucleo de SU mercado).
+// Unidades y pesos si lo son, y son lo que se lleva a una reunion.
+function growthSubtotal(rows, positive) {
+    var u = 0, v = 0, hayV = false, n = 0;
+    for (var i = 0; i < rows.length; i++) {
+        if (!rows[i].extra) continue;
+        n++; u += rows[i].extra.unid;
+        if (rows[i].extra.valor != null) { v += rows[i].extra.valor; hayV = true; }
+    }
+    if (!n) return '';
+    var color = positive ? '#198754' : '#dc3545';
+    return '<div class="gbar-row convalor gbar-sub">' +
+        '<span class="gbar-name">Total (' + n + ')</span>' +
+        '<span></span><span></span>' +
+        '<span class="gbar-u" style="color:' + color + '">' + (u >= 0 ? '+' : '') +
+        Math.round(u).toLocaleString('es-AR') + '</span>' +
+        '<span class="gbar-money" style="color:' + color + '">' +
+        (hayV ? fmtPesos(v) : '<span class="sd">&mdash;</span>') + '</span></div>';
+}
+
 function growthBar(name, delta, maxAbs, positive, extra) {
     var pct = maxAbs ? Math.min(100, Math.abs(delta) / maxAbs * 100) : 0;
     var color = positive ? '#198754' : '#dc3545';
@@ -2760,8 +2783,8 @@ function renderGrowth() {
         var hdr = hayExtra ? '<div class="gbar-hdr"><span>Producto</span><span></span><span>DP%</span>' +
                              '<span title="Unidades atribuibles al cambio de distribucion ponderada">Unidades</span>' +
                              '<span title="Valorizadas a PSL neto, ponderado por el mix de presentaciones">A PSL neto</span></div>' : '';
-        up.innerHTML = ups.length ? hdr + ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true, r.extra); }).join('') : '<div class="evol-empty">Ninguno.</div>';
-        down.innerHTML = downs.length ? hdr + downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false, r.extra); }).join('') : '<div class="evol-empty">Ninguno.</div>';
+        up.innerHTML = ups.length ? hdr + ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true, r.extra); }).join('') + growthSubtotal(ups, true) : '<div class="evol-empty">Ninguno.</div>';
+        down.innerHTML = downs.length ? hdr + downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false, r.extra); }).join('') + growthSubtotal(downs, false) : '<div class="evol-empty">Ninguno.</div>';
         // el neto es lo que se lleva a una reunion: ganado menos perdido
         var tu = 0, tv = 0, hayV = false;
         for (var q = 0; q < rows.length; q++) {
