@@ -620,6 +620,9 @@ body {
 .growth-total { margin:10px 0 0; padding:8px 12px; background:#f7ebec; border-radius:8px; font-size:0.82rem; color:#5a3f41; }
 .gbar-row.gbar-sub { border-top:1px solid #e4d3d5; margin-top:5px; padding-top:6px; font-weight:700; }
 .gbar-row.gbar-sub .gbar-name { color:#5a3f41; }
+.gbar-hdr .sortable { cursor:pointer; user-select:none; }
+.gbar-hdr .sortable:hover { color:#95232C; text-decoration:underline; }
+.gbar-hdr .sortable.active { color:#95232C; font-weight:700; }
 .gbar-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#3a2022; }
 .gbar-track { background:#f0e4e5; border-radius:4px; height:14px; overflow:hidden; }
 .gbar-fill { display:block; height:100%; border-radius:4px; }
@@ -952,7 +955,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
 
     <!-- Footer -->
     <div class="footer">
-        Generado el 24/08/2026 13:42 | DP% Report - Datos Junio 2026
+        Generado el 24/08/2026 14:19 | DP% Report - Datos Junio 2026
     </div>
 </div>
 
@@ -2675,6 +2678,65 @@ function fmtPesos(v) {
     return sg + '$ ' + Math.round(a).toLocaleString('es-AR');
 }
 
+// === ORDEN DE LA VISTA CRECIMIENTO ===
+// Una sola fuente de verdad para los dos paneles. 'dir' se interpreta por
+// MAGNITUD, no por signo: en "Mas cayeron" todos los valores son negativos, y
+// ordenarlos de mayor a menor pondria la caida mas chica arriba, que es lo
+// contrario de lo que se quiere leer.
+var growthSort = { key: 'pp', dir: -1 };   // -1 = mayor impacto primero
+
+// Si se pidio ordenar por una columna que esta vacia (DF%, o un periodo sin
+// unidades), ordenar por ella no diria nada: se cae a los pp.
+function growthEffKey(hayExtra) {
+    var k = growthSort.key;
+    if (!hayExtra && (k === 'unid' || k === 'valor')) return 'pp';
+    return k;
+}
+
+function growthSetSort(key) {
+    if (growthSort.key === key) growthSort.dir = -growthSort.dir;
+    else { growthSort.key = key; growthSort.dir = (key === 'name') ? 1 : -1; }
+    renderGrowth();
+}
+
+function growthVal(r, k) {
+    if (k === 'pp') return Math.abs(r.delta);
+    if (k === 'unid') return r.extra ? Math.abs(r.extra.unid) : null;
+    if (k === 'valor') return (r.extra && r.extra.valor != null) ? Math.abs(r.extra.valor) : null;
+    return null;
+}
+
+function growthCmp(hayExtra) {
+    var k = growthEffKey(hayExtra), d = growthSort.dir;
+    return function (a, b) {
+        if (k === 'name') return String(a.name).localeCompare(String(b.name), 'es') * d;
+        var va = growthVal(a, k), vb = growthVal(b, k);
+        if (va == null && vb == null) return 0;      // sin dato siempre al fondo
+        if (va == null) return 1;
+        if (vb == null) return -1;
+        return (va - vb) * d;
+    };
+}
+
+function growthHdr(hayExtra) {
+    var ef = growthEffKey(hayExtra);
+    function th(key, label, extraAttr) {
+        var act = (ef === key);
+        var fl = act ? (growthSort.dir < 0 ? ' &#9662;' : ' &#9652;') : '';
+        return '<span class="sortable' + (act ? ' active' : '') + '"' +
+               ' onclick="growthSetSort(\'' + key + '\')" title="Ordenar por ' + label + '"' +
+               (extraAttr || '') + '>' + label + fl + '</span>';
+    }
+    if (!hayExtra) {
+        return '<div class="gbar-hdr" style="grid-template-columns:120px 1fr 66px">' +
+               th('name', 'Producto') + '<span></span>' + th('pp', 'DP%') + '</div>';
+    }
+    return '<div class="gbar-hdr">' + th('name', 'Producto') + '<span></span>' + th('pp', 'DP%') +
+        th('unid', 'Unidades', ' data-t="Unidades atribuibles al cambio de distribucion ponderada"') +
+        th('valor', 'A PSL neto', ' data-t="Valorizadas a PSL neto, ponderado por el mix de presentaciones"') +
+        '</div>';
+}
+
 // Subtotal de una columna. NO suma los pp: los puntos de DP% de productos
 // distintos no son aditivos (cada uno se mide sobre el nucleo de SU mercado).
 // Unidades y pesos si lo son, y son lo que se lleva a una reunion.
@@ -2777,12 +2839,13 @@ function renderGrowth() {
         if (vac) { vac.innerHTML = ''; vac.style.display = 'none'; }
     } else {
         var maxAbs = Math.max.apply(null, rows.map(function (r) { return Math.abs(r.delta); }).concat([0.0001]));
-        var ups = rows.filter(function (r) { return r.delta > 0; }).sort(function (x, y) { return y.delta - x.delta; });
-        var downs = rows.filter(function (r) { return r.delta < 0; }).sort(function (x, y) { return x.delta - y.delta; });
+        // el orden lo fija growthCmp segun la columna elegida (por defecto, pp)
+        var ups = rows.filter(function (r) { return r.delta > 0; });
+        var downs = rows.filter(function (r) { return r.delta < 0; });
         var hayExtra = rows.some(function (r) { return !!r.extra; });
-        var hdr = hayExtra ? '<div class="gbar-hdr"><span>Producto</span><span></span><span>DP%</span>' +
-                             '<span title="Unidades atribuibles al cambio de distribucion ponderada">Unidades</span>' +
-                             '<span title="Valorizadas a PSL neto, ponderado por el mix de presentaciones">A PSL neto</span></div>' : '';
+        var hdr = growthHdr(hayExtra);
+        var cmp = growthCmp(hayExtra);
+        ups.sort(cmp); downs.sort(cmp);
         up.innerHTML = ups.length ? hdr + ups.map(function (r) { return growthBar(r.name, r.delta, maxAbs, true, r.extra); }).join('') + growthSubtotal(ups, true) : '<div class="evol-empty">Ninguno.</div>';
         down.innerHTML = downs.length ? hdr + downs.map(function (r) { return growthBar(r.name, r.delta, maxAbs, false, r.extra); }).join('') + growthSubtotal(downs, false) : '<div class="evol-empty">Ninguno.</div>';
         // el neto es lo que se lleva a una reunion: ganado menos perdido
