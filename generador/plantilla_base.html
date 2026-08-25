@@ -2624,12 +2624,21 @@ function initGrowth() {
 // El 0,80 es la definicion del nucleo (vParetoCorte en la app; medido: concentra
 // exactamente el 80,0% de las unidades del mercado).
 //
-// fMarg es la correccion que evita el error grande: NO se entra en una farmacia
-// promedio del nucleo, se entra por las mas chicas, que son las que faltaban
-// justamente porque cuestan mas. Medido contra Qlik por producto, una farmacia
-// del ultimo tramo del nucleo rinde ~0,39 de la promedio. Sin este factor la
-// atribucion se sobreestima unas 2,6 veces. Sigue siendo generoso: los puntos que
-// se ganan son decenas de farmacias, o sea la cola misma de ese tramo.
+// fMarg corrige que la farmacia que se gana no es la PROMEDIO del nucleo. Las
+// unicas que se pueden ganar son las del nucleo donde Siegfried hoy no esta, y se
+// midio contra Qlik cuanto vende una de esas frente a la promedio: 0,51 a 1,25
+// segun el mercado, mediana 0,67.
+//
+// El patron tiene sentido comercial: donde ya se cubre casi todo el nucleo, lo que
+// queda por ganar es lo chico (Calcio Base 0,51 con 88 farmacias ganables); donde
+// se cubre poco, lo que falta es casi todo el nucleo y el factor se acerca a 1
+// (Deltrox 0,92 con 3.209 ganables).
+//
+// Una version anterior uso como proxy el ultimo tramo del nucleo (acumulado de
+// Pareto 0,70-0,80) suponiendo que lo que falta es lo mas chico. Medido, es falso
+// -- daba 0,37 contra 0,67 real -- y subestimaba la atribucion a la mitad. Que
+// Siegfried no este en una farmacia depende de la relacion comercial, no del
+// tamano del punto.
 //
 // Solo vale para DP%, que se mide sobre el nucleo; en DF% el denominador es el
 // mercado entero y el razonamiento no aplica.
@@ -2653,7 +2662,11 @@ function unidsSie(product, location) {
     return hay ? s : null;
 }
 
-var FACTMARG_DEF = 0.386;   // mediana medida, para un producto sin factor propio
+// Mediana de los 28 productos con suficientes farmacias ganables. La usan los 14
+// que tienen menos de 50: ahi el promedio seria ruido. Son los de cobertura mas
+// alta, donde el patron sugiere un factor MAS BAJO que la mediana, asi que su
+// aporte queda si acaso sobreestimado.
+var FACTMARG_DEF = 0.6675;
 
 function factorMarginal(product) {
     if (typeof FACTMARG !== 'undefined' && FACTMARG && FACTMARG[product]) return FACTMARG[product];
@@ -2667,7 +2680,8 @@ function atribuible(product, location, delta) {
     var unid = delta * 0.80 * factorMarginal(product) * u;
     var p = (typeof PSL !== 'undefined' && PSL && PSL[product]) ? PSL[product] : null;
     return { unid: unid, valor: p ? unid * p.psl : null, cob: p ? p.cob : null,
-             fmarg: factorMarginal(product) };
+             fmarg: factorMarginal(product),
+             fmargProp: !!(typeof FACTMARG !== 'undefined' && FACTMARG && FACTMARG[product]) };
 }
 
 function fmtPesos(v) {
@@ -2819,8 +2833,9 @@ function growthBar(name, delta, maxAbs, positive, extra) {
     if (extra) {
         var tit = (extra.cob != null && extra.cob < 0.98)
             ? ' title="PSL ponderado con el ' + (extra.cob * 100).toFixed(0) + '% de las unidades del producto"' : '';
-        var titU = extra.fmarg ? ' title="La farmacia que se gana es de la cola del nucleo: rinde ' +
-                   (extra.fmarg * 100).toFixed(0) + '% de la farmacia promedio"' : '';
+        var titU = extra.fmarg ? ' title="Valuadas como una farmacia del núcleo donde hoy no estás: rinde ' +
+                   (extra.fmarg * 100).toFixed(0) + '% de la farmacia promedio del núcleo' +
+                   (extra.fmargProp ? '' : ' (mediana: este producto tiene muy pocas ganables)') + '"' : '';
         cols = '<span class="gbar-u"' + titU + '>' + (extra.unid == null ? '<span class="sd">&mdash;</span>'
                  : (extra.unid >= 0 ? '+' : '') + Math.round(extra.unid).toLocaleString('es-AR')) + '</span>' +
                '<span class="gbar-money" style="color:' + color + '"' + tit + '>' + fmtPesos(extra.valor) + '</span>';
@@ -2918,7 +2933,7 @@ function renderGrowth() {
                 ? 'Neto atribuible al cambio de distribuci&oacute;n: <b>' + (tu >= 0 ? '+' : '') +
                   Math.round(tu).toLocaleString('es-AR') + ' unidades</b>' +
                   (hayV ? ' &middot; <b>' + fmtPesos(tv) + '</b> a PSL neto' : '') +
-                  ' <span class="ctx-def">&mdash; s&oacute;lo la porci&oacute;n explicada por estar en m&aacute;s (o menos) farmacias del n&uacute;cleo 80-20, valuadas como la farmacia marginal (~39% de la promedio del n&uacute;cleo)</span>'
+                  ' <span class="ctx-def">&mdash; s&oacute;lo la porci&oacute;n explicada por estar en m&aacute;s (o menos) farmacias del n&uacute;cleo 80-20, valuadas como una farmacia del n&uacute;cleo donde hoy no est&aacute;s (mediana 67% de la promedio)</span>'
                 : '';
             res.style.display = hayExtra ? '' : 'none';
         }
