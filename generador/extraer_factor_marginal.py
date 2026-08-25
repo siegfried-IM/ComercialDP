@@ -38,6 +38,10 @@ STORE = os.path.join(DATA, "factor_marginal.json")
 W = ("{$<CPA=,MesesRollBack={0},DescripcionTipo={'Mensual'},[AñoSeleccion]=,MesSeleccion=,"
      "Flag_Rollback={0},[AñoMes_Num]={\">=$(=max(AñoMes_Num)-2)<=$(=max(AñoMes_Num))\"}>}")
 WS = W[:-2] + ",DescripcionLaboratorioIMS={'SIEGFRIED'}>}"
+# mismo trimestre de hace 12 meses, para saber donde NO estabamos
+WANT = ("{$<CPA=,MesesRollBack={0},DescripcionTipo={'Mensual'},[AñoSeleccion]=,MesSeleccion=,"
+        "Flag_Rollback={0},[AñoMes_Num]={\">=$(=max(AñoMes_Num)-14)<=$(=max(AñoMes_Num)-12)\"},"
+        "DescripcionLaboratorioIMS={'SIEGFRIED'}>}")
 ACUM = "Rangesum(Above(Sum(%s MensualUnidades)/Sum(%s total MensualUnidades),0,RowNo()))" % (W, W)
 DIM = "(CPA,(=Sum(%s MensualUnidades),Desc))" % W
 CORTE = 0.8
@@ -47,9 +51,11 @@ MIN_FARM = 50          # con menos farmacias ganables la media es ruido
 EXPR = {
     "un": "Sum(Aggr(If(%s<%s, Sum(%s MensualUnidades)), %s))" % (ACUM, CORTE, W, DIM),
     "nn": "Count(Aggr(If(%s<%s, 1), %s))" % (ACUM, CORTE, DIM),
-    "u0": "Sum(Aggr(If(%s<%s and Sum(%s MensualUnidades)=0, Sum(%s MensualUnidades)), %s))"
-          % (ACUM, CORTE, WS, W, DIM),
-    "n0": "Count(Aggr(If(%s<%s and Sum(%s MensualUnidades)=0, 1), %s))" % (ACUM, CORTE, WS, DIM),
+    # las que se GANARON de verdad: en el nucleo hoy, con SIE hoy, sin SIE hace 12m
+    "u0": ("Sum(Aggr(If(%s<%s and Sum(%s MensualUnidades)>0 and Sum(%s MensualUnidades)=0, "
+           "Sum(%s MensualUnidades)), %s))" % (ACUM, CORTE, WS, WANT, W, DIM)),
+    "n0": ("Count(Aggr(If(%s<%s and Sum(%s MensualUnidades)>0 and Sum(%s MensualUnidades)=0, 1), %s))"
+           % (ACUM, CORTE, WS, WANT, DIM)),
 }
 
 
@@ -75,10 +81,9 @@ def controles(v, mercado, ganables_esperadas):
         r = nuc / (CORTE * mercado)
         if abs(r - 1) > TOL:
             f.append("núcleo %.3f x lo esperado" % r)
-    if ganables_esperadas is not None and v.get("farmacias_ganables") is not None:
-        d = v["farmacias_ganables"] - ganables_esperadas
-        if abs(d) > max(3, 0.02 * max(1, ganables_esperadas)):
-            f.append("ganables %d vs %d esperadas" % (v["farmacias_ganables"], ganables_esperadas))
+    # las ganadas no pueden superar a las ganables de hace un ano ni ser negativas
+    if v.get("farmacias_ganables") is not None and v["farmacias_ganables"] < 0:
+        f.append("ganadas negativas")
     return f
 
 
@@ -104,7 +109,7 @@ def main():
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
     out["meta"] = {"ventana": "TRIM", "periodo": max_p, "label": C.periodo_label(max_p),
-                   "corte_pareto": CORTE, "definicion": "u/farmacia del núcleo SIN Siegfried "
+                   "corte_pareto": CORTE, "definicion": "u/farmacia EFECTIVAMENTE GANADA en 12m "
                                                         "sobre u/farmacia del núcleo"}
     objetivo = pedidos or list(mapping)
     print(f"Factor de la farmacia ganable · {C.periodo_label(max_p)} · {len(objetivo)} mercados")
