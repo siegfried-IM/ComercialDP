@@ -451,6 +451,7 @@ def main():
     unidepstore = load_opt("unidades_depto.json")
     deptowinstore = load_opt("depto_win.json")
     pslstore = load_opt("psl_ponderado.json")   # PSL ponderado por el mix de presentaciones
+    margstore = load_opt("factor_marginal.json")  # cuanto rinde la farmacia marginal del nucleo
 
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
@@ -610,6 +611,12 @@ def main():
               # WIN ya no se inyecta: el front lo arma por período desde los conteos
               # (WINp() en la plantilla), así el segmentador puede moverse sin
               # multiplicar el payload por cada período.
+              # Factor marginal: la farmacia que se gana al subir el DP% es de la COLA
+              # del nucleo, no la promedio. Rinde ~0,39 de la promedio (medido por
+              # producto). Sin esto la atribucion se sobreestima unas 2,6 veces.
+              ("var FACTMARG = " + dump({k: v["factor"] for k, v in margstore["datos"].items()
+                                         if v.get("factor")}) + ";\n"
+               if margstore else "var FACTMARG = null;\n") +
               # PSL ponderado por el mix real de unidades de cada presentacion:
               # dentro de un mismo mercado los precios de lista llegan a diferir 45x,
               # asi que un PSL unico por producto seria un numero elegido a dedo.

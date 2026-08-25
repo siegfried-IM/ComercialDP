@@ -2617,12 +2617,22 @@ function initGrowth() {
 // === UNIDADES Y PESOS ATRIBUIBLES AL CAMBIO DE DP% ===
 // La farmacia que se gana (o se pierde) es del nucleo Pareto 80-20, y ahi se
 // captura el share habitual del producto. Desarrollando:
-//    farmacias ganadas x unidades de mercado por farmacia del nucleo x share
-//  = (dDP% x 80-20) x (0,80 x mercado / 80-20) x (Siegfried / mercado)
-//  = dDP% x 0,80 x unidades Siegfried
-// El 0,80 es la definicion del nucleo: concentra el 80% de las unidades del
-// mercado. Solo vale para DP%, que se mide sobre ese nucleo; en DF% el
-// denominador es el mercado entero y el razonamiento no aplica.
+//    farmacias ganadas x unidades de mercado de la farmacia que se gana x share
+//  = (dDP% x 80-20) x (0,80 x mercado / 80-20 x fMarg) x (Siegfried / mercado)
+//  = dDP% x 0,80 x fMarg x unidades Siegfried
+//
+// El 0,80 es la definicion del nucleo (vParetoCorte en la app; medido: concentra
+// exactamente el 80,0% de las unidades del mercado).
+//
+// fMarg es la correccion que evita el error grande: NO se entra en una farmacia
+// promedio del nucleo, se entra por las mas chicas, que son las que faltaban
+// justamente porque cuestan mas. Medido contra Qlik por producto, una farmacia
+// del ultimo tramo del nucleo rinde ~0,39 de la promedio. Sin este factor la
+// atribucion se sobreestima unas 2,6 veces. Sigue siendo generoso: los puntos que
+// se ganan son decenas de farmacias, o sea la cola misma de ese tramo.
+//
+// Solo vale para DP%, que se mide sobre el nucleo; en DF% el denominador es el
+// mercado entero y el razonamiento no aplica.
 function unidsSie(product, location) {
     if (!hayUnidades() || !WINU.win[currentWindow]) return null;
     var reg = WINU.win[currentWindow].reg[product];
@@ -2643,13 +2653,21 @@ function unidsSie(product, location) {
     return hay ? s : null;
 }
 
+var FACTMARG_DEF = 0.386;   // mediana medida, para un producto sin factor propio
+
+function factorMarginal(product) {
+    if (typeof FACTMARG !== 'undefined' && FACTMARG && FACTMARG[product]) return FACTMARG[product];
+    return FACTMARG_DEF;
+}
+
 function atribuible(product, location, delta) {
     if (currentMetric !== 'DP') return null;
     var u = unidsSie(product, location);
     if (u == null) return null;
-    var unid = delta * 0.80 * u;
+    var unid = delta * 0.80 * factorMarginal(product) * u;
     var p = (typeof PSL !== 'undefined' && PSL && PSL[product]) ? PSL[product] : null;
-    return { unid: unid, valor: p ? unid * p.psl : null, cob: p ? p.cob : null };
+    return { unid: unid, valor: p ? unid * p.psl : null, cob: p ? p.cob : null,
+             fmarg: factorMarginal(product) };
 }
 
 function fmtPesos(v) {
@@ -2801,7 +2819,9 @@ function growthBar(name, delta, maxAbs, positive, extra) {
     if (extra) {
         var tit = (extra.cob != null && extra.cob < 0.98)
             ? ' title="PSL ponderado con el ' + (extra.cob * 100).toFixed(0) + '% de las unidades del producto"' : '';
-        cols = '<span class="gbar-u">' + (extra.unid == null ? '<span class="sd">&mdash;</span>'
+        var titU = extra.fmarg ? ' title="La farmacia que se gana es de la cola del nucleo: rinde ' +
+                   (extra.fmarg * 100).toFixed(0) + '% de la farmacia promedio"' : '';
+        cols = '<span class="gbar-u"' + titU + '>' + (extra.unid == null ? '<span class="sd">&mdash;</span>'
                  : (extra.unid >= 0 ? '+' : '') + Math.round(extra.unid).toLocaleString('es-AR')) + '</span>' +
                '<span class="gbar-money" style="color:' + color + '"' + tit + '>' + fmtPesos(extra.valor) + '</span>';
     }
@@ -2898,7 +2918,7 @@ function renderGrowth() {
                 ? 'Neto atribuible al cambio de distribuci&oacute;n: <b>' + (tu >= 0 ? '+' : '') +
                   Math.round(tu).toLocaleString('es-AR') + ' unidades</b>' +
                   (hayV ? ' &middot; <b>' + fmtPesos(tv) + '</b> a PSL neto' : '') +
-                  ' <span class="ctx-def">&mdash; s&oacute;lo la porci&oacute;n explicada por estar en m&aacute;s (o menos) farmacias del n&uacute;cleo 80-20</span>'
+                  ' <span class="ctx-def">&mdash; s&oacute;lo la porci&oacute;n explicada por estar en m&aacute;s (o menos) farmacias del n&uacute;cleo 80-20, valuadas como la farmacia marginal (~39% de la promedio del n&uacute;cleo)</span>'
                 : '';
             res.style.display = hayExtra ? '' : 'none';
         }

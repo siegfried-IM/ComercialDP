@@ -1,0 +1,305 @@
+{
+ "meta": {
+  "ventana": "TRIM",
+  "periodo": 24318,
+  "label": "Jun-2026",
+  "corte_pareto": 0.8,
+  "banda_marginal": 0.7
+ },
+ "datos": {
+  "Acemuk": {
+   "u_prom_nucleo": 283.8,
+   "u_marg_nucleo": 110.1,
+   "farmacias_nucleo": 5328,
+   "farmacias_marginales": 1717,
+   "factor": 0.3879
+  },
+  "Alidial": {
+   "u_prom_nucleo": 100.8,
+   "u_marg_nucleo": 39.0,
+   "farmacias_nucleo": 4588,
+   "farmacias_marginales": 1483,
+   "factor": 0.3869
+  },
+  "Hexaler cort": {
+   "u_prom_nucleo": 227.6,
+   "u_marg_nucleo": 84.6,
+   "farmacias_nucleo": 5049,
+   "farmacias_marginales": 1698,
+   "factor": 0.3717
+  },
+  "Aireal": {
+   "u_prom_nucleo": 56.0,
+   "u_marg_nucleo": 21.5,
+   "farmacias_nucleo": 3832,
+   "farmacias_marginales": 1250,
+   "factor": 0.3832
+  },
+  "Mometax": {
+   "u_prom_nucleo": 12.8,
+   "u_marg_nucleo": 4.9,
+   "farmacias_nucleo": 3420,
+   "farmacias_marginales": 1111,
+   "factor": 0.3848
+  },
+  "Acantex": {
+   "u_prom_nucleo": 31.9,
+   "u_marg_nucleo": 12.4,
+   "farmacias_nucleo": 2223,
+   "farmacias_marginales": 715,
+   "factor": 0.389
+  },
+  "Bactrim": {
+   "u_prom_nucleo": 61.5,
+   "u_marg_nucleo": 48.2,
+   "farmacias_nucleo": 4487,
+   "farmacias_marginales": 715,
+   "factor": 0.7844
+  },
+  "Cefalexiona": {
+   "u_prom_nucleo": 75.9,
+   "u_marg_nucleo": 28.6,
+   "farmacias_nucleo": 4718,
+   "farmacias_marginales": 1567,
+   "factor": 0.3766
+  },
+  "Decadron": {
+   "u_prom_nucleo": 202.0,
+   "u_marg_nucleo": 78.7,
+   "farmacias_nucleo": 5095,
+   "farmacias_marginales": 1635,
+   "factor": 0.3894
+  },
+  "Macromax": {
+   "u_prom_nucleo": 103.9,
+   "u_marg_nucleo": 41.6,
+   "farmacias_nucleo": 4671,
+   "farmacias_marginales": 1460,
+   "factor": 0.4001
+  },
+  "Calcio Base": {
+   "u_prom_nucleo": 87.7,
+   "u_marg_nucleo": 33.3,
+   "farmacias_nucleo": 3742,
+   "farmacias_marginales": 1233,
+   "factor": 0.3797
+  },
+  "ISIS Free": {
+   "u_prom_nucleo": 119.5,
+   "u_marg_nucleo": 41.3,
+   "farmacias_nucleo": 3424,
+   "farmacias_marginales": 1238,
+   "factor": 0.3458
+  },
+  "Siderblut": {
+   "u_prom_nucleo": 60.1,
+   "u_marg_nucleo": 24.0,
+   "farmacias_nucleo": 4372,
+   "farmacias_marginales": 1369,
+   "factor": 0.3993
+  },
+  "Trip D3": {
+   "u_prom_nucleo": 403.1,
+   "u_marg_nucleo": 149.2,
+   "farmacias_nucleo": 3964,
+   "farmacias_marginales": 1339,
+   "factor": 0.3701
+  },
+  "Deltrox": {
+   "u_prom_nucleo": 52.5,
+   "u_marg_nucleo": 20.0,
+   "farmacias_nucleo": 3521,
+   "farmacias_marginales": 1157,
+   "factor": 0.3804
+  },
+  "Exforge": {
+   "u_prom_nucleo": 98.6,
+   "u_marg_nucleo": 37.6,
+   "farmacias_nucleo": 3987,
+   "farmacias_marginales": 1306,
+   "factor": 0.3819
+  },
+  "Entresto": {
+   "u_prom_nucleo": 22.6,
+   "u_marg_nucleo": 9.3,
+   "farmacias_nucleo": 3224,
+   "farmacias_marginales": 981,
+   "factor": 0.411
+  },
+  "Dilatrend": {
+   "u_prom_nucleo": 176.0,
+   "u_marg_nucleo": 70.7,
+   "farmacias_nucleo": 4183,
+   "farmacias_marginales": 1301,
+   "factor": 0.4017
+  },
+  "Empax": {
+   "u_prom_nucleo": 39.1,
+   "u_marg_nucleo": 13.4,
+   "farmacias_nucleo": 2584,
+   "farmacias_marginales": 940,
+   "factor": 0.3439
+  },
+  "Metglucon": {
+   "u_prom_nucleo": 434.3,
+   "u_marg_nucleo": 162.2,
+   "farmacias_nucleo": 4169,
+   "farmacias_marginales": 1396,
+   "factor": 0.3735
+  },
+  "Roxolan": {
+   "u_prom_nucleo": 472.1,
+   "u_marg_nucleo": 184.6,
+   "farmacias_nucleo": 4104,
+   "farmacias_marginales": 1312,
+   "factor": 0.3911
+  },
+  "Roxolan Plus": {
+   "u_prom_nucleo": 86.2,
+   "u_marg_nucleo": 30.9,
+   "farmacias_nucleo": 3413,
+   "farmacias_marginales": 1192,
+   "factor": 0.3578
+  },
+  "Siltran": {
+   "u_prom_nucleo": 222.0,
+   "u_marg_nucleo": 86.1,
+   "farmacias_nucleo": 3751,
+   "farmacias_marginales": 1209,
+   "factor": 0.3877
+  },
+  "Sintrom": {
+   "u_prom_nucleo": 44.2,
+   "u_marg_nucleo": 18.1,
+   "farmacias_nucleo": 3868,
+   "farmacias_marginales": 1181,
+   "factor": 0.4096
+  },
+  "Terloc": {
+   "u_prom_nucleo": 258.6,
+   "u_marg_nucleo": 104.0,
+   "farmacias_nucleo": 4186,
+   "farmacias_marginales": 1302,
+   "factor": 0.4022
+  },
+  "Diovan": {
+   "u_prom_nucleo": 380.2,
+   "u_marg_nucleo": 150.0,
+   "farmacias_nucleo": 4364,
+   "farmacias_marginales": 1383,
+   "factor": 0.3946
+  },
+  "Telpres": {
+   "u_prom_nucleo": 79.7,
+   "u_marg_nucleo": 26.9,
+   "farmacias_nucleo": 3728,
+   "farmacias_marginales": 1383,
+   "factor": 0.3372
+  },
+  "Dauran": {
+   "u_prom_nucleo": 88.5,
+   "u_marg_nucleo": 30.0,
+   "farmacias_nucleo": 3153,
+   "farmacias_marginales": 1165,
+   "factor": 0.3385
+  },
+  "Pixaban": {
+   "u_prom_nucleo": 25.2,
+   "u_marg_nucleo": 8.1,
+   "farmacias_nucleo": 1906,
+   "farmacias_marginales": 744,
+   "factor": 0.3201
+  },
+  "Levital": {
+   "u_prom_nucleo": 51.5,
+   "u_marg_nucleo": 19.7,
+   "farmacias_nucleo": 3125,
+   "farmacias_marginales": 1023,
+   "factor": 0.382
+  },
+  "PGB": {
+   "u_prom_nucleo": 65.8,
+   "u_marg_nucleo": 26.0,
+   "farmacias_nucleo": 3967,
+   "farmacias_marginales": 1256,
+   "factor": 0.395
+  },
+  "QTP": {
+   "u_prom_nucleo": 156.8,
+   "u_marg_nucleo": 61.7,
+   "farmacias_nucleo": 3900,
+   "farmacias_marginales": 1240,
+   "factor": 0.3933
+  },
+  "Valium": {
+   "u_prom_nucleo": 31.3,
+   "u_marg_nucleo": 13.5,
+   "farmacias_nucleo": 4302,
+   "farmacias_marginales": 1247,
+   "factor": 0.4314
+  },
+  "Madopar": {
+   "u_prom_nucleo": 62.5,
+   "u_marg_nucleo": 25.3,
+   "farmacias_nucleo": 3826,
+   "farmacias_marginales": 1181,
+   "factor": 0.405
+  },
+  "Acneclin": {
+   "u_prom_nucleo": 25.9,
+   "u_marg_nucleo": 9.2,
+   "farmacias_nucleo": 3113,
+   "farmacias_marginales": 1090,
+   "factor": 0.3569
+  },
+  "Clobesol": {
+   "u_prom_nucleo": 52.5,
+   "u_marg_nucleo": 20.6,
+   "farmacias_nucleo": 4612,
+   "farmacias_marginales": 1471,
+   "factor": 0.3918
+  },
+  "Micomazol": {
+   "u_prom_nucleo": 58.3,
+   "u_marg_nucleo": 23.7,
+   "farmacias_nucleo": 5221,
+   "farmacias_marginales": 1610,
+   "factor": 0.4055
+  },
+  "Microsona": {
+   "u_prom_nucleo": 14.7,
+   "u_marg_nucleo": 6.1,
+   "farmacias_nucleo": 4244,
+   "farmacias_marginales": 1277,
+   "factor": 0.4154
+  },
+  "Paldar": {
+   "u_prom_nucleo": 25.6,
+   "u_marg_nucleo": 9.4,
+   "farmacias_nucleo": 3695,
+   "farmacias_marginales": 1254,
+   "factor": 0.3682
+  },
+  "Roaccutan": {
+   "u_prom_nucleo": 20.7,
+   "u_marg_nucleo": 7.6,
+   "farmacias_nucleo": 2834,
+   "farmacias_marginales": 964,
+   "factor": 0.3677
+  },
+  "Tetralgin": {
+   "u_prom_nucleo": 87.0,
+   "u_marg_nucleo": 28.2,
+   "farmacias_nucleo": 4756,
+   "farmacias_marginales": 1836,
+   "factor": 0.3237
+  },
+  "Magnus": {
+   "u_prom_nucleo": 106.3,
+   "u_marg_nucleo": 39.1,
+   "farmacias_nucleo": 4145,
+   "farmacias_marginales": 1408,
+   "factor": 0.3681
+  }
+ }
+}
