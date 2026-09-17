@@ -2669,6 +2669,9 @@ var FACTMARG_DEF = 0.7088;
 
 function factorMarginal(product) {
     if (typeof FACTMARG !== 'undefined' && FACTMARG && FACTMARG[product]) return FACTMARG[product];
+    // La mediana viene del store y se resuelve al llamar, no al cargar: se inyecta
+    // mas abajo en el archivo. FACTMARG_DEF queda solo como ultimo recurso.
+    if (typeof FACTMARG_MED !== 'undefined' && FACTMARG_MED) return FACTMARG_MED;
     return FACTMARG_DEF;
 }
 

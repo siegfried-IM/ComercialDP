@@ -617,6 +617,12 @@ def main():
               ("var FACTMARG = " + dump({k: v["factor"] for k, v in margstore["datos"].items()
                                          if v.get("factor")}) + ";\n"
                if margstore else "var FACTMARG = null;\n") +
+              # La mediana tambien sale del store: es el factor de los productos
+              # con pocas farmacias ganables, donde su propia media seria ruido.
+              # Estaba clavada en la plantilla y se quedo en la de Jun-2026 (0,7088)
+              # cuando el store ya decia 0,7002.
+              ("var FACTMARG_MED = " + dump(margstore.get("meta", {}).get("mediana")) + ";\n"
+               if margstore else "var FACTMARG_MED = null;\n") +
               # PSL ponderado por el mix real de unidades de cada presentacion:
               # dentro de un mismo mercado los precios de lista llegan a diferir 45x,
               # asi que un PSL unico por producto seria un numero elegido a dedo.

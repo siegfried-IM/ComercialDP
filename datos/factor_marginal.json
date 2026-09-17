@@ -1,294 +1,309 @@
 {
  "meta": {
   "ventana": "TRIM",
-  "periodo": 24318,
-  "label": "Jun-2026",
+  "periodo": 24319,
+  "label": "Jul-2026",
   "corte_pareto": 0.8,
   "definicion": "u/farmacia EFECTIVAMENTE GANADA en 12m sobre u/farmacia del núcleo",
-  "mediana": 0.7088
+  "mediana": 0.7002
  },
  "datos": {
   "Acemuk": {
+   "u_prom_nucleo": 312.7,
+   "u_ganable": 300.0,
+   "farmacias_nucleo": 5434,
+   "farmacias_ganables": 41,
    "factor": null,
-   "_dudoso": true
+   "_pocas_ganables": true
   },
   "Alidial": {
-   "u_prom_nucleo": 100.8,
-   "u_ganable": 67.4,
-   "farmacias_nucleo": 4588,
-   "farmacias_ganables": 549,
-   "factor": 0.6687
+   "u_prom_nucleo": 98.9,
+   "u_ganable": 65.9,
+   "farmacias_nucleo": 4624,
+   "farmacias_ganables": 518,
+   "factor": 0.6663
   },
   "Hexaler cort": {
-   "u_prom_nucleo": 227.6,
-   "u_ganable": 2841.9,
-   "farmacias_nucleo": 5049,
-   "farmacias_ganables": 9,
-   "factor": null,
-   "_pocas_ganables": true
+   "u_prom_nucleo": 240.8,
+   "u_ganable": 157.4,
+   "farmacias_nucleo": 5070,
+   "farmacias_ganables": 212,
+   "factor": 0.6537
   },
   "Aireal": {
-   "u_prom_nucleo": 56.0,
-   "u_ganable": 39.4,
-   "farmacias_nucleo": 3832,
-   "farmacias_ganables": 475,
-   "factor": 0.7036
+   "u_prom_nucleo": 57.1,
+   "u_ganable": 37.1,
+   "farmacias_nucleo": 3854,
+   "farmacias_ganables": 473,
+   "factor": 0.6497
   },
   "Mometax": {
-   "factor": null,
-   "_dudoso": true
+   "u_prom_nucleo": 13.5,
+   "u_ganable": 7.0,
+   "farmacias_nucleo": 3370,
+   "farmacias_ganables": 398,
+   "factor": 0.5185
   },
   "Acantex": {
-   "u_prom_nucleo": 31.9,
-   "u_ganable": 545.6,
-   "farmacias_nucleo": 2223,
-   "farmacias_ganables": 9,
-   "factor": null,
-   "_pocas_ganables": true
+   "u_prom_nucleo": 38.8,
+   "u_ganable": 26.1,
+   "farmacias_nucleo": 2217,
+   "farmacias_ganables": 173,
+   "factor": 0.6727
   },
   "Bactrim": {
+   "u_prom_nucleo": 58.5,
+   "u_ganable": 41.2,
+   "farmacias_nucleo": 4539,
+   "farmacias_ganables": 46,
    "factor": null,
-   "_dudoso": true
+   "_pocas_ganables": true
   },
   "Cefalexiona": {
-   "u_prom_nucleo": 75.9,
-   "u_ganable": 2841.9,
-   "farmacias_nucleo": 4718,
-   "farmacias_ganables": 9,
-   "factor": null,
-   "_pocas_ganables": true
+   "u_prom_nucleo": 73.8,
+   "u_ganable": 45.7,
+   "farmacias_nucleo": 4708,
+   "farmacias_ganables": 85,
+   "factor": 0.6192
   },
   "Decadron": {
-   "factor": null,
-   "_dudoso": true
+   "u_prom_nucleo": 216.0,
+   "u_ganable": 181.2,
+   "farmacias_nucleo": 5102,
+   "farmacias_ganables": 947,
+   "factor": 0.8389
   },
   "Macromax": {
-   "u_prom_nucleo": 103.9,
-   "u_ganable": 81.7,
-   "farmacias_nucleo": 4671,
-   "farmacias_ganables": 416,
-   "factor": 0.7863
+   "u_prom_nucleo": 114.1,
+   "u_ganable": 94.9,
+   "farmacias_nucleo": 4708,
+   "farmacias_ganables": 407,
+   "factor": 0.8317
   },
   "Calcio Base": {
-   "u_prom_nucleo": 87.7,
-   "u_ganable": 44.0,
-   "farmacias_nucleo": 3742,
-   "farmacias_ganables": 134,
-   "factor": 0.5017
+   "u_prom_nucleo": 90.1,
+   "u_ganable": 52.6,
+   "farmacias_nucleo": 3748,
+   "farmacias_ganables": 135,
+   "factor": 0.5838
   },
   "ISIS Free": {
-   "u_prom_nucleo": 119.5,
-   "u_ganable": 66.8,
-   "farmacias_nucleo": 3424,
-   "farmacias_ganables": 137,
-   "factor": 0.559
+   "u_prom_nucleo": 121.9,
+   "u_ganable": 80.0,
+   "farmacias_nucleo": 3447,
+   "farmacias_ganables": 136,
+   "factor": 0.6563
   },
   "Siderblut": {
-   "factor": null,
-   "_dudoso": true
+   "u_prom_nucleo": 60.3,
+   "u_ganable": 35.9,
+   "farmacias_nucleo": 4378,
+   "farmacias_ganables": 73,
+   "factor": 0.5954
   },
   "Trip D3": {
-   "u_prom_nucleo": 403.1,
-   "u_ganable": 224.9,
-   "farmacias_nucleo": 3964,
-   "farmacias_ganables": 174,
-   "factor": 0.5579
+   "u_prom_nucleo": 435.0,
+   "u_ganable": 304.6,
+   "farmacias_nucleo": 3921,
+   "farmacias_ganables": 168,
+   "factor": 0.7002
   },
   "Deltrox": {
-   "u_prom_nucleo": 52.5,
-   "u_ganable": 2104.6,
-   "farmacias_nucleo": 3521,
-   "farmacias_ganables": 9,
-   "factor": null,
-   "_pocas_ganables": true
+   "u_prom_nucleo": 54.4,
+   "u_ganable": 68.4,
+   "farmacias_nucleo": 3477,
+   "farmacias_ganables": 176,
+   "factor": 1.2574
   },
   "Exforge": {
-   "u_prom_nucleo": 98.6,
-   "u_ganable": 66.6,
-   "farmacias_nucleo": 3987,
-   "farmacias_ganables": 264,
-   "factor": 0.6755
+   "u_prom_nucleo": 101.6,
+   "u_ganable": 69.1,
+   "farmacias_nucleo": 4018,
+   "farmacias_ganables": 277,
+   "factor": 0.6801
   },
   "Entresto": {
-   "u_prom_nucleo": 22.6,
-   "u_ganable": 14.4,
-   "farmacias_nucleo": 3224,
-   "farmacias_ganables": 226,
-   "factor": 0.6372
+   "u_prom_nucleo": 23.0,
+   "u_ganable": 13.7,
+   "farmacias_nucleo": 3253,
+   "farmacias_ganables": 224,
+   "factor": 0.5957
   },
   "Dilatrend": {
-   "u_prom_nucleo": 176.0,
-   "u_ganable": 110.7,
-   "farmacias_nucleo": 4183,
-   "farmacias_ganables": 78,
-   "factor": 0.629
+   "u_prom_nucleo": 176.6,
+   "u_ganable": 150.6,
+   "farmacias_nucleo": 4199,
+   "farmacias_ganables": 58,
+   "factor": 0.8528
   },
   "Empax": {
-   "u_prom_nucleo": 39.1,
-   "u_ganable": 36.5,
-   "farmacias_nucleo": 2584,
-   "farmacias_ganables": 663,
-   "factor": 0.9335
+   "u_prom_nucleo": 39.7,
+   "u_ganable": 37.3,
+   "farmacias_nucleo": 2609,
+   "farmacias_ganables": 720,
+   "factor": 0.9395
   },
   "Metglucon": {
-   "u_prom_nucleo": 434.3,
-   "u_ganable": 380.6,
-   "farmacias_nucleo": 4169,
-   "farmacias_ganables": 256,
-   "factor": 0.8764
+   "u_prom_nucleo": 442.6,
+   "u_ganable": 357.7,
+   "farmacias_nucleo": 4136,
+   "farmacias_ganables": 224,
+   "factor": 0.8082
   },
   "Roxolan": {
-   "u_prom_nucleo": 472.1,
-   "u_ganable": 410.0,
-   "farmacias_nucleo": 4104,
-   "farmacias_ganables": 365,
-   "factor": 0.8685
+   "u_prom_nucleo": 482.1,
+   "u_ganable": 400.7,
+   "farmacias_nucleo": 4105,
+   "farmacias_ganables": 386,
+   "factor": 0.8312
   },
   "Roxolan Plus": {
-   "u_prom_nucleo": 86.2,
-   "u_ganable": 87.5,
-   "farmacias_nucleo": 3413,
-   "farmacias_ganables": 675,
-   "factor": 1.0151
+   "u_prom_nucleo": 89.8,
+   "u_ganable": 87.7,
+   "farmacias_nucleo": 3455,
+   "farmacias_ganables": 752,
+   "factor": 0.9766
   },
   "Siltran": {
-   "u_prom_nucleo": 222.0,
-   "u_ganable": 211.9,
-   "farmacias_nucleo": 3751,
-   "farmacias_ganables": 494,
-   "factor": 0.9545
+   "u_prom_nucleo": 218.7,
+   "u_ganable": 199.7,
+   "farmacias_nucleo": 3810,
+   "farmacias_ganables": 499,
+   "factor": 0.9131
   },
   "Sintrom": {
-   "u_prom_nucleo": 44.2,
-   "u_ganable": 24.9,
+   "u_prom_nucleo": 43.8,
+   "u_ganable": 28.6,
    "farmacias_nucleo": 3868,
-   "farmacias_ganables": 28,
+   "farmacias_ganables": 34,
    "factor": null,
    "_pocas_ganables": true
   },
   "Terloc": {
-   "u_prom_nucleo": 258.6,
-   "u_ganable": 185.4,
-   "farmacias_nucleo": 4186,
-   "farmacias_ganables": 196,
-   "factor": 0.7169
+   "u_prom_nucleo": 267.6,
+   "u_ganable": 185.9,
+   "farmacias_nucleo": 4179,
+   "farmacias_ganables": 171,
+   "factor": 0.6947
   },
   "Diovan": {
-   "u_prom_nucleo": 380.2,
-   "u_ganable": 268.0,
-   "farmacias_nucleo": 4364,
-   "farmacias_ganables": 166,
-   "factor": 0.7049
+   "u_prom_nucleo": 395.1,
+   "u_ganable": 295.0,
+   "farmacias_nucleo": 4354,
+   "farmacias_ganables": 156,
+   "factor": 0.7466
   },
   "Telpres": {
-   "u_prom_nucleo": 79.7,
-   "u_ganable": 82.5,
-   "farmacias_nucleo": 3728,
-   "farmacias_ganables": 384,
-   "factor": 1.0351
+   "u_prom_nucleo": 80.8,
+   "u_ganable": 84.6,
+   "farmacias_nucleo": 3736,
+   "farmacias_ganables": 354,
+   "factor": 1.047
   },
   "Dauran": {
-   "u_prom_nucleo": 88.5,
-   "u_ganable": 106.5,
-   "farmacias_nucleo": 3153,
-   "farmacias_ganables": 423,
-   "factor": 1.2034
+   "u_prom_nucleo": 89.0,
+   "u_ganable": 109.1,
+   "farmacias_nucleo": 3225,
+   "farmacias_ganables": 457,
+   "factor": 1.2258
   },
   "Pixaban": {
-   "u_prom_nucleo": 25.2,
-   "u_ganable": 21.3,
-   "farmacias_nucleo": 1906,
-   "farmacias_ganables": 440,
-   "factor": 0.8452
+   "u_prom_nucleo": 24.6,
+   "u_ganable": 21.7,
+   "farmacias_nucleo": 2004,
+   "farmacias_ganables": 434,
+   "factor": 0.8821
   },
   "Levital": {
-   "u_prom_nucleo": 51.5,
-   "u_ganable": 2841.9,
-   "farmacias_nucleo": 3125,
-   "farmacias_ganables": 9,
-   "factor": null,
-   "_pocas_ganables": true
+   "u_prom_nucleo": 53.3,
+   "u_ganable": 75.0,
+   "farmacias_nucleo": 3116,
+   "farmacias_ganables": 272,
+   "factor": 1.4071
   },
   "PGB": {
-   "u_prom_nucleo": 65.8,
-   "u_ganable": 65.4,
-   "farmacias_nucleo": 3967,
-   "farmacias_ganables": 488,
-   "factor": 0.9939
+   "u_prom_nucleo": 67.5,
+   "u_ganable": 60.4,
+   "farmacias_nucleo": 3953,
+   "farmacias_ganables": 418,
+   "factor": 0.8948
   },
   "QTP": {
-   "u_prom_nucleo": 156.8,
-   "u_ganable": 204.4,
-   "farmacias_nucleo": 3900,
-   "farmacias_ganables": 418,
-   "factor": 1.3036
+   "u_prom_nucleo": 157.9,
+   "u_ganable": 213.6,
+   "farmacias_nucleo": 3923,
+   "farmacias_ganables": 390,
+   "factor": 1.3528
   },
   "Valium": {
-   "u_prom_nucleo": 31.3,
-   "u_ganable": 18.9,
-   "farmacias_nucleo": 4302,
-   "farmacias_ganables": 60,
-   "factor": 0.6038
+   "u_prom_nucleo": 31.5,
+   "u_ganable": 18.8,
+   "farmacias_nucleo": 4328,
+   "farmacias_ganables": 64,
+   "factor": 0.5968
   },
   "Madopar": {
-   "u_prom_nucleo": 62.5,
-   "u_ganable": 44.3,
-   "farmacias_nucleo": 3826,
-   "farmacias_ganables": 234,
-   "factor": 0.7088
+   "u_prom_nucleo": 61.0,
+   "u_ganable": 43.1,
+   "farmacias_nucleo": 3882,
+   "farmacias_ganables": 241,
+   "factor": 0.7066
   },
   "Acneclin": {
-   "u_prom_nucleo": 25.9,
-   "u_ganable": 14.0,
-   "farmacias_nucleo": 3113,
-   "farmacias_ganables": 297,
-   "factor": 0.5405
+   "u_prom_nucleo": 27.4,
+   "u_ganable": 15.0,
+   "farmacias_nucleo": 3083,
+   "farmacias_ganables": 279,
+   "factor": 0.5474
   },
   "Clobesol": {
-   "u_prom_nucleo": 52.5,
-   "u_ganable": 32.9,
-   "farmacias_nucleo": 4612,
-   "farmacias_ganables": 594,
-   "factor": 0.6267
+   "u_prom_nucleo": 54.0,
+   "u_ganable": 33.2,
+   "farmacias_nucleo": 4567,
+   "farmacias_ganables": 537,
+   "factor": 0.6148
   },
   "Micomazol": {
-   "u_prom_nucleo": 58.3,
-   "u_ganable": 31.7,
-   "farmacias_nucleo": 5221,
-   "farmacias_ganables": 354,
-   "factor": 0.5437
+   "u_prom_nucleo": 55.8,
+   "u_ganable": 31.1,
+   "farmacias_nucleo": 5257,
+   "farmacias_ganables": 377,
+   "factor": 0.5573
   },
   "Microsona": {
-   "factor": null,
-   "_dudoso": true
+   "u_prom_nucleo": 15.8,
+   "u_ganable": 9.1,
+   "farmacias_nucleo": 4212,
+   "farmacias_ganables": 312,
+   "factor": 0.5759
   },
   "Paldar": {
-   "u_prom_nucleo": 25.6,
-   "u_ganable": 18.7,
-   "farmacias_nucleo": 3695,
-   "farmacias_ganables": 482,
-   "factor": 0.7305
+   "u_prom_nucleo": 23.9,
+   "u_ganable": 17.9,
+   "farmacias_nucleo": 3669,
+   "farmacias_ganables": 487,
+   "factor": 0.749
   },
   "Roaccutan": {
-   "u_prom_nucleo": 20.7,
-   "u_ganable": 10.1,
-   "farmacias_nucleo": 2834,
-   "farmacias_ganables": 230,
-   "factor": 0.4879
+   "u_prom_nucleo": 20.4,
+   "u_ganable": 10.5,
+   "farmacias_nucleo": 2924,
+   "farmacias_ganables": 239,
+   "factor": 0.5147
   },
   "Tetralgin": {
-   "u_prom_nucleo": 87.0,
-   "u_ganable": 50.5,
-   "farmacias_nucleo": 4756,
-   "farmacias_ganables": 136,
-   "factor": 0.5805
+   "u_prom_nucleo": 81.6,
+   "u_ganable": 45.8,
+   "farmacias_nucleo": 4742,
+   "farmacias_ganables": 147,
+   "factor": 0.5613
   },
   "Magnus": {
-   "u_prom_nucleo": 106.3,
-   "u_ganable": 92.2,
-   "farmacias_nucleo": 4145,
-   "farmacias_ganables": 250,
-   "factor": 0.8674
+   "u_prom_nucleo": 104.6,
+   "u_ganable": 99.9,
+   "farmacias_nucleo": 4172,
+   "farmacias_ganables": 260,
+   "factor": 0.9551
   }
  }
 }

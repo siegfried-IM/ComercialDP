@@ -2,21 +2,21 @@
  "meta": {
   "lista": "Lista de precios Siegfried 2026.08.19.xlsx",
   "ventana": "MAT",
-  "hasta": "Jun-2026",
+  "hasta": "Jul-2026",
   "precio": "PRECIO DE VENTA DROGUERIA SIN IVA"
  },
  "datos": {
   "Acemuk": {
-   "psl_ponderado": 11352.76,
-   "unidades_mat": 3225434,
-   "cobertura": 0.9402,
+   "psl_ponderado": 11355.58,
+   "unidades_mat": 3119401,
+   "cobertura": 0.9379,
    "match": [
     {
      "iqvia": "ACEMUK GRAN P/SUSP 2.00G 100ML x 1 /5ML",
      "lista": "ACEMUK JARABE",
      "env": null,
      "psl": 8194.17,
-     "u": 243745,
+     "u": 241202,
      "packs": 1
     },
     {
@@ -24,15 +24,7 @@
      "lista": "ACEMUK 600  mg",
      "env": 20,
      "psl": 16050.113605174258,
-     "u": 649566,
-     "packs": 1
-    },
-    {
-     "iqvia": "ACEMUK TABL EFERV 600MG x 60",
-     "lista": "ACEMUK 600  mg",
-     "env": 60,
-     "psl": 42528.98918284981,
-     "u": 26902,
+     "u": 629374,
      "packs": 1
     },
     {
@@ -40,20 +32,28 @@
      "lista": "ACEMUK 600  mg",
      "env": 10,
      "psl": 9875.639826769866,
-     "u": 2112255,
+     "u": 2029236,
+     "packs": 1
+    },
+    {
+     "iqvia": "ACEMUK TABL EFERV 600MG x 60",
+     "lista": "ACEMUK 600  mg",
+     "env": 60,
+     "psl": 42528.98918284981,
+     "u": 26018,
      "packs": 1
     }
    ],
    "sin_precio": [
     {
      "iqvia": "ACEMUK TABL EFERV 600MG x 5",
-     "u": 192966
+     "u": 193571
     }
    ]
   },
   "Alidial": {
-   "psl_ponderado": 8551.58,
-   "unidades_mat": 206697,
+   "psl_ponderado": 8531.69,
+   "unidades_mat": 209228,
    "cobertura": 1.0,
    "match": [
     {
@@ -61,23 +61,7 @@
      "lista": "ALERGICAL",
      "env": 20,
      "psl": 14233.215733021007,
-     "u": 3332,
-     "packs": 1
-    },
-    {
-     "iqvia": "ALIDIAL L GOTAS 5.00MG 20ML x 1 /ML",
-     "lista": "ALIDIAL L - LEVOCETIRIZINA",
-     "env": 20,
-     "psl": 15468.545622794762,
-     "u": 3944,
-     "packs": 1
-    },
-    {
-     "iqvia": "ALIDIAL TABL RECUBIE 10mg x 30",
-     "lista": "ALIDIAL",
-     "env": 30,
-     "psl": 10842.450279855217,
-     "u": 87100,
+     "u": 2615,
      "packs": 1
     },
     {
@@ -85,7 +69,15 @@
      "lista": "ALIDIAL",
      "env": 20,
      "psl": 5980.29599338422,
-     "u": 76724,
+     "u": 77972,
+     "packs": 1
+    },
+    {
+     "iqvia": "ALIDIAL L GOTAS 5.00MG 20ML x 1 /ML",
+     "lista": "ALIDIAL L - LEVOCETIRIZINA",
+     "env": 20,
+     "psl": 15468.545622794762,
+     "u": 4689,
      "packs": 1
     },
     {
@@ -93,23 +85,15 @@
      "lista": "ALIDIAL",
      "env": 10,
      "psl": 5866.918239394062,
-     "u": 28718,
+     "u": 29184,
      "packs": 1
     },
     {
-     "iqvia": "ALERGICAL TABL RECUBIE 5.00MG x 30",
-     "lista": "ALERGICAL",
+     "iqvia": "ALIDIAL TABL RECUBIE 10mg x 30",
+     "lista": "ALIDIAL",
      "env": 30,
-     "psl": 23862.552018763694,
-     "u": 1037,
-     "packs": 1
-    },
-    {
-     "iqvia": "ALERGICAL TABL RECUBIE 5.00MG x 10",
-     "lista": "ALERGICAL",
-     "env": 10,
-     "psl": 9526.063008732883,
-     "u": 1027,
+     "psl": 10842.450279855217,
+     "u": 87411,
      "packs": 1
     },
     {
@@ -117,7 +101,7 @@
      "lista": "ALIDIAL L",
      "env": 30,
      "psl": 14695.015218017543,
-     "u": 2821,
+     "u": 3406,
      "packs": 1
     },
     {
@@ -125,71 +109,63 @@
      "lista": "ALIDIAL L",
      "env": 10,
      "psl": 5754.559803642224,
-     "u": 1994,
+     "u": 2327,
+     "packs": 1
+    },
+    {
+     "iqvia": "ALERGICAL TABL RECUBIE 5.00MG x 10",
+     "lista": "ALERGICAL",
+     "env": 10,
+     "psl": 9526.063008732883,
+     "u": 847,
+     "packs": 1
+    },
+    {
+     "iqvia": "ALERGICAL TABL RECUBIE 5.00MG x 30",
+     "lista": "ALERGICAL",
+     "env": 30,
+     "psl": 23862.552018763694,
+     "u": 777,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Hexaler cort": {
-   "psl_ponderado": 6978.0,
-   "unidades_mat": 722807,
+   "psl_ponderado": 6977.69,
+   "unidades_mat": 705608,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "HEXALER CORT TABL RECUBIE 5.00MG x 10 /0.6",
-     "lista": "HEXALER CORT",
-     "env": 10,
-     "psl": 6734.692271280279,
-     "u": 583028,
-     "packs": 1
-    },
     {
      "iqvia": "HEXALER CORT JBE 100MG/ 5.00MG 60ML x 1",
      "lista": "HEXALER CORT",
      "env": 60,
      "psl": 7992.850612554322,
-     "u": 139779,
+     "u": 136282,
+     "packs": 1
+    },
+    {
+     "iqvia": "HEXALER CORT TABL RECUBIE 5.00MG x 10 /0.6",
+     "lista": "HEXALER CORT",
+     "env": 10,
+     "psl": 6734.692271280279,
+     "u": 569326,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Aireal": {
-   "psl_ponderado": 27559.08,
-   "unidades_mat": 110710,
+   "psl_ponderado": 27579.73,
+   "unidades_mat": 110541,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "AIREAL TABL RECUBIE 10mg x 60",
-     "lista": "AIREAL 10 mg",
-     "env": 60,
-     "psl": 46575.82090243138,
-     "u": 9157,
-     "packs": 1
-    },
-    {
-     "iqvia": "AIREAL TABL MAST 4.00MG x 60",
-     "lista": "AIREAL  4 mg",
-     "env": 60,
-     "psl": 37722.082752504764,
-     "u": 3533,
-     "packs": 1
-    },
     {
      "iqvia": "AIREAL TABL MAST 4.00MG x 30",
      "lista": "AIREAL  4 mg",
      "env": 30,
      "psl": 22533.73947747808,
-     "u": 11734,
-     "packs": 1
-    },
-    {
-     "iqvia": "AIREAL TABL MAST 10mg x 30",
-     "lista": "AIREAL 10 mg",
-     "env": 30,
-     "psl": 24411.373023717944,
-     "u": 55186,
+     "u": 11415,
      "packs": 1
     },
     {
@@ -197,7 +173,15 @@
      "lista": "AIREAL  5 mg",
      "env": 30,
      "psl": 23748.536114256876,
-     "u": 23271,
+     "u": 23078,
+     "packs": 1
+    },
+    {
+     "iqvia": "AIREAL TABL MAST 4.00MG x 60",
+     "lista": "AIREAL  4 mg",
+     "env": 60,
+     "psl": 37722.082752504764,
+     "u": 3554,
      "packs": 1
     },
     {
@@ -205,15 +189,31 @@
      "lista": "AIREAL  5 mg",
      "env": 60,
      "psl": 41776.76088669727,
-     "u": 7829,
+     "u": 7748,
+     "packs": 1
+    },
+    {
+     "iqvia": "AIREAL TABL MAST 10mg x 30",
+     "lista": "AIREAL 10 mg",
+     "env": 30,
+     "psl": 24411.373023717944,
+     "u": 55492,
+     "packs": 1
+    },
+    {
+     "iqvia": "AIREAL TABL RECUBIE 10mg x 60",
+     "lista": "AIREAL 10 mg",
+     "env": 60,
+     "psl": 46575.82090243138,
+     "u": 9254,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Mometax": {
-   "psl_ponderado": 10644.86,
-   "unidades_mat": 143180,
+   "psl_ponderado": 10686.16,
+   "unidades_mat": 141852,
    "cobertura": 1.0,
    "match": [
     {
@@ -221,7 +221,7 @@
      "lista": "MOMETAX",
      "env": 30,
      "psl": 12688.354271978465,
-     "u": 15087,
+     "u": 15082,
      "packs": 1
     },
     {
@@ -229,7 +229,7 @@
      "lista": "MOMETAX",
      "env": 30,
      "psl": 14300.304418811489,
-     "u": 52013,
+     "u": 52322,
      "packs": 1
     },
     {
@@ -237,39 +237,31 @@
      "lista": "MOMETAX",
      "env": 15,
      "psl": 7740.531749631919,
-     "u": 76080,
+     "u": 74448,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Acantex": {
-   "psl_ponderado": 14994.64,
-   "unidades_mat": 278985,
+   "psl_ponderado": 14994.0,
+   "unidades_mat": 277539,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "ACANTEX V.IM LIOF 1.00G 3.5ML x 1",
-     "lista": "ACANTEX INV 1 g",
-     "env": 1,
-     "psl": 15505.297018921221,
-     "u": 230788,
-     "packs": 1
-    },
-    {
-     "iqvia": "ACANTEX V.IV LIOF 1.00G 10ML x 1",
-     "lista": "ACANTEX INV 1 g",
-     "env": 1,
-     "psl": 15505.297018921221,
-     "u": 26039,
-     "packs": 1
-    },
     {
      "iqvia": "ACANTEX V+SOLV INFUS 2.00G x 1",
      "lista": "ACANTEX INV 1 g",
      "env": 1,
      "psl": 15505.297018921221,
-     "u": 3100,
+     "u": 3084,
+     "packs": 1
+    },
+    {
+     "iqvia": "ACANTEX V.IM LIOF 1.00G 3.5ML x 1",
+     "lista": "ACANTEX INV 1 g",
+     "env": 1,
+     "psl": 15505.297018921221,
+     "u": 230506,
      "packs": 1
     },
     {
@@ -277,15 +269,23 @@
      "lista": "ACANTEX INV 500 mg",
      "env": 1,
      "psl": 8029.883154388665,
-     "u": 19058,
+     "u": 18983,
+     "packs": 1
+    },
+    {
+     "iqvia": "ACANTEX V.IV LIOF 1.00G 10ML x 1",
+     "lista": "ACANTEX INV 1 g",
+     "env": 1,
+     "psl": 15505.297018921221,
+     "u": 24966,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Bactrim": {
-   "psl_ponderado": 12686.89,
-   "unidades_mat": 1231391,
+   "psl_ponderado": 12684.93,
+   "unidades_mat": 1215336,
    "cobertura": 1.0,
    "match": [
     {
@@ -293,15 +293,7 @@
      "lista": "BACTRIM 400-80/5ml",
      "env": 5,
      "psl": 21125.398917288894,
-     "u": 618,
-     "packs": 1
-    },
-    {
-     "iqvia": "BACTRIM TABL 400MG x 20 /80",
-     "lista": "BACTRIM 400-80 comp",
-     "env": 20,
-     "psl": 9994.427817340396,
-     "u": 129094,
+     "u": 619,
      "packs": 1
     },
     {
@@ -309,7 +301,7 @@
      "lista": "BACTRIM FORTE 800-160",
      "env": 10,
      "psl": 13331.856661913835,
-     "u": 974153,
+     "u": 960732,
      "packs": 1
     },
     {
@@ -317,127 +309,31 @@
      "lista": "BACTRIM 200-40",
      "env": null,
      "psl": 10444.717449164385,
-     "u": 127526,
+     "u": 125697,
+     "packs": 1
+    },
+    {
+     "iqvia": "BACTRIM TABL 400MG x 20 /80",
+     "lista": "BACTRIM 400-80 comp",
+     "env": 20,
+     "psl": 9994.427817340396,
+     "u": 128288,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Cefalexiona": {
-   "psl_ponderado": 12378.65,
-   "unidades_mat": 1108215,
+   "psl_ponderado": 12382.5,
+   "unidades_mat": 1099876,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "CEFACAR SUSP 500MG 60ML x 1 /5ML",
-     "lista": "CEFACAR 500 MG",
-     "env": 60,
-     "psl": 8255.505168646232,
-     "u": 3755,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI SUSP 250MG 120ML x 1 /5ML",
-     "lista": "CEFALEXINA ARGENTIA 250 MG",
-     "env": 120,
-     "psl": 5585.592848187091,
-     "u": 5842,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI SUSP 250MG 90ML x 1 /5ML",
-     "lista": "CEFALEXINA ARGENTIA 250 MG",
-     "env": 90,
-     "psl": 5079.932568769853,
-     "u": 20605,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI SUSP 500MG 90ML x 1 /5ML",
-     "lista": "CEFALEXINA ARGENTIA 500 MG",
-     "env": 90,
-     "psl": 8349.066212719687,
-     "u": 66175,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI SUSP 500MG 120ML x 1 /5ML",
-     "lista": "CEFALEXINA ARGENTIA 500 MG",
-     "env": 120,
-     "psl": 10296.724208598735,
-     "u": 40478,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFACAR SUSP 500MG 90ML x 1 /5ML",
-     "lista": "CEFACAR 500 MG",
-     "env": 90,
-     "psl": 19787.146475917845,
-     "u": 6116,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI SUSP DUO 750MG 90ML x 1",
-     "lista": "CEFALEXINA ARGENTIA DUO 750 MG",
-     "env": 90,
-     "psl": 9399.262243724825,
-     "u": 36298,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 24",
-     "lista": "CEFALEXINA ARGENTIA 500 MG",
-     "env": 24,
-     "psl": 10613.325103158957,
-     "u": 92488,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 8",
-     "lista": "CEFALEXINA ARGENTIA 500 MG",
-     "env": 8,
-     "psl": 4815.658551288363,
-     "u": 56254,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 16",
-     "lista": "CEFALEXINA ARGENTIA 500 MG",
-     "env": 16,
-     "psl": 8281.4830220419,
-     "u": 150183,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 80",
-     "lista": "CEFALEXINA ARGENTIA 500 MG",
-     "env": 80,
-     "psl": 40282.25837868326,
-     "u": 1041,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI TABL DUO 1.00G x 14",
-     "lista": "CEFALEXINA ARGENTIA DUO 1 GR",
-     "env": 14,
-     "psl": 15346.532280122963,
-     "u": 306519,
-     "packs": 1
-    },
     {
      "iqvia": "CEFACAR TABL 1.00G x 16",
      "lista": "CEFACAR 500 MG",
      "env": 16,
      "psl": 16892.73162227583,
-     "u": 45756,
-     "packs": 1
-    },
-    {
-     "iqvia": "CEFALEXINA ARGENTI TABL DUO 1.00G x 16",
-     "lista": "CEFALEXINA ARGENTIA DUO 1 GR",
-     "env": 16,
-     "psl": 16699.8765583131,
-     "u": 127592,
+     "u": 45745,
      "packs": 1
     },
     {
@@ -445,7 +341,63 @@
      "lista": "CEFACAR 500 MG",
      "env": 8,
      "psl": 8693.34044706534,
-     "u": 46217,
+     "u": 45452,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI SUSP DUO 750MG 90ML x 1",
+     "lista": "CEFALEXINA ARGENTIA DUO 750 MG",
+     "env": 90,
+     "psl": 9399.262243724825,
+     "u": 36129,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 24",
+     "lista": "CEFALEXINA ARGENTIA 500 MG",
+     "env": 24,
+     "psl": 10613.325103158957,
+     "u": 92842,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 80",
+     "lista": "CEFALEXINA ARGENTIA 500 MG",
+     "env": 80,
+     "psl": 40282.25837868326,
+     "u": 1007,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI SUSP 250MG 120ML x 1 /5ML",
+     "lista": "CEFALEXINA ARGENTIA 250 MG",
+     "env": 120,
+     "psl": 5585.592848187091,
+     "u": 5717,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 8",
+     "lista": "CEFALEXINA ARGENTIA 500 MG",
+     "env": 8,
+     "psl": 4815.658551288363,
+     "u": 55474,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI TABL DUO 1.00G x 16",
+     "lista": "CEFALEXINA ARGENTIA DUO 1 GR",
+     "env": 16,
+     "psl": 16699.8765583131,
+     "u": 126554,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI TABL DUO 1.00G x 14",
+     "lista": "CEFALEXINA ARGENTIA DUO 1 GR",
+     "env": 14,
+     "psl": 15346.532280122963,
+     "u": 303918,
      "packs": 1
     },
     {
@@ -453,7 +405,15 @@
      "lista": "CEFACAR 500 MG",
      "env": 16,
      "psl": 16892.73162227583,
-     "u": 82474,
+     "u": 81702,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI TABL 500MG x 16",
+     "lista": "CEFALEXINA ARGENTIA 500 MG",
+     "env": 16,
+     "psl": 8281.4830220419,
+     "u": 148601,
      "packs": 1
     },
     {
@@ -461,31 +421,63 @@
      "lista": "CEFACAR 500 MG",
      "env": 8,
      "psl": 8693.34044706534,
-     "u": 20422,
+     "u": 20308,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI SUSP 250MG 90ML x 1 /5ML",
+     "lista": "CEFALEXINA ARGENTIA 250 MG",
+     "env": 90,
+     "psl": 5079.932568769853,
+     "u": 20387,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFACAR SUSP 500MG 90ML x 1 /5ML",
+     "lista": "CEFACAR 500 MG",
+     "env": 90,
+     "psl": 19787.146475917845,
+     "u": 6204,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI SUSP 500MG 90ML x 1 /5ML",
+     "lista": "CEFALEXINA ARGENTIA 500 MG",
+     "env": 90,
+     "psl": 8349.066212719687,
+     "u": 65674,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFACAR SUSP 500MG 60ML x 1 /5ML",
+     "lista": "CEFACAR 500 MG",
+     "env": 60,
+     "psl": 8255.505168646232,
+     "u": 3676,
+     "packs": 1
+    },
+    {
+     "iqvia": "CEFALEXINA ARGENTI SUSP 500MG 120ML x 1 /5ML",
+     "lista": "CEFALEXINA ARGENTIA 500 MG",
+     "env": 120,
+     "psl": 10296.724208598735,
+     "u": 40486,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Decadron": {
-   "psl_ponderado": 14394.75,
-   "unidades_mat": 68558,
+   "psl_ponderado": 14271.35,
+   "unidades_mat": 70073,
    "cobertura": 1.0,
    "match": [
     {
-     "iqvia": "DECADRON. TABL 0.50MG x 30",
-     "lista": "DECADRON 0,5",
-     "env": 30,
-     "psl": 17418.166221213258,
-     "u": 43153,
-     "packs": 1
-    },
-    {
-     "iqvia": "DECADRON TABL 4.00MG x 10",
+     "iqvia": "DECADRON TABL 4.00MG x 20",
      "lista": "DECADRON 4MG",
-     "env": 10,
-     "psl": 6438.553279390163,
-     "u": 14331,
+     "env": 20,
+     "psl": 12242.423930162326,
+     "u": 5989,
      "packs": 1
     },
     {
@@ -493,39 +485,47 @@
      "lista": "DECADRON 8MG",
      "env": 10,
      "psl": 13602.624800038553,
-     "u": 5430,
+     "u": 5413,
      "packs": 1
     },
     {
-     "iqvia": "DECADRON TABL 4.00MG x 20",
+     "iqvia": "DECADRON TABL 4.00MG x 10",
      "lista": "DECADRON 4MG",
-     "env": 20,
-     "psl": 12242.423930162326,
-     "u": 5644,
+     "env": 10,
+     "psl": 6438.553279390163,
+     "u": 15379,
+     "packs": 1
+    },
+    {
+     "iqvia": "DECADRON. TABL 0.50MG x 30",
+     "lista": "DECADRON 0,5",
+     "env": 30,
+     "psl": 17418.166221213258,
+     "u": 43292,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Macromax": {
-   "psl_ponderado": 13548.29,
-   "unidades_mat": 140455,
+   "psl_ponderado": 13555.02,
+   "unidades_mat": 140646,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "MACROMAX TABL 500MG x 3",
-     "lista": "MACROMAX",
-     "env": 3,
-     "psl": 10393.616709836217,
-     "u": 13752,
-     "packs": 1
-    },
     {
      "iqvia": "MACROMAX TABL 500MG x 6",
      "lista": "MACROMAX",
      "env": 6,
      "psl": 13920.152015943977,
-     "u": 54752,
+     "u": 54743,
+     "packs": 1
+    },
+    {
+     "iqvia": "MACROMAX TABL 500MG x 3",
+     "lista": "MACROMAX",
+     "env": 3,
+     "psl": 10393.616709836217,
+     "u": 13497,
      "packs": 1
     },
     {
@@ -533,23 +533,23 @@
      "lista": "MACROMAX PEDIATRICO",
      "env": 30,
      "psl": 13868.262426802461,
-     "u": 71951,
+     "u": 72406,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Calcio Base": {
-   "psl_ponderado": 9755.39,
-   "unidades_mat": 378210,
+   "psl_ponderado": 9676.16,
+   "unidades_mat": 379716,
    "cobertura": 1.0,
    "match": [
     {
-     "iqvia": "CALCIO BASE D TABL 500MG x 60 /440",
-     "lista": "CALCIO BASE DUPOMAR D",
+     "iqvia": "CALCIO BASE D3 TABL MAST 200MG x 60",
+     "lista": "CALCIO BASE DUPOMAR D3 200",
      "env": 60,
-     "psl": 11291.604299994666,
-     "u": 10639,
+     "psl": 11051.444706301776,
+     "u": 7090,
      "packs": 1
     },
     {
@@ -557,7 +557,15 @@
      "lista": "CALCIO BASE DUPOMAR",
      "env": 30,
      "psl": 7612.8703152831,
-     "u": 135855,
+     "u": 141365,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO BASE D TABL 500MG x 60 /440",
+     "lista": "CALCIO BASE DUPOMAR D",
+     "env": 60,
+     "psl": 11291.604299994666,
+     "u": 10951,
      "packs": 1
     },
     {
@@ -565,103 +573,7 @@
      "lista": "CALCIO BASE DUPOMAR D3 200",
      "env": 30,
      "psl": 6863.485040253395,
-     "u": 34865,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO BASE D3 TABL MAST 200MG x 30",
-     "lista": "CALCIO BASE DUPOMAR D3 200",
-     "env": 30,
-     "psl": 6863.485040253395,
-     "u": 11202,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO BASE D3 TABL MAST 200MG x 60",
-     "lista": "CALCIO BASE DUPOMAR D3 200",
-     "env": 60,
-     "psl": 11051.444706301776,
-     "u": 6961,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO BASE D3 TABL MAST 400MG x 60",
-     "lista": "CALCIO BASE DUPOMAR D3 200",
-     "env": 60,
-     "psl": 11051.444706301776,
-     "u": 23796,
-     "packs": 1
-    },
-    {
-     "iqvia": "CITRAMAR D 400 TABL 315MG x 60 /400",
-     "lista": "CITRAMAR D 400",
-     "env": 60,
-     "psl": 12636.192403247705,
-     "u": 431,
-     "packs": 1
-    },
-    {
-     "iqvia": "CITRAMAR D 200 TABL 315MG x 30 /200",
-     "lista": "CITRAMAR D 200",
-     "env": 30,
-     "psl": 6237.947866387202,
-     "u": 500,
-     "packs": 1
-    },
-    {
-     "iqvia": "CITRAMAR D 200 TABL 315MG x 60 /200",
-     "lista": "CITRAMAR D 200",
-     "env": 60,
-     "psl": 11624.360894762354,
-     "u": 244,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 60 /200",
-     "lista": "CALCIO BASE DUPOMAR D3 200",
-     "env": 60,
-     "psl": 11051.444706301776,
-     "u": 1099,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 30 /400",
-     "lista": "CALCIO BASE DUPOMAR D3 400",
-     "env": 30,
-     "psl": 8452.164873848726,
-     "u": 4726,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO BASE TABL MAST 500MG x 60",
-     "lista": "CALCIO BASE DUPOMAR",
-     "env": 60,
-     "psl": 12925.251345044233,
-     "u": 130078,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 30 /200",
-     "lista": "CALCIO BASE DUPOMAR D3 200",
-     "env": 30,
-     "psl": 6863.485040253395,
-     "u": 2167,
-     "packs": 1
-    },
-    {
-     "iqvia": "CITRAMAR D 400 TABL 315MG x 30 /400",
-     "lista": "CITRAMAR D 400",
-     "env": 30,
-     "psl": 7413.003927685451,
-     "u": 845,
-     "packs": 1
-    },
-    {
-     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 60 /400",
-     "lista": "CALCIO BASE DUPOMAR D3 400",
-     "env": 60,
-     "psl": 12605.245670252014,
-     "u": 2385,
+     "u": 34880,
      "packs": 1
     },
     {
@@ -669,23 +581,111 @@
      "lista": "CALCIO BASE DUPOMAR D",
      "env": 30,
      "psl": 6695.287375148584,
-     "u": 12417,
+     "u": 12579,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO BASE TABL MAST 500MG x 60",
+     "lista": "CALCIO BASE DUPOMAR",
+     "env": 60,
+     "psl": 12925.251345044233,
+     "u": 124666,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 30 /400",
+     "lista": "CALCIO BASE DUPOMAR D3 400",
+     "env": 30,
+     "psl": 8452.164873848726,
+     "u": 5555,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 30 /200",
+     "lista": "CALCIO BASE DUPOMAR D3 200",
+     "env": 30,
+     "psl": 6863.485040253395,
+     "u": 2503,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 60 /400",
+     "lista": "CALCIO BASE DUPOMAR D3 400",
+     "env": 60,
+     "psl": 12605.245670252014,
+     "u": 2727,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO CIT DUPO D3 TABL MAST 1500MG x 60 /200",
+     "lista": "CALCIO BASE DUPOMAR D3 200",
+     "env": 60,
+     "psl": 11051.444706301776,
+     "u": 1234,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO BASE D3 TABL MAST 200MG x 30",
+     "lista": "CALCIO BASE DUPOMAR D3 200",
+     "env": 30,
+     "psl": 6863.485040253395,
+     "u": 11221,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCIO BASE D3 TABL MAST 400MG x 60",
+     "lista": "CALCIO BASE DUPOMAR D3 200",
+     "env": 60,
+     "psl": 11051.444706301776,
+     "u": 23467,
+     "packs": 1
+    },
+    {
+     "iqvia": "CITRAMAR D 200 TABL 315MG x 30 /200",
+     "lista": "CITRAMAR D 200",
+     "env": 30,
+     "psl": 6237.947866387202,
+     "u": 385,
+     "packs": 1
+    },
+    {
+     "iqvia": "CITRAMAR D 400 TABL 315MG x 30 /400",
+     "lista": "CITRAMAR D 400",
+     "env": 30,
+     "psl": 7413.003927685451,
+     "u": 670,
+     "packs": 1
+    },
+    {
+     "iqvia": "CITRAMAR D 400 TABL 315MG x 60 /400",
+     "lista": "CITRAMAR D 400",
+     "env": 60,
+     "psl": 12636.192403247705,
+     "u": 243,
+     "packs": 1
+    },
+    {
+     "iqvia": "CITRAMAR D 200 TABL 315MG x 60 /200",
+     "lista": "CITRAMAR D 200",
+     "env": 60,
+     "psl": 11624.360894762354,
+     "u": 180,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "ISIS Free": {
-   "psl_ponderado": 22768.0,
-   "unidades_mat": 602844,
+   "psl_ponderado": 22783.49,
+   "unidades_mat": 593707,
    "cobertura": 1.0,
    "match": [
     {
-     "iqvia": "ISIS FREE S/ESTROG TABL RECUBIE 4.00MG x 56",
+     "iqvia": "ISIS FREE S/ESTROG TABL RECUBIE 4.00MG x 84",
      "lista": "ISIS FREE",
-     "env": 56,
-     "psl": 35594.35935143017,
-     "u": 13746,
+     "env": 84,
+     "psl": 45249.32932550562,
+     "u": 22924,
      "packs": 1
     },
     {
@@ -693,39 +693,39 @@
      "lista": "ISIS FREE",
      "env": 28,
      "psl": 21547.2996788122,
-     "u": 566197,
+     "u": 557215,
      "packs": 1
     },
     {
-     "iqvia": "ISIS FREE S/ESTROG TABL RECUBIE 4.00MG x 84",
+     "iqvia": "ISIS FREE S/ESTROG TABL RECUBIE 4.00MG x 56",
      "lista": "ISIS FREE",
-     "env": 84,
-     "psl": 45249.32932550562,
-     "u": 22901,
+     "env": 56,
+     "psl": 35594.35935143017,
+     "u": 13568,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Siderblut": {
-   "psl_ponderado": 11262.17,
-   "unidades_mat": 695879,
+   "psl_ponderado": 11245.46,
+   "unidades_mat": 700291,
    "cobertura": 1.0,
    "match": [
+    {
+     "iqvia": "FER-IN-SOL GOTAS 125MG 20ML x 1 /ML",
+     "lista": "FERINSOL",
+     "env": 20,
+     "psl": 8122.32353896678,
+     "u": 225736,
+     "packs": 1
+    },
     {
      "iqvia": "SIDERBLUT CAPS 200MG x 60",
      "lista": "SIDERBLUT",
      "env": 60,
      "psl": 19097.71621068156,
-     "u": 95394,
-     "packs": 1
-    },
-    {
-     "iqvia": "SIDERBLUT POLI TABL 100MG x 60",
-     "lista": "SIDERBLUT  POLI",
-     "env": 60,
-     "psl": 16534.844630359716,
-     "u": 46089,
+     "u": 95169,
      "packs": 1
     },
     {
@@ -733,15 +733,7 @@
      "lista": "SIDERBLUT",
      "env": 30,
      "psl": 10153.665572231346,
-     "u": 238634,
-     "packs": 1
-    },
-    {
-     "iqvia": "SIDERBLUT POLI TABL 100MG x 30",
-     "lista": "SIDERBLUT  POLI",
-     "env": 30,
-     "psl": 9476.176287642089,
-     "u": 54704,
+     "u": 239811,
      "packs": 1
     },
     {
@@ -749,7 +741,7 @@
      "lista": "SIDERBLUT",
      "env": 5,
      "psl": 27089.55615302739,
-     "u": 12153,
+     "u": 12045,
      "packs": 1
     },
     {
@@ -757,47 +749,39 @@
      "lista": "SIDERBLUT",
      "env": 20,
      "psl": 6582.233971189137,
-     "u": 25374,
+     "u": 25508,
      "packs": 1
     },
     {
-     "iqvia": "FER-IN-SOL GOTAS 125MG 20ML x 1 /ML",
-     "lista": "FERINSOL",
-     "env": 20,
-     "psl": 8122.32353896678,
-     "u": 223531,
+     "iqvia": "SIDERBLUT POLI TABL 100MG x 30",
+     "lista": "SIDERBLUT  POLI",
+     "env": 30,
+     "psl": 9476.176287642089,
+     "u": 55533,
+     "packs": 1
+    },
+    {
+     "iqvia": "SIDERBLUT POLI TABL 100MG x 60",
+     "lista": "SIDERBLUT  POLI",
+     "env": 60,
+     "psl": 16534.844630359716,
+     "u": 46489,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Trip D3": {
-   "psl_ponderado": 17708.87,
-   "unidades_mat": 431191,
+   "psl_ponderado": 17714.4,
+   "unidades_mat": 430900,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "CALCITRIOL INV CAPS 0.25Y x 30",
-     "lista": "CALCITRIOL 0,25 mg",
-     "env": 30,
-     "psl": 16349.307565825538,
-     "u": 174742,
-     "packs": 1
-    },
     {
      "iqvia": "CALCITOL D3 SOLN ORAL 2.50MG 2ML x 1",
      "lista": "CALCITOL D3",
      "env": 2,
      "psl": 7075.238115500255,
-     "u": 39,
-     "packs": 1
-    },
-    {
-     "iqvia": "TRIP D3 CAPS DURAS 100K x 1",
-     "lista": "TRIP D3 (*)",
-     "env": 1,
-     "psl": 9716.219711709133,
-     "u": 68442,
+     "u": 11,
      "packs": 1
     },
     {
@@ -805,7 +789,23 @@
      "lista": "TRIP D3 (*)",
      "env": 3,
      "psl": 21885.223639545904,
-     "u": 187968,
+     "u": 187760,
+     "packs": 1
+    },
+    {
+     "iqvia": "CALCITRIOL INV CAPS 0.25Y x 30",
+     "lista": "CALCITRIOL 0,25 mg",
+     "env": 30,
+     "psl": 16349.307565825538,
+     "u": 175121,
+     "packs": 1
+    },
+    {
+     "iqvia": "TRIP D3 CAPS DURAS 100K x 1",
+     "lista": "TRIP D3 (*)",
+     "env": 1,
+     "psl": 9716.219711709133,
+     "u": 68008,
      "packs": 1
     }
    ],
@@ -813,7 +813,7 @@
   },
   "Deltrox": {
    "psl_ponderado": 28816.88,
-   "unidades_mat": 6105,
+   "unidades_mat": 5480,
    "cobertura": 1.0,
    "match": [
     {
@@ -821,23 +821,31 @@
      "lista": "DELTROX 150 mg",
      "env": 1,
      "psl": 28816.882005581923,
-     "u": 6105,
+     "u": 5480,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Exforge": {
-   "psl_ponderado": 38577.74,
-   "unidades_mat": 185321,
+   "psl_ponderado": 38579.32,
+   "unidades_mat": 184585,
    "cobertura": 1.0,
    "match": [
+    {
+     "iqvia": "EXFORGE TABL RECUBIE 320MG x 28 /10",
+     "lista": "EXFORGE 160/10 (*)",
+     "env": 28,
+     "psl": 39082.06434933639,
+     "u": 7676,
+     "packs": 1
+    },
     {
      "iqvia": "EXFORGE TABL RECUBIE 5.00MG x 28 /160",
      "lista": "EXFORGE 160/5 (*)",
      "env": 28,
      "psl": 38468.6772779437,
-     "u": 94754,
+     "u": 93933,
      "packs": 1
     },
     {
@@ -845,15 +853,7 @@
      "lista": "EXFORGE 160/5 (*)",
      "env": 14,
      "psl": 20782.941205027084,
-     "u": 1152,
-     "packs": 1
-    },
-    {
-     "iqvia": "EXFORGE TABL RECUBIE 320MG x 28 /5",
-     "lista": "EXFORGE 80/5 (*)",
-     "env": 28,
-     "psl": 39213.90798151405,
-     "u": 8892,
+     "u": 1153,
      "packs": 1
     },
     {
@@ -861,7 +861,15 @@
      "lista": "EXFORGE 160/5 (*)",
      "env": 28,
      "psl": 38468.6772779437,
-     "u": 33652,
+     "u": 33374,
+     "packs": 1
+    },
+    {
+     "iqvia": "EXFORGE TABL RECUBIE 320MG x 28 /5",
+     "lista": "EXFORGE 80/5 (*)",
+     "env": 28,
+     "psl": 39213.90798151405,
+     "u": 8804,
      "packs": 1
     },
     {
@@ -869,47 +877,23 @@
      "lista": "EXFORGE 80/5 (*)",
      "env": 28,
      "psl": 39213.90798151405,
-     "u": 39504,
-     "packs": 1
-    },
-    {
-     "iqvia": "EXFORGE TABL RECUBIE 320MG x 28 /10",
-     "lista": "EXFORGE 160/10 (*)",
-     "env": 28,
-     "psl": 39082.06434933639,
-     "u": 7367,
+     "u": 39645,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Entresto": {
-   "psl_ponderado": 80021.44,
-   "unidades_mat": 204137,
+   "psl_ponderado": 80040.99,
+   "unidades_mat": 205022,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "ENTRESTO TA REV 49MG/ 51mg x 30",
-     "lista": "ENTRESTO 100 mg (*)",
-     "env": 30,
-     "psl": 66102.3027880846,
-     "u": 36642,
-     "packs": 1
-    },
     {
      "iqvia": "ENTRESTO TA REV 97MG/ 103MG x 60",
      "lista": "ENTRESTO 200 mg (*)",
      "env": 60,
      "psl": 132204.6748625992,
-     "u": 16947,
-     "packs": 1
-    },
-    {
-     "iqvia": "ENTRESTO TA REV 49MG/ 51mg x 60",
-     "lista": "ENTRESTO 100 mg (*)",
-     "env": 60,
-     "psl": 132204.6748625992,
-     "u": 26038,
+     "u": 17080,
      "packs": 1
     },
     {
@@ -917,87 +901,39 @@
      "lista": "ENTRESTO 50 mg (*)",
      "env": 30,
      "psl": 66102.3027880846,
-     "u": 124510,
+     "u": 125346,
+     "packs": 1
+    },
+    {
+     "iqvia": "ENTRESTO TA REV 49MG/ 51mg x 30",
+     "lista": "ENTRESTO 100 mg (*)",
+     "env": 30,
+     "psl": 66102.3027880846,
+     "u": 36444,
+     "packs": 1
+    },
+    {
+     "iqvia": "ENTRESTO TA REV 49MG/ 51mg x 60",
+     "lista": "ENTRESTO 100 mg (*)",
+     "env": 60,
+     "psl": 132204.6748625992,
+     "u": 26152,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Dilatrend": {
-   "psl_ponderado": 15199.55,
-   "unidades_mat": 701269,
-   "cobertura": 0.9364,
+   "psl_ponderado": 15193.3,
+   "unidades_mat": 692148,
+   "cobertura": 0.9365,
    "match": [
-    {
-     "iqvia": "DILATREND D TABL RAN 25/ 12mg x 28",
-     "lista": "DILATREND D  X 28",
-     "env": 28,
-     "psl": 17166.97911477668,
-     "u": 13719,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND AP CAPS 40mg x 30",
-     "lista": "DILATREND AP 40 MG",
-     "env": 30,
-     "psl": 27945.684711224018,
-     "u": 19763,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND AP CAPS 20mg x 30",
-     "lista": "DILATREND AP 20 MG",
-     "env": 30,
-     "psl": 22863.116255947603,
-     "u": 20618,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND AP CAPS 10mg x 30",
-     "lista": "DILATREND AP 10 MG",
-     "env": 30,
-     "psl": 13362.210382090188,
-     "u": 7427,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND AP CAPS 80mg x 30",
-     "lista": "DILATREND AP 80 MG",
-     "env": 30,
-     "psl": 33673.375742923636,
-     "u": 4412,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND TABL RAN 12.5MG x 56",
-     "lista": "DILATREND 12,5 mg",
-     "env": 56,
-     "psl": 19534.985467741102,
-     "u": 56071,
-     "packs": 1
-    },
     {
      "iqvia": "DILATREND TABL RAN 6.25MG x 56",
      "lista": "DILATREND 6,25 mg",
      "env": 56,
      "psl": 15404.91467534309,
-     "u": 56438,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND TABL RAN 6.25MG x 30",
-     "lista": "DILATREND 6,25 mg",
-     "env": 30,
-     "psl": 9960.71768122267,
-     "u": 103938,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND TABL RAN 12.5MG x 28",
-     "lista": "DILATREND 12,5 mg",
-     "env": 28,
-     "psl": 11959.171531002268,
-     "u": 43355,
+     "u": 56067,
      "packs": 1
     },
     {
@@ -1005,15 +941,7 @@
      "lista": "DILATREND D  X 28",
      "env": 28,
      "psl": 17166.97911477668,
-     "u": 12582,
-     "packs": 1
-    },
-    {
-     "iqvia": "DILATREND TABL RAN 50mg x 28",
-     "lista": "DILATREND 50 MG",
-     "env": 28,
-     "psl": 19736.449298026786,
-     "u": 6053,
+     "u": 12300,
      "packs": 1
     },
     {
@@ -1021,15 +949,39 @@
      "lista": "DILATREND 6,25 mg",
      "env": 28,
      "psl": 9959.68878182727,
-     "u": 35423,
+     "u": 34472,
      "packs": 1
     },
     {
-     "iqvia": "DILATREND TABL RAN 12.5MG x 30",
-     "lista": "DILATREND 12,5 mg",
+     "iqvia": "DILATREND TABL RAN 6.25MG x 30",
+     "lista": "DILATREND 6,25 mg",
      "env": 30,
-     "psl": 12317.979433770155,
-     "u": 118504,
+     "psl": 9960.71768122267,
+     "u": 103342,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND TABL RAN 50mg x 28",
+     "lista": "DILATREND 50 MG",
+     "env": 28,
+     "psl": 19736.449298026786,
+     "u": 5870,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND TABL RAN 12.5MG x 28",
+     "lista": "DILATREND 12,5 mg",
+     "env": 28,
+     "psl": 11959.171531002268,
+     "u": 42292,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND TABL RAN 12.5MG x 56",
+     "lista": "DILATREND 12,5 mg",
+     "env": 56,
+     "psl": 19534.985467741102,
+     "u": 55421,
      "packs": 1
     },
     {
@@ -1037,7 +989,39 @@
      "lista": "DILATREND 25 mg",
      "env": 30,
      "psl": 15228.091464723711,
-     "u": 82470,
+     "u": 81077,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND TABL RAN 12.5MG x 30",
+     "lista": "DILATREND 12,5 mg",
+     "env": 30,
+     "psl": 12317.979433770155,
+     "u": 117868,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND AP CAPS 10mg x 30",
+     "lista": "DILATREND AP 10 MG",
+     "env": 30,
+     "psl": 13362.210382090188,
+     "u": 7389,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND AP CAPS 80mg x 30",
+     "lista": "DILATREND AP 80 MG",
+     "env": 30,
+     "psl": 33673.375742923636,
+     "u": 4335,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND AP CAPS 20mg x 30",
+     "lista": "DILATREND AP 20 MG",
+     "env": 30,
+     "psl": 22863.116255947603,
+     "u": 20257,
      "packs": 1
     },
     {
@@ -1045,7 +1029,15 @@
      "lista": "DILATREND 25 mg",
      "env": 28,
      "psl": 15228.340084293348,
-     "u": 37837,
+     "u": 36925,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND AP CAPS 40mg x 30",
+     "lista": "DILATREND AP 40 MG",
+     "env": 30,
+     "psl": 27945.684711224018,
+     "u": 19594,
      "packs": 1
     },
     {
@@ -1053,60 +1045,36 @@
      "lista": "DILATREND 25 mg",
      "env": 56,
      "psl": 25625.444358677963,
-     "u": 38077,
+     "u": 37458,
+     "packs": 1
+    },
+    {
+     "iqvia": "DILATREND D TABL RAN 25/ 12mg x 28",
+     "lista": "DILATREND D  X 28",
+     "env": 28,
+     "psl": 17166.97911477668,
+     "u": 13535,
      "packs": 1
     }
    ],
    "sin_precio": [
     {
      "iqvia": "DILATREND TABL RAN 3.12MG x 30",
-     "u": 44582
+     "u": 43946
     }
    ]
   },
   "Empax": {
-   "psl_ponderado": 57437.9,
-   "unidades_mat": 27649,
+   "psl_ponderado": 57415.11,
+   "unidades_mat": 29707,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "EMPAX TABL RECUBIE 25mg x 30",
-     "lista": "EMPAX 25 MG",
-     "env": 30,
-     "psl": 59690.777882359216,
-     "u": 7083,
-     "packs": 1
-    },
-    {
-     "iqvia": "EMPAX TABL RECUBIE 10mg x 30",
-     "lista": "EMPAX 10 MG",
-     "env": 30,
-     "psl": 55536.07003479712,
-     "u": 15981,
-     "packs": 1
-    },
     {
      "iqvia": "EMPAX MET TABL RECUBIE 850MG x 60 /5",
      "lista": "EMPAX MET 5/1000",
      "env": 60,
      "psl": 60586.42521164741,
-     "u": 997,
-     "packs": 1
-    },
-    {
-     "iqvia": "EMPAX MET TABL RECUBIE 1000MG x 60 /12.",
-     "lista": "EMPAX MET 5/1000",
-     "env": 60,
-     "psl": 60586.42521164741,
-     "u": 2179,
-     "packs": 1
-    },
-    {
-     "iqvia": "EMPAX MET TABL RECUBIE 1000MG x 60 /5",
-     "lista": "EMPAX MET 5/1000",
-     "env": 60,
-     "psl": 60586.42521164741,
-     "u": 831,
+     "u": 1019,
      "packs": 1
     },
     {
@@ -1114,31 +1082,55 @@
      "lista": "EMPAX MET 5/1000",
      "env": 60,
      "psl": 60586.42521164741,
-     "u": 578,
+     "u": 567,
+     "packs": 1
+    },
+    {
+     "iqvia": "EMPAX MET TABL RECUBIE 1000MG x 60 /12.",
+     "lista": "EMPAX MET 5/1000",
+     "env": 60,
+     "psl": 60586.42521164741,
+     "u": 2331,
+     "packs": 1
+    },
+    {
+     "iqvia": "EMPAX MET TABL RECUBIE 1000MG x 60 /5",
+     "lista": "EMPAX MET 5/1000",
+     "env": 60,
+     "psl": 60586.42521164741,
+     "u": 840,
+     "packs": 1
+    },
+    {
+     "iqvia": "EMPAX TABL RECUBIE 25mg x 30",
+     "lista": "EMPAX 25 MG",
+     "env": 30,
+     "psl": 59690.777882359216,
+     "u": 7653,
+     "packs": 1
+    },
+    {
+     "iqvia": "EMPAX TABL RECUBIE 10mg x 30",
+     "lista": "EMPAX 10 MG",
+     "env": 30,
+     "psl": 55536.07003479712,
+     "u": 17297,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Metglucon": {
-   "psl_ponderado": 14242.2,
-   "unidades_mat": 330955,
+   "psl_ponderado": 14237.4,
+   "unidades_mat": 326350,
    "cobertura": 1.0,
    "match": [
     {
-     "iqvia": "METGLUCON AP TABL RECUBIE 500MG x 30",
+     "iqvia": "METGLUCON AP TABL RECUBIE 850MG x 30",
      "lista": "METGLUCON 500 AP",
      "env": 30,
      "psl": 8506.259612986894,
-     "u": 28161,
-     "packs": 1
-    },
-    {
-     "iqvia": "METGLUCON AP TABL RECUBIE 1000MG x 30",
-     "lista": "METGLUCON 500 AP",
-     "env": 30,
-     "psl": 8506.259612986894,
-     "u": 15412,
+     "u": 38288,
      "packs": 1
     },
     {
@@ -1146,7 +1138,7 @@
      "lista": "METGLUCON 500 AP",
      "env": 60,
      "psl": 16163.841758859784,
-     "u": 73034,
+     "u": 71822,
      "packs": 1
     },
     {
@@ -1154,15 +1146,23 @@
      "lista": "METGLUCON 500 AP",
      "env": 60,
      "psl": 16163.841758859784,
-     "u": 59343,
+     "u": 58684,
      "packs": 1
     },
     {
-     "iqvia": "METGLUCON TABL RECUB. 500MG x 30",
+     "iqvia": "METGLUCON AP TABL RECUBIE 500MG x 30",
      "lista": "METGLUCON 500 AP",
      "env": 30,
      "psl": 8506.259612986894,
-     "u": 531,
+     "u": 28152,
+     "packs": 1
+    },
+    {
+     "iqvia": "METGLUCON AP TABL RECUBIE 1000MG x 30",
+     "lista": "METGLUCON 500 AP",
+     "env": 30,
+     "psl": 8506.259612986894,
+     "u": 15127,
      "packs": 1
     },
     {
@@ -1170,47 +1170,39 @@
      "lista": "METGLUCON 500 AP",
      "env": 60,
      "psl": 16163.841758859784,
-     "u": 115526,
+     "u": 113743,
      "packs": 1
     },
     {
-     "iqvia": "METGLUCON AP TABL RECUBIE 850MG x 30",
+     "iqvia": "METGLUCON TABL RECUB. 500MG x 30",
      "lista": "METGLUCON 500 AP",
      "env": 30,
      "psl": 8506.259612986894,
-     "u": 38948,
+     "u": 534,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Roxolan": {
-   "psl_ponderado": 22637.6,
-   "unidades_mat": 194281,
+   "psl_ponderado": 22648.61,
+   "unidades_mat": 195517,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "ROXOLAN TABL 5.00MG x 30",
-     "lista": "ROXOLAN 5 MG",
-     "env": 30,
-     "psl": 10249.003871510165,
-     "u": 8933,
-     "packs": 1
-    },
-    {
-     "iqvia": "ROXOLAN TABL 40mg x 30",
-     "lista": "ROXOLAN 40 MG",
-     "env": 30,
-     "psl": 48772.992743501774,
-     "u": 19579,
-     "packs": 1
-    },
     {
      "iqvia": "ROXOLAN TABL 10mg x 30",
      "lista": "ROXOLAN 10 MG",
      "env": 30,
      "psl": 15517.585503536759,
-     "u": 103543,
+     "u": 104077,
+     "packs": 1
+    },
+    {
+     "iqvia": "ROXOLAN TABL 5.00MG x 30",
+     "lista": "ROXOLAN 5 MG",
+     "env": 30,
+     "psl": 10249.003871510165,
+     "u": 8949,
      "packs": 1
     },
     {
@@ -1218,15 +1210,23 @@
      "lista": "ROXOLAN 20 MG",
      "env": 30,
      "psl": 28040.34088813013,
-     "u": 62226,
+     "u": 62794,
+     "packs": 1
+    },
+    {
+     "iqvia": "ROXOLAN TABL 40mg x 30",
+     "lista": "ROXOLAN 40 MG",
+     "env": 30,
+     "psl": 48772.992743501774,
+     "u": 19697,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Roxolan Plus": {
-   "psl_ponderado": 21060.38,
-   "unidades_mat": 37570,
+   "psl_ponderado": 20951.22,
+   "unidades_mat": 39240,
    "cobertura": 1.0,
    "match": [
     {
@@ -1234,7 +1234,7 @@
      "lista": "ROXOLAN 5 MG",
      "env": 30,
      "psl": 10249.003871510165,
-     "u": 2184,
+     "u": 2274,
      "packs": 1
     },
     {
@@ -1242,7 +1242,7 @@
      "lista": "ROXOLAN 10 MG",
      "env": 30,
      "psl": 15517.585503536759,
-     "u": 17838,
+     "u": 18983,
      "packs": 1
     },
     {
@@ -1250,15 +1250,15 @@
      "lista": "ROXOLAN 20 MG",
      "env": 30,
      "psl": 28040.34088813013,
-     "u": 17548,
+     "u": 17983,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Siltran": {
-   "psl_ponderado": 66349.01,
-   "unidades_mat": 64752,
+   "psl_ponderado": 66348.69,
+   "unidades_mat": 66752,
    "cobertura": 1.0,
    "match": [
     {
@@ -1266,7 +1266,7 @@
      "lista": "SILTRAN 50mg",
      "env": 30,
      "psl": 64600.48443704309,
-     "u": 5722,
+     "u": 5959,
      "packs": 1
     },
     {
@@ -1274,15 +1274,7 @@
      "lista": "SILTRAN 100mg",
      "env": 30,
      "psl": 69281.67896146649,
-     "u": 24781,
-     "packs": 1
-    },
-    {
-     "iqvia": "SILTRAN MET TABL RECUBIE 1000MG x 60 /50",
-     "lista": "SILTRAN MET 50/1000mg",
-     "env": 60,
-     "psl": 79277.1015826524,
-     "u": 11321,
+     "u": 25677,
      "packs": 1
     },
     {
@@ -1290,23 +1282,7 @@
      "lista": "SILTRAN MET 50/500mg",
      "env": 30,
      "psl": 36513.317290502615,
-     "u": 2252,
-     "packs": 1
-    },
-    {
-     "iqvia": "SILTRAN MET TABL RECUBIE 1000MG x 30 /50",
-     "lista": "SILTRAN MET 50/1000mg",
-     "env": 30,
-     "psl": 41194.51181492604,
-     "u": 1627,
-     "packs": 1
-    },
-    {
-     "iqvia": "SILTRAN MET TABL RECUBIE 850MG x 30 /50",
-     "lista": "SILTRAN MET 50/850mg",
-     "env": 30,
-     "psl": 38697.87473523355,
-     "u": 4680,
+     "u": 2339,
      "packs": 1
     },
     {
@@ -1314,63 +1290,71 @@
      "lista": "SILTRAN MET 50/850mg",
      "env": 60,
      "psl": 68332.12860295785,
-     "u": 14369,
+     "u": 14816,
+     "packs": 1
+    },
+    {
+     "iqvia": "SILTRAN MET TABL RECUBIE 1000MG x 30 /50",
+     "lista": "SILTRAN MET 50/1000mg",
+     "env": 30,
+     "psl": 41194.51181492604,
+     "u": 1675,
+     "packs": 1
+    },
+    {
+     "iqvia": "SILTRAN MET TABL RECUBIE 850MG x 30 /50",
+     "lista": "SILTRAN MET 50/850mg",
+     "env": 30,
+     "psl": 38697.87473523355,
+     "u": 4754,
+     "packs": 1
+    },
+    {
+     "iqvia": "SILTRAN MET TABL RECUBIE 1000MG x 60 /50",
+     "lista": "SILTRAN MET 50/1000mg",
+     "env": 60,
+     "psl": 79277.1015826524,
+     "u": 11532,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Sintrom": {
-   "psl_ponderado": 26010.02,
-   "unidades_mat": 689805,
+   "psl_ponderado": 25998.9,
+   "unidades_mat": 680255,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "SINTROM TABL 1.00MG x 20",
-     "lista": "SINTROM 1 mg NA",
-     "env": 20,
-     "psl": 7757.161842945386,
-     "u": 61579,
-     "packs": 1
-    },
     {
      "iqvia": "SINTROM TABL 4.00MG x 20",
      "lista": "SINTROM 4 mg NA",
      "env": 20,
      "psl": 27799.171522727163,
-     "u": 628226,
+     "u": 619151,
+     "packs": 1
+    },
+    {
+     "iqvia": "SINTROM TABL 1.00MG x 20",
+     "lista": "SINTROM 1 mg NA",
+     "env": 20,
+     "psl": 7757.161842945386,
+     "u": 61104,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Terloc": {
-   "psl_ponderado": 20310.05,
-   "unidades_mat": 329937,
-   "cobertura": 0.9872,
+   "psl_ponderado": 20326.99,
+   "unidades_mat": 329328,
+   "cobertura": 0.9875,
    "match": [
-    {
-     "iqvia": "TERLOC TABL 10mg x 60",
-     "lista": "TERLOC 10 MG (*)",
-     "env": 60,
-     "psl": 43448.01598328852,
-     "u": 18892,
-     "packs": 1
-    },
-    {
-     "iqvia": "TERLOC TABL 5.00MG x 60",
-     "lista": "TERLOC 5 MG (*)",
-     "env": 60,
-     "psl": 25295.674832314555,
-     "u": 30685,
-     "packs": 1
-    },
     {
      "iqvia": "TERLOC TABL 10mg x 30",
      "lista": "TERLOC 10 MG (*)",
      "env": 30,
      "psl": 23764.793928611547,
-     "u": 133873,
+     "u": 133932,
      "packs": 1
     },
     {
@@ -1378,15 +1362,23 @@
      "lista": "TERLOC 5 MG (*)",
      "env": 30,
      "psl": 12910.745994568759,
-     "u": 136264,
+     "u": 136505,
      "packs": 1
     },
     {
-     "iqvia": "TERLOC DUO CAPS 5.00MG x 30 /20",
+     "iqvia": "TERLOC TABL 5.00MG x 60",
      "lista": "TERLOC 5 MG (*)",
-     "env": 30,
-     "psl": 12910.745994568759,
-     "u": 1659,
+     "env": 60,
+     "psl": 25295.674832314555,
+     "u": 31114,
+     "packs": 1
+    },
+    {
+     "iqvia": "TERLOC TABL 10mg x 60",
+     "lista": "TERLOC 10 MG (*)",
+     "env": 60,
+     "psl": 43448.01598328852,
+     "u": 18757,
      "packs": 1
     },
     {
@@ -1394,44 +1386,36 @@
      "lista": "TERLOC 5 MG (*)",
      "env": 30,
      "psl": 12910.745994568759,
-     "u": 4334,
+     "u": 3588,
+     "packs": 1
+    },
+    {
+     "iqvia": "TERLOC DUO CAPS 5.00MG x 30 /20",
+     "lista": "TERLOC 5 MG (*)",
+     "env": 30,
+     "psl": 12910.745994568759,
+     "u": 1314,
      "packs": 1
     }
    ],
    "sin_precio": [
     {
      "iqvia": "TERLOC DUO CAPS 2.50MG x 30 /10",
-     "u": 4230
+     "u": 4118
     }
    ]
   },
   "Diovan": {
-   "psl_ponderado": 26400.0,
-   "unidades_mat": 495638,
+   "psl_ponderado": 26390.76,
+   "unidades_mat": 487105,
    "cobertura": 1.0,
    "match": [
     {
-     "iqvia": "DIOVAN TABL RECUBIE 160MG x 14",
-     "lista": "DIOVAN 160 mg (*)",
+     "iqvia": "DIOVAN IC TABL RECUBIE 40mg x 14",
+     "lista": "DIOVAN 40 mg (*)",
      "env": 14,
-     "psl": 14758.64153024608,
-     "u": 2667,
-     "packs": 1
-    },
-    {
-     "iqvia": "DIOVAN TABL RECUBIE 320MG x 28",
-     "lista": "DIOVAN 320 mg (*)",
-     "env": 28,
-     "psl": 31747.88403193343,
-     "u": 37130,
-     "packs": 1
-    },
-    {
-     "iqvia": "DIOVAN TABL RECUBIE 80mg x 28",
-     "lista": "DIOVAN 80 mg (*)",
-     "env": 28,
-     "psl": 22490.43999899523,
-     "u": 175278,
+     "psl": 15395.393591693943,
+     "u": 11020,
      "packs": 1
     },
     {
@@ -1439,39 +1423,55 @@
      "lista": "DIOVAN 160 mg (*)",
      "env": 28,
      "psl": 28765.85094027423,
-     "u": 269641,
+     "u": 264450,
      "packs": 1
     },
     {
-     "iqvia": "DIOVAN IC TABL RECUBIE 40mg x 14",
-     "lista": "DIOVAN 40 mg (*)",
+     "iqvia": "DIOVAN TABL RECUBIE 160MG x 14",
+     "lista": "DIOVAN 160 mg (*)",
      "env": 14,
-     "psl": 15395.393591693943,
-     "u": 10922,
+     "psl": 14758.64153024608,
+     "u": 2677,
+     "packs": 1
+    },
+    {
+     "iqvia": "DIOVAN TABL RECUBIE 80mg x 28",
+     "lista": "DIOVAN 80 mg (*)",
+     "env": 28,
+     "psl": 22490.43999899523,
+     "u": 172315,
+     "packs": 1
+    },
+    {
+     "iqvia": "DIOVAN TABL RECUBIE 320MG x 28",
+     "lista": "DIOVAN 320 mg (*)",
+     "env": 28,
+     "psl": 31747.88403193343,
+     "u": 36643,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Telpres": {
-   "psl_ponderado": 56192.8,
-   "unidades_mat": 50834,
+   "psl_ponderado": 56142.57,
+   "unidades_mat": 49575,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "TELPRES TABL 80mg x 28",
-     "lista": "TELPRES 80 MG",
-     "env": 28,
-     "psl": 65591.31647971447,
-     "u": 24959,
-     "packs": 1
-    },
     {
      "iqvia": "TELPRES TABL 40mg x 28",
      "lista": "TELPRES 40 MG",
      "env": 28,
      "psl": 47126.99201718042,
-     "u": 25875,
+     "u": 25369,
+     "packs": 1
+    },
+    {
+     "iqvia": "TELPRES TABL 80mg x 28",
+     "lista": "TELPRES 80 MG",
+     "env": 28,
+     "psl": 65591.31647971447,
+     "u": 24206,
      "packs": 1
     }
    ],
@@ -1479,7 +1479,7 @@
   },
   "Dauran": {
    "psl_ponderado": 41251.89,
-   "unidades_mat": 13978,
+   "unidades_mat": 14469,
    "cobertura": 1.0,
    "match": [
     {
@@ -1487,15 +1487,15 @@
      "lista": "DAURAN 10 mg",
      "env": 30,
      "psl": 41251.89125033042,
-     "u": 13978,
+     "u": 14469,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Pixaban": {
-   "psl_ponderado": 76432.16,
-   "unidades_mat": 24623,
+   "psl_ponderado": 76428.32,
+   "unidades_mat": 24537,
    "cobertura": 1.0,
    "match": [
     {
@@ -1503,7 +1503,7 @@
      "lista": "PIXABAN 5 MG",
      "env": 60,
      "psl": 77189.54993057104,
-     "u": 16328,
+     "u": 16229,
      "packs": 1
     },
     {
@@ -1511,31 +1511,23 @@
      "lista": "PIXABAN 2,5 MG",
      "env": 60,
      "psl": 74941.31061220492,
-     "u": 8295,
+     "u": 8308,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Levital": {
-   "psl_ponderado": 84425.6,
-   "unidades_mat": 13315,
+   "psl_ponderado": 84405.27,
+   "unidades_mat": 13373,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "LEVITAL SOLN ORAL 100MG 200ML x 1",
-     "lista": "LEVITAL 100 mg",
-     "env": 200,
-     "psl": 81199.97815779924,
-     "u": 5427,
-     "packs": 1
-    },
     {
      "iqvia": "LEVITAL TABL REC 500MG x 60",
      "lista": "LEVITAL 500 mg",
      "env": 60,
      "psl": 95716.26816087285,
-     "u": 2490,
+     "u": 2535,
      "packs": 1
     },
     {
@@ -1543,7 +1535,7 @@
      "lista": "LEVITAL 500 mg",
      "env": 30,
      "psl": 49232.649680657785,
-     "u": 1833,
+     "u": 1836,
      "packs": 1
     },
     {
@@ -1551,47 +1543,63 @@
      "lista": "LEVITAL 1000 mg",
      "env": 30,
      "psl": 99544.91888730775,
-     "u": 3565,
+     "u": 3530,
+     "packs": 1
+    },
+    {
+     "iqvia": "LEVITAL SOLN ORAL 100MG 200ML x 1",
+     "lista": "LEVITAL 100 mg",
+     "env": 200,
+     "psl": 81199.97815779924,
+     "u": 5472,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "PGB": {
-   "psl_ponderado": 25068.78,
-   "unidades_mat": 63172,
+   "psl_ponderado": 25033.53,
+   "unidades_mat": 60970,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "PGB TABL MULTDOS 75mg x 15",
-     "lista": "PGB 75 mg",
-     "env": 15,
-     "psl": 13328.496588774868,
-     "u": 3869,
-     "packs": 1
-    },
     {
      "iqvia": "PGB TABL MULTDOS 75mg x 30",
      "lista": "PGB 75 mg",
      "env": 30,
      "psl": 25834.733635514283,
-     "u": 59303,
+     "u": 57064,
+     "packs": 1
+    },
+    {
+     "iqvia": "PGB TABL MULTDOS 75mg x 15",
+     "lista": "PGB 75 mg",
+     "env": 15,
+     "psl": 13328.496588774868,
+     "u": 3906,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "QTP": {
-   "psl_ponderado": 44742.94,
-   "unidades_mat": 22052,
+   "psl_ponderado": 44703.23,
+   "unidades_mat": 21959,
    "cobertura": 1.0,
    "match": [
+    {
+     "iqvia": "QTP TABL RECUBIE 200MG x 30",
+     "lista": "QTP 200 MG",
+     "env": 30,
+     "psl": 75745.10441242246,
+     "u": 1092,
+     "packs": 1
+    },
     {
      "iqvia": "QTP TABL RECUBIE 100MG x 30",
      "lista": "QTP 100 MG",
      "env": 30,
      "psl": 58603.12943228866,
-     "u": 6898,
+     "u": 6776,
      "packs": 1
     },
     {
@@ -1599,39 +1607,23 @@
      "lista": "QTP 25 MG",
      "env": 30,
      "psl": 35613.489449708846,
-     "u": 14089,
-     "packs": 1
-    },
-    {
-     "iqvia": "QTP TABL RECUBIE 200MG x 30",
-     "lista": "QTP 200 MG",
-     "env": 30,
-     "psl": 75745.10441242246,
-     "u": 1065,
+     "u": 14091,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Valium": {
-   "psl_ponderado": 8527.99,
-   "unidades_mat": 474763,
+   "psl_ponderado": 8546.32,
+   "unidades_mat": 470978,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "VALIUM A.IM 10mg 2ML x 5",
-     "lista": "VALIUM 10 mg",
-     "env": 5,
-     "psl": 9662.082826840366,
-     "u": 10525,
-     "packs": 1
-    },
     {
      "iqvia": "VALIUM TABL 5.00MG x 30",
      "lista": "VALIUM 5 mg",
      "env": 30,
      "psl": 6442.591263803529,
-     "u": 203708,
+     "u": 203902,
      "packs": 1
     },
     {
@@ -1639,7 +1631,7 @@
      "lista": "VALIUM 10 mg",
      "env": 50,
      "psl": 11495.581517048246,
-     "u": 162394,
+     "u": 164151,
      "packs": 1
     },
     {
@@ -1647,15 +1639,23 @@
      "lista": "VALIUM 10 mg",
      "env": 30,
      "psl": 7824.44531340404,
-     "u": 98136,
+     "u": 92515,
+     "packs": 1
+    },
+    {
+     "iqvia": "VALIUM A.IM 10mg 2ML x 5",
+     "lista": "VALIUM 10 mg",
+     "env": 5,
+     "psl": 9662.082826840366,
+     "u": 10410,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Madopar": {
-   "psl_ponderado": 28445.83,
-   "unidades_mat": 313031,
+   "psl_ponderado": 28353.43,
+   "unidades_mat": 314035,
    "cobertura": 1.0,
    "match": [
     {
@@ -1663,15 +1663,7 @@
      "lista": "MADOPAR 250 mg",
      "env": 50,
      "psl": 33315.30363485904,
-     "u": 204377,
-     "packs": 1
-    },
-    {
-     "iqvia": "MADOPAR TABL DISPERS 125MG x 100",
-     "lista": "MADOPAR 125 mg",
-     "env": 100,
-     "psl": 29408.29747994487,
-     "u": 16909,
+     "u": 203970,
      "packs": 1
     },
     {
@@ -1679,7 +1671,7 @@
      "lista": "MADOPAR 250 mg",
      "env": 30,
      "psl": 20173.75656499641,
-     "u": 68673,
+     "u": 68240,
      "packs": 1
     },
     {
@@ -1687,15 +1679,23 @@
      "lista": "MADOPAR HBS 125 mg",
      "env": 30,
      "psl": 9227.106212832694,
-     "u": 23072,
+     "u": 24677,
+     "packs": 1
+    },
+    {
+     "iqvia": "MADOPAR TABL DISPERS 125MG x 100",
+     "lista": "MADOPAR 125 mg",
+     "env": 100,
+     "psl": 29408.29747994487,
+     "u": 17148,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Acneclin": {
-   "psl_ponderado": 29910.06,
-   "unidades_mat": 131044,
+   "psl_ponderado": 29870.79,
+   "unidades_mat": 127498,
    "cobertura": 1.0,
    "match": [
     {
@@ -1703,7 +1703,7 @@
      "lista": "ACNECLIN",
      "env": 30,
      "psl": 16348.45943562007,
-     "u": 15202,
+     "u": 15117,
      "packs": 1
     },
     {
@@ -1711,47 +1711,31 @@
      "lista": "ACNECLIN 100 AP",
      "env": 30,
      "psl": 31689.750288535073,
-     "u": 115842,
+     "u": 112381,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Clobesol": {
-   "psl_ponderado": 14322.76,
-   "unidades_mat": 164948,
+   "psl_ponderado": 14324.69,
+   "unidades_mat": 164802,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "CLOBESOL ESPUMA 0.05G 100G x 1",
-     "lista": "CLOBESOL",
-     "env": 100,
-     "psl": 21307.926574132438,
-     "u": 14913,
-     "packs": 1
-    },
-    {
-     "iqvia": "CLOBESOL UNGT 0.05% 15G x 1",
-     "lista": "CLOBESOL",
-     "env": 15,
-     "psl": 10391.776842645995,
-     "u": 21943,
-     "packs": 1
-    },
-    {
-     "iqvia": "CLOBESOL LOC. 0.05% 30ML x 1",
-     "lista": "CLOBESOL",
-     "env": 30,
-     "psl": 11266.860937821755,
-     "u": 14181,
-     "packs": 1
-    },
     {
      "iqvia": "CLOBESOL CREMA 0.05% 20G x 1",
      "lista": "CLOBESOL",
      "env": 20,
      "psl": 11430.954526910595,
-     "u": 45838,
+     "u": 46141,
+     "packs": 1
+    },
+    {
+     "iqvia": "CLOBESOL CREMA 0.05% 15G x 1",
+     "lista": "CLOBESOL",
+     "env": 15,
+     "psl": 10391.776842645995,
+     "u": 26,
      "packs": 1
     },
     {
@@ -1759,39 +1743,47 @@
      "lista": "CLOBESOL",
      "env": 30,
      "psl": 16643.479774149822,
-     "u": 68073,
+     "u": 67912,
+     "packs": 1
+    },
+    {
+     "iqvia": "CLOBESOL LOC. 0.05% 30ML x 1",
+     "lista": "CLOBESOL",
+     "env": 30,
+     "psl": 11266.860937821755,
+     "u": 14168,
+     "packs": 1
+    },
+    {
+     "iqvia": "CLOBESOL UNGT 0.05% 15G x 1",
+     "lista": "CLOBESOL",
+     "env": 15,
+     "psl": 10391.776842645995,
+     "u": 21601,
+     "packs": 1
+    },
+    {
+     "iqvia": "CLOBESOL ESPUMA 0.05G 100G x 1",
+     "lista": "CLOBESOL",
+     "env": 100,
+     "psl": 21307.926574132438,
+     "u": 14954,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Micomazol": {
-   "psl_ponderado": 7632.23,
-   "unidades_mat": 289654,
+   "psl_ponderado": 7625.89,
+   "unidades_mat": 285330,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "MICOMAZOL LACA FCO 8% 5ML x 1",
-     "lista": "MICOMAZOL",
-     "env": 5,
-     "psl": 16999.137711187337,
-     "u": 2506,
-     "packs": 1
-    },
-    {
-     "iqvia": "IKOLAN CREMA 1% 50G x 1",
-     "lista": "IKOLAN 1%",
-     "env": 50,
-     "psl": 4571.36831643928,
-     "u": 8255,
-     "packs": 1
-    },
     {
      "iqvia": "MICOMAZOL POLVO 1% 50G x 1",
      "lista": "MICOMAZOL",
      "env": 50,
      "psl": 8623.367148747211,
-     "u": 7099,
+     "u": 6570,
      "packs": 1
     },
     {
@@ -1799,15 +1791,23 @@
      "lista": "MICOMAZOL",
      "env": 30,
      "psl": 8179.726370698141,
-     "u": 29662,
+     "u": 29355,
      "packs": 1
     },
     {
-     "iqvia": "MICOMAZOL DEO AERO 1% 110G x 1",
-     "lista": "MICOMAZOL DEO",
-     "env": 110,
-     "psl": 10025.729323456611,
-     "u": 35150,
+     "iqvia": "MICOMAZOL LACA FCO 8% 5ML x 1",
+     "lista": "MICOMAZOL",
+     "env": 5,
+     "psl": 16999.137711187337,
+     "u": 2591,
+     "packs": 1
+    },
+    {
+     "iqvia": "IKOLAN CREMA 1% 50G x 1",
+     "lista": "IKOLAN 1%",
+     "env": 50,
+     "psl": 4571.36831643928,
+     "u": 7316,
      "packs": 1
     },
     {
@@ -1815,7 +1815,7 @@
      "lista": "MICOMAZOL",
      "env": 30,
      "psl": 8179.726370698141,
-     "u": 131411,
+     "u": 130629,
      "packs": 1
     },
     {
@@ -1823,15 +1823,23 @@
      "lista": "MICORAL",
      "env": 30,
      "psl": 5282.663180043113,
-     "u": 75571,
+     "u": 75556,
+     "packs": 1
+    },
+    {
+     "iqvia": "MICOMAZOL DEO AERO 1% 110G x 1",
+     "lista": "MICOMAZOL DEO",
+     "env": 110,
+     "psl": 10025.729323456611,
+     "u": 33313,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Microsona": {
-   "psl_ponderado": 7632.65,
-   "unidades_mat": 200364,
+   "psl_ponderado": 7632.1,
+   "unidades_mat": 199291,
    "cobertura": 1.0,
    "match": [
     {
@@ -1839,7 +1847,7 @@
      "lista": "MICROSONA 2 %",
      "env": 15,
      "psl": 9417.541456842639,
-     "u": 25669,
+     "u": 25478,
      "packs": 1
     },
     {
@@ -1847,7 +1855,7 @@
      "lista": "MICROSONA 0,5 %",
      "env": 15,
      "psl": 7369.938171939441,
-     "u": 28829,
+     "u": 28921,
      "packs": 1
     },
     {
@@ -1855,7 +1863,7 @@
      "lista": "MICROSONA 1 %",
      "env": 15,
      "psl": 7370.467722638728,
-     "u": 145866,
+     "u": 144892,
      "packs": 1
     }
    ],
@@ -1863,31 +1871,31 @@
   },
   "Paldar": {
    "psl_ponderado": 10492.73,
-   "unidades_mat": 108683,
+   "unidades_mat": 106875,
    "cobertura": 1.0,
    "match": [
-    {
-     "iqvia": "PALDAR CREMA 0.30G 15G x 1",
-     "lista": "PALDAR",
-     "env": 15,
-     "psl": 10492.734595050968,
-     "u": 93329,
-     "packs": 1
-    },
     {
      "iqvia": "PALDAR UNGT 2% 15G x 1",
      "lista": "PALDAR",
      "env": 15,
      "psl": 10492.734595050968,
-     "u": 15354,
+     "u": 14914,
+     "packs": 1
+    },
+    {
+     "iqvia": "PALDAR CREMA 0.30G 15G x 1",
+     "lista": "PALDAR",
+     "env": 15,
+     "psl": 10492.734595050968,
+     "u": 91961,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Roaccutan": {
-   "psl_ponderado": 157517.0,
-   "unidades_mat": 184940,
+   "psl_ponderado": 157395.01,
+   "unidades_mat": 182205,
    "cobertura": 1.0,
    "match": [
     {
@@ -1895,7 +1903,7 @@
      "lista": "ROACCUTAN 20 mg",
      "env": 30,
      "psl": 167626.40433932107,
-     "u": 169768,
+     "u": 167077,
      "packs": 2
     },
     {
@@ -1903,23 +1911,31 @@
      "lista": "ROACCUTAN 10 mg",
      "env": 30,
      "psl": 44397.25291722,
-     "u": 15172,
+     "u": 15128,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Tetralgin": {
-   "psl_ponderado": 14474.2,
-   "unidades_mat": 354800,
+   "psl_ponderado": 14440.47,
+   "unidades_mat": 355343,
    "cobertura": 1.0,
    "match": [
+    {
+     "iqvia": "TETRALGIN NOVO TABL x 20",
+     "lista": "TETRALGIN NOVO",
+     "env": 20,
+     "psl": 7411.095982849879,
+     "u": 46659,
+     "packs": 1
+    },
     {
      "iqvia": "TETRALGIN NOVO TABL x 40",
      "lista": "TETRALGIN NOVO",
      "env": 40,
      "psl": 14116.622486426388,
-     "u": 31217,
+     "u": 31189,
      "packs": 1
     },
     {
@@ -1927,7 +1943,7 @@
      "lista": "TETRALGIN",
      "env": 50,
      "psl": 17004.31166550445,
-     "u": 59222,
+     "u": 59314,
      "packs": 1
     },
     {
@@ -1935,7 +1951,7 @@
      "lista": "TETRALGIN",
      "env": 20,
      "psl": 7250.184278367876,
-     "u": 148004,
+     "u": 148791,
      "packs": 1
     },
     {
@@ -1943,55 +1959,23 @@
      "lista": "TETRALGIN",
      "env": 100,
      "psl": 32539.05031175594,
-     "u": 69737,
-     "packs": 1
-    },
-    {
-     "iqvia": "TETRALGIN NOVO TABL x 20",
-     "lista": "TETRALGIN NOVO",
-     "env": 20,
-     "psl": 7411.095982849879,
-     "u": 46620,
+     "u": 69390,
      "packs": 1
     }
    ],
    "sin_precio": []
   },
   "Magnus": {
-   "psl_ponderado": 14186.4,
-   "unidades_mat": 745434,
+   "psl_ponderado": 14179.61,
+   "unidades_mat": 748935,
    "cobertura": 1.0,
    "match": [
     {
-     "iqvia": "MAGNUS TABL RECUBIE 50mg x 1",
-     "lista": "MAGNUS 50 mg",
-     "env": 1,
-     "psl": 1991.6484065802813,
-     "u": 1664,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 50mg x 10",
-     "lista": "MAGNUS 50 mg",
-     "env": 10,
-     "psl": 17826.755433284186,
-     "u": 42124,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 50mg x 2",
+     "iqvia": "MAGNUS TABL MAST 50mg x 2",
      "lista": "MAGNUS 50 mg",
      "env": 2,
      "psl": 3793.6282867631094,
-     "u": 115321,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 25mg x 10",
-     "lista": "MAGNUS 25 mg",
-     "env": 10,
-     "psl": 13993.612120889395,
-     "u": 6363,
+     "u": 97986,
      "packs": 1
     },
     {
@@ -1999,55 +1983,7 @@
      "lista": "MAGNUS 25 mg",
      "env": 2,
      "psl": 2977.9115561867857,
-     "u": 11116,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 100MG x 10",
-     "lista": "MAGNUS 100 mg",
-     "env": 10,
-     "psl": 25706.975879337282,
-     "u": 89427,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 50mg x 20",
-     "lista": "MAGNUS 50 mg",
-     "env": 20,
-     "psl": 32204.332276839195,
-     "u": 52920,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 100MG x 2",
-     "lista": "MAGNUS 100 mg",
-     "env": 2,
-     "psl": 5470.583153353709,
-     "u": 101289,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL RECUBIE 25mg x 30",
-     "lista": "MAGNUS 25 mg",
-     "env": 30,
-     "psl": 41394.07539726208,
-     "u": 8472,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL MAST 50mg x 2",
-     "lista": "MAGNUS 50 mg",
-     "env": 2,
-     "psl": 3793.6282867631094,
-     "u": 97214,
-     "packs": 1
-    },
-    {
-     "iqvia": "MAGNUS TABL MAST 50mg x 10",
-     "lista": "MAGNUS 50 mg",
-     "env": 10,
-     "psl": 17826.755433284186,
-     "u": 35000,
+     "u": 10901,
      "packs": 1
     },
     {
@@ -2055,15 +1991,15 @@
      "lista": "MAGNUS 50 mg",
      "env": 20,
      "psl": 32204.332276839195,
-     "u": 35168,
+     "u": 35368,
      "packs": 1
     },
     {
-     "iqvia": "MAGNUS TABL MAST 100MG x 10",
-     "lista": "MAGNUS 100 mg",
+     "iqvia": "MAGNUS TABL MAST 50mg x 10",
+     "lista": "MAGNUS 50 mg",
      "env": 10,
-     "psl": 25706.975879337282,
-     "u": 69718,
+     "psl": 17826.755433284186,
+     "u": 34966,
      "packs": 1
     },
     {
@@ -2071,7 +2007,79 @@
      "lista": "MAGNUS 100 mg",
      "env": 2,
      "psl": 5470.583153353709,
-     "u": 79638,
+     "u": 80400,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL MAST 100MG x 10",
+     "lista": "MAGNUS 100 mg",
+     "env": 10,
+     "psl": 25706.975879337282,
+     "u": 70246,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 100MG x 10",
+     "lista": "MAGNUS 100 mg",
+     "env": 10,
+     "psl": 25706.975879337282,
+     "u": 89988,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 100MG x 2",
+     "lista": "MAGNUS 100 mg",
+     "env": 2,
+     "psl": 5470.583153353709,
+     "u": 101431,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 25mg x 30",
+     "lista": "MAGNUS 25 mg",
+     "env": 30,
+     "psl": 41394.07539726208,
+     "u": 8423,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 25mg x 10",
+     "lista": "MAGNUS 25 mg",
+     "env": 10,
+     "psl": 13993.612120889395,
+     "u": 6287,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 50mg x 10",
+     "lista": "MAGNUS 50 mg",
+     "env": 10,
+     "psl": 17826.755433284186,
+     "u": 42377,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 50mg x 2",
+     "lista": "MAGNUS 50 mg",
+     "env": 2,
+     "psl": 3793.6282867631094,
+     "u": 116061,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 50mg x 1",
+     "lista": "MAGNUS 50 mg",
+     "env": 1,
+     "psl": 1991.6484065802813,
+     "u": 1599,
+     "packs": 1
+    },
+    {
+     "iqvia": "MAGNUS TABL RECUBIE 50mg x 20",
+     "lista": "MAGNUS 50 mg",
+     "env": 20,
+     "psl": 32204.332276839195,
+     "u": 52902,
      "packs": 1
     }
    ],

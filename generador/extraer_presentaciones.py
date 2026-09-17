@@ -50,6 +50,14 @@ def main():
     q.clear_all(doc)
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
+    # El checkpoint es por producto y no sabe de periodos: si el store viene de un
+    # MAT anterior, saltear "lo ya hecho" deja los datos viejos con el sello nuevo.
+    # Paso en la corrida de Jul-2026: meta decia Jul y las unidades eran las de Jun.
+    previo = store.get("meta", {}).get("hasta")
+    if previo is not None and previo != max_p:
+        print(f"  store de MAT hasta {C.periodo_label(previo)}; se rehace entero "
+              f"para {C.periodo_label(max_p)}")
+        store["datos"] = {}
     store["meta"] = {"ventana": "MAT", "hasta": max_p, "label": C.periodo_label(max_p),
                      "campo": "DescripcionProductoIMS", "laboratorio": "SIEGFRIED"}
     print(f"Presentaciones Siegfried · MAT hasta {C.periodo_label(max_p)} · {len(mapping)} mercados")
