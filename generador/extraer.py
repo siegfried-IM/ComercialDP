@@ -102,6 +102,10 @@ def main():
     if len(args) == 0:
         # trimestres completos, MÁS RECIENTE PRIMERO (para tener ya el período
         # actual y que el histórico se complete hacia atrás)
+        # El tope es min_p + 1 a proposito: deja el periodo mas viejo en min_p + 2,
+        # el primero con trimestre entero. La medida toma max-2..max dentro de la
+        # seleccion, asi que en min_p la ventana tiene 1 mes y en min_p+1 tiene 2,
+        # y el DP% sale bajo por construccion (Ago-2024: 67,7% en vez de 76,3%).
         periods = list(range(max_p, min_p + 1, -1))
     elif len(args) == 1:
         periods = [args[0]]
