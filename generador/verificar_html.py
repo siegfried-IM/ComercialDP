@@ -9,7 +9,7 @@ perfectos y el tablero muestra otra cosa.
 Corre DESPUÉS de generar:
     python verificar.py P && python generar_html.py P && python verificar_html.py P
 """
-import json, os, sys
+import collections, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -123,6 +123,37 @@ def main():
         sin_ant[win] = sum(1 for p in ps if (p - 12) not in ps)
     chequeo("períodos sin año anterior (se muestran s/d)", True,
             " · ".join(f"{w}:{c}/{len(META['periodos'][w])}" for w, c in sin_ant.items()))
+
+    # --- la evolucion por departamento usa los mismos periodos que la serie principal.
+    #     depto_win conserva trimestres truncados de los meses mas viejos de la app; sin este
+    #     filtro dibujaban un punto bajo falso al inicio de la evolucion por departamento ---
+    DEPTO = js_var(src, "DEPTO_EVOL")
+    if not DEPTO:
+        chequeo("evolución por departamento sobre la serie principal", None, "el HTML no trae DEPTO_EVOL")
+    else:
+        fuera = [x for x in DEPTO["periods"] if x not in TRIMC["periodos"]]
+        chequeo("evolución por departamento sobre la serie principal", not fuera,
+                f"{len(DEPTO['periods'])} períodos de departamento · {len(TRIMC['periodos'])} en la serie"
+                + (f" · fuera de la serie: {fuera}" if fuera else ""))
+
+    # --- el pie declara el reload con el que se armaron los datos. Se calcula desde el
+    #     STORE: si se leyera del HTML el chequeo compararia el pie consigo mismo ---
+    sellos = json.load(open(os.path.join(DATA, "historico.json"), encoding="utf-8")).get("sellos", {})
+    cont = collections.Counter(sellos.get(str(P), {}).values())
+    pie = re.search(r'<div class="footer">(.*?)</div>', src, re.S)
+    pie = pie.group(1) if pie else ""
+    if not cont:
+        chequeo("el pie declara el reload de IQVIA", None, "el store no tiene sellos de reload")
+    else:
+        actual = cont.most_common(1)[0][0]
+        fecha = actual.split(" ")[0]
+        pers = [str(x) for x in TRIMC["periodos"]]
+        mixtos = [pn for pn in prods if any(sellos.get(x, {}).get(pn) != actual for x in pers)]
+        ok_fecha = ("reload del " + fecha) in pie
+        ok_resto = ("conserv" in pie) if mixtos else ("toda la serie" in pie)
+        chequeo("el pie declara el reload de IQVIA", ok_fecha and ok_resto,
+                f"reload {fecha} · {len(mixtos)} productos con períodos de otro reload"
+                + ("" if ok_fecha and ok_resto else f" · pie: {pie.strip()[:90]!r}"))
 
     # --- variables que ya no deben viajar en el HTML (pesaban y estaban clavadas) ---
     muertas = [v for v in ("var WIN = ", "var kpiData = ") if v in src]

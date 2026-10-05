@@ -12,7 +12,7 @@ algún FAIL o SKIP, para poder encadenarlo:
 
 Uso:  python verificar.py [periodo]     (por defecto, el máximo del store)
 """
-import json, os, subprocess, sys
+import collections, json, os, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -44,6 +44,26 @@ def cargar(nombre):
 def ok_prods(store, pk):
     d = store.get("datos", {}).get(pk, {})
     return {k: v for k, v in d.items() if isinstance(v, dict) and v.get("_ok")}
+
+
+def sello_pp(store, pk, pn):
+    """Reload de IQVIA con el que se leyo ese producto en ese periodo (None si no tiene).
+    Lo escriben los extractores en store["sellos"][periodo][producto]."""
+    return store.get("sellos", {}).get(pk, {}).get(pn)
+
+
+def leer_args(argv):
+    """verificar.py [periodo] [--refrescados P1 P2 ...] [--productos "Trip D3" Alidial ...]"""
+    pos, refrescados, prods, i = [], set(), set(), 0
+    while i < len(argv):
+        if argv[i] in ("--refrescados", "--productos"):
+            destino = refrescados if argv[i] == "--refrescados" else prods
+            i += 1
+            while i < len(argv) and not argv[i].startswith("--"):
+                destino.add(str(int(argv[i])) if destino is refrescados else argv[i]); i += 1
+        else:
+            pos.append(argv[i]); i += 1
+    return pos, refrescados, prods
 
 
 def g0(P, stores):
@@ -95,6 +115,35 @@ def g1(P, H, W, D):
     chequeo("historico[TRIM] == historico_win[TRI] (todos)", not malos,
             f"{len(compartidos)} períodos · {n} celdas · peor {peor*100:.2f}%" +
             (f" · rezagados: {malos}" if malos else ""))
+
+    # 1b. Mismo reload de IQVIA en cada (periodo, producto) que comparten los dos
+    #     stores. El chequeo anterior solo ve diferencias grandes en el TOTAL; los
+    #     sellos son exactos: un producto refrescado en un store y no en el otro esta
+    #     mal aunque la reexpresion haya sido chica. La reexpresion es POR PRODUCTO
+    #     (reload de oct-2026: Trip D3 -8,6 pp, Alidial -2,1 pp, el resto <= 0,25 pp),
+    #     por eso el sello tambien.
+    celdas = {}
+    for nombre, st in (("historico", H), ("historico_win", W)):
+        celdas[nombre] = {(p, pn): sello_pp(st, p, pn) for p in st["datos"] for pn in ok_prods(st, p)}
+        c = collections.Counter(v or "sin sello" for v in celdas[nombre].values())
+        print("  reload por producto-período · %s: " % nombre + " · ".join("%s: %d" % (k, v) for k, v in c.most_common()))
+    ch, cw = celdas["historico"], celdas["historico_win"]
+    por_prod = collections.defaultdict(set)
+    for (p, pn), v in ch.items():
+        por_prod[pn].add(v or "sin sello")
+    mixtos = sorted(pn for pn, vs in por_prod.items() if len(vs) > 1)
+    if mixtos:
+        print("  AVISO %d de %d productos mezclan reloads en su serie de historico (se ve como un escalon en "
+              "Evolución): %s" % (len(mixtos), len(por_prod), ", ".join(mixtos[:8]) + (" …" if len(mixtos) > 8 else "")))
+    ambos = [k for k in ch if k in cw]
+    con_sello = [k for k in ambos if ch[k] and cw[k]]
+    distintos = ["%s/%s (%s vs %s)" % (k[0], k[1], ch[k], cw[k]) for k in con_sello if ch[k] != cw[k]]
+    if not con_sello:
+        chequeo("celdas compartidas del mismo reload", None, "los stores no tienen sellos de reload")
+    else:
+        chequeo("celdas compartidas del mismo reload", not distintos,
+                "%d de %d con sello en los dos" % (len(con_sello), len(ambos))
+                + (" · DISTINTAS: %d, p.ej. %s" % (len(distintos), distintos[:3]) if distintos else ""))
 
     # 2. depto sumado vs región. El depto suma un poco más (regiones sin mapear).
     peor, peor_det, n = 0.0, "", 0
@@ -211,8 +260,13 @@ def g2(P, H, W, U, UD, D):
                 f"{n} pares comparados" + (f" · {len(malos)} violaciones: {malos[:3]}" if malos else ""))
 
 
-def g3(P, H):
-    """Diff contra la versión anterior: lo que no debe moverse, no se movió."""
+def g3(P, H, refrescados=frozenset(), prods_refrescados=frozenset()):
+    """Diff contra la versión anterior: lo que no debe moverse, no se movió.
+
+    Se compara por bloque (período, producto). `refrescados` son períodos y
+    `prods_refrescados` productos que se re-extrajeron A PROPÓSITO (python verificar.py
+    P --refrescados P1 P2 --productos "Trip D3"): declararlos es decir de antemano qué
+    debe moverse. Un bloque que se movió sin estar cubierto por ninguna lista es FAIL."""
     print("\nG3 · Diff contra la versión commiteada")
     try:
         crudo = subprocess.run(["git", "--no-pager", "show", "HEAD:datos/historico.json"],
@@ -224,9 +278,22 @@ def g3(P, H):
     # El invariante es "sólo se movió P", y vale tanto antes como después de
     # commitear P: mirar sólo los períodos agregados daba FAIL una vez commiteado.
     otros = sorted((set(base["datos"]) | set(H["datos"])) - {str(P)}, key=int)
-    movidos = [pk for pk in otros if base["datos"].get(pk) != H["datos"].get(pk)]
-    chequeo("sólo se movió el período en curso", not movidos,
-            f"{len(otros)} períodos ajenos comparados" + (f" · se movieron: {movidos}" if movidos else ""))
+    def bloques(st):
+        return {(pk, pn): v for pk, d in st["datos"].items() for pn, v in d.items() if isinstance(v, dict)}
+    b0, b1 = bloques(base), bloques(H)
+    movidas = sorted((k for k in set(b0) | set(b1) if k[0] != str(P) and b0.get(k) != b1.get(k)),
+                     key=lambda k: (int(k[0]), k[1]))
+    sin_declarar = [k for k in movidas if k[0] not in refrescados and k[1] not in prods_refrescados]
+    chequeo("sólo se movió el período en curso y lo declarado", not sin_declarar,
+            f"{len(set(b0) | set(b1))} bloques producto-período comparados · {len(movidas)} se movieron"
+            + (f" · SIN declarar: {len(sin_declarar)}, p.ej. {[f'{k[0]}/{k[1]}' for k in sin_declarar[:3]]}"
+               if sin_declarar else ""))
+    quietos_p = sorted((p for p in refrescados if p != str(P) and not any(k[0] == p for k in movidas)), key=int)
+    quietos_pr = sorted(pr for pr in prods_refrescados if not any(k[1] == pr for k in movidas))
+    if quietos_p or quietos_pr:
+        print(f"  NOTA  declarados como refrescados que NO cambiaron contra el commit: "
+              f"períodos {quietos_p or '-'} · productos {quietos_pr or '-'} "
+              f"(o no se re-extrajeron, o la app no los reexpresó)")
     en_base = str(P) in base["datos"]
     chequeo(f"período {P} en el store", str(P) in H["datos"],
             "ya commiteado" if en_base else "nuevo respecto del commit")
@@ -247,7 +314,8 @@ def main():
     U = cargar("unidades_region.json")
     UD = cargar("unidades_depto.json")
     D = cargar("depto_win.json")
-    P = int(sys.argv[1]) if len(sys.argv) > 1 else max(int(k) for k in H["datos"])
+    pos, refrescados, prods_ref = leer_args(sys.argv[1:])
+    P = int(pos[0]) if pos else max(int(k) for k in H["datos"])
 
     a, m = divmod(P, 12)
     if m == 0:
@@ -260,7 +328,7 @@ def main():
     g0(P, stores)
     g1(P, H, W, D)
     g2(P, H, W, U, UD, D)
-    g3(P, H)
+    g3(P, H, refrescados, prods_ref)
 
     print()
     n_fail = resultados.count("FAIL")

@@ -97,6 +97,7 @@ def main():
     q, doc = connect_retry(); q.clear_all(doc)
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
+    sello = q.reload_time(doc)
 
     args = [int(a) for a in sys.argv[1:]]
     if len(args) == 0:
@@ -123,6 +124,7 @@ def main():
         store["periodos"].setdefault(pk, {"label": C.periodo_label(p), "num": p})
         store["datos"].setdefault(pk, {})
         done = store["datos"][pk]
+        sellos = store.setdefault("sellos", {}).setdefault(pk, {})
         for i, (prod, mercado) in enumerate(mapping.items(), 1):
             if prod in done and done[prod].get("_ok"):
                 continue
@@ -142,12 +144,19 @@ def main():
             if data is None:
                 print(f"  [{C.periodo_label(p)}] {prod!r} FALLO tras 3 intentos -- se saltea")
                 done[prod] = {"_ok": False, "_mercado": mercado}
+                sellos.pop(prod, None)
                 save_json(STORE, store)
                 continue
+            ahora = q.reload_time(doc)
+            if ahora != sello:
+                save_json(STORE, store)
+                sys.exit(f"LA APP RECARGO durante la extracción ({C.periodo_label(p)} / {prod}): "
+                         f"{sello} -> {ahora}. Ese producto no se guarda; relanzar toma el reload nuevo.")
             all_unmapped |= unmapped
             data["_ok"] = True
             data["_mercado"] = mercado
             done[prod] = data
+            sellos[prod] = sello
             tot = data["TOTAL"]
             dp = tot["sie_act"] / tot["p80_act"] if tot["p80_act"] else 0
             print(f"  [{C.periodo_label(p)}] {i:>2}/{len(mapping)} {prod:<14} DP%={dp:6.3f} ({time.time()-t0:.1f}s)")

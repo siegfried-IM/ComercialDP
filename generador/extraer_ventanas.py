@@ -84,6 +84,7 @@ def main():
 
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
+    sello = q.reload_time(doc)
     args = [int(a) for a in sys.argv[1:]]
     periods = args if args else list(range(max_p, min_p + 1, -1))   # lista explícita de períodos
 
@@ -114,6 +115,7 @@ def main():
         store["periodos"].setdefault(pk, {"label": C.periodo_label(P), "num": P})
         store["datos"].setdefault(pk, {})
         done = store["datos"][pk]
+        sellos = store.setdefault("sellos", {}).setdefault(pk, {})
         ms, order = measures_for(P)
         for i, (prod, merc) in enumerate(mapping.items(), 1):
             if prod in done and done[prod].get("_ok"):
@@ -139,7 +141,12 @@ def main():
                     except Exception: pass
                     q, doc = connect_retry(pausa_inicial=3)
             if rows is None:
-                done[prod] = {"_ok": False}; save_json(STORE, store); continue
+                done[prod] = {"_ok": False}; sellos.pop(prod, None); save_json(STORE, store); continue
+            ahora = q.reload_time(doc)
+            if ahora != sello:
+                save_json(STORE, store)
+                sys.exit(f"LA APP RECARGO durante la extracción ({C.periodo_label(P)} / {prod}): "
+                         f"{sello} -> {ahora}. Ese producto no se guarda; relanzar toma el reload nuevo.")
             agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))  # region->win->[s,p,t]
             tot = defaultdict(lambda: [0.0, 0.0, 0.0])                        # win->[s,p,t]
             for r in rows:
@@ -156,6 +163,7 @@ def main():
             out["TOTAL"] = {w: {"s": round(v[0], 1), "p": round(v[1], 1), "t": round(v[2], 1)} for w, v in tot.items()}
             out["_ok"] = True
             done[prod] = out
+            sellos[prod] = sello
             dp = tot["TRI"][0] / tot["TRI"][1] if tot["TRI"][1] else 0
             print(f"  [{C.periodo_label(P)}] {i:>2}/{len(mapping)} {prod:<14} DP%TRI={dp:5.3f} ({time.time()-t1:.0f}s)")
             save_json(STORE, store)

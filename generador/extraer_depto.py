@@ -65,6 +65,7 @@ def main():
     win = lambda d, S: d.replace("-2)", "-%d)" % S)
     min_p = int(round(float(str(q.evaluate(doc, "=Min([AñoMes_Num])")).replace(",", "."))))
     max_p = int(round(float(str(q.evaluate(doc, "=Max([AñoMes_Num])")).replace(",", "."))))
+    sello = q.reload_time(doc)
     if sys.argv[2] == "all":
         periods = list(range(max_p, min_p + 1, -1))
     else:
@@ -78,6 +79,7 @@ def main():
     t0 = time.time()
     for P in periods:
         pk = str(P); store["datos"].setdefault(pk, {}); done = store["datos"][pk]
+        sellos = store.setdefault("sellos", {}).setdefault(pk, {})
         ms, order = [], []
         for w in wins:
             S = offset(w, P)
@@ -115,7 +117,12 @@ def main():
                     # por todos los extractores en qlik_client.connect_retry.
                     q, doc = connect_retry(pausa_inicial=3)
             if rows is None:
-                done[prod] = {"_ok": False}; save_json(STORE, store); continue
+                done[prod] = {"_ok": False}; sellos.pop(prod, None); save_json(STORE, store); continue
+            ahora = q.reload_time(doc)
+            if ahora != sello:
+                save_json(STORE, store)
+                sys.exit(f"LA APP RECARGO durante la extracción ({C.periodo_label(P)} / {prod}): "
+                         f"{sello} -> {ahora}. Ese producto no se guarda; relanzar toma el reload nuevo.")
             agg = defaultdict(lambda: defaultdict(lambda: [0.0, 0.0, 0.0]))
             for r in rows:
                 k = geo_match.key(r[0]["qText"], r[1]["qText"])
@@ -123,6 +130,7 @@ def main():
                     agg[k][w][j] += num(r[idx + 2])
             done[prod] = {k: {w: {"s": round(v[0], 1), "p": round(v[1], 1), "t": round(v[2], 1)} for w, v in wv.items()} for k, wv in agg.items()}
             done[prod]["_ok"] = True
+            sellos[prod] = sello
             save_json(STORE, store)
             print(f"  [{C.periodo_label(P)}] {i:>2}/{len(mapping)} {prod:<14} deptos={len(agg)} ({time.time()-t1:.0f}s)")
     print(f"Listo en {(time.time()-t0)/60:.1f} min")

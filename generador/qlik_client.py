@@ -134,6 +134,16 @@ class Qix:
     def evaluate(self, doc, expr):
         return self.rpc("Evaluate", doc, [expr])["qReturn"]
 
+    def reload_time(self, doc):
+        """Sello del ultimo reload de la app, p.ej. '02/oct./2026 21:11:04'.
+
+        IQVIA reexpresa periodos pasados en cada reload, asi que un producto extraido
+        antes y otro despues pueden no ser comparables. Los extractores lo guardan por
+        (periodo, producto) y lo re-leen despues de cada lectura. ReloadTime() no
+        depende de las selecciones (Max([AñoMes_Num]) si: devuelve el tope de lo
+        seleccionado)."""
+        return str(self.evaluate(doc, "=ReloadTime()")).strip()
+
     def check_selection(self, doc, field, esperado=1):
         """Corta si `field` no quedó con exactamente `esperado` valores seleccionados.
 

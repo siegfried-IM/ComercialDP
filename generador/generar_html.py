@@ -11,7 +11,7 @@ Uso:
     python generar_html.py            # usa el período máximo disponible en el store
     python generar_html.py 24317      # genera para un período específico (May-2026)
 """
-import json, os, re, sys, datetime
+import collections, json, os, re, sys, datetime
 import config as C
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -371,15 +371,17 @@ def build_depto_dp(store, productNames):
     return {"order": WIN_ORDER, "current": CUR, "curLabel": period_label(CUR), "prod": prod}
 
 
-def build_depto_evol(store, productNames):
+def build_depto_evol(store, productNames, solo_periodos=None):
     """Serie trimestral (DP% = s/p) por producto y departamento a lo largo de todos
     los períodos, para el gráfico de evolución al hacer clic en un depto.
     DP% solo (métrica principal) para acotar el tamaño; se omiten series con < 2 puntos.
-    Estructura: prod[producto][geokey] = [dp por período (o null)]. Geokeys se re-clavean."""
+    Estructura: prod[producto][geokey] = [dp por período (o null)]. Geokeys se re-clavean.
+    `solo_periodos` acota a los períodos de la serie principal (los que tienen los 42 productos):
+    depto_win conserva además trimestres truncados de los meses más viejos de la app."""
     datos = store.get("datos", {})
     if not datos:
         return None
-    periods = sorted((int(p) for p in datos), key=lambda x: x)
+    periods = sorted((int(p) for p in datos if solo_periodos is None or int(p) in solo_periodos), key=lambda x: x)
     labels = [period_label(p) for p in periods]
     n = len(periods)
     prod = {}
@@ -412,6 +414,39 @@ def build_depto_evol(store, productNames):
             compOut[k] = ser
     prod["TOTAL COMPAÑÍA"] = compOut
     return {"labels": labels, "periods": periods, "prod": prod}
+
+
+def nota_reload(store, trimc, P, productNames):
+    """Línea del pie con el reload de IQVIA de la serie.
+
+    IQVIA reexpresa meses pasados en cada reload, así que un período extraído antes y otro
+    después pueden no ser comparables. Los extractores sellan cada (período, producto) con
+    el reload en que se leyó. Sin sellos no se dice nada: no se inventa una versión."""
+    sellos = store.get("sellos", {})
+    pers = [str(x) for x in trimc["periodos"]]
+    c = collections.Counter(sellos.get(str(P), {}).values())
+    if not c:
+        return ""
+    actual = c.most_common(1)[0][0]
+    fecha = actual.split(" ")[0]
+    completos = [pn for pn in productNames if all(sellos.get(x, {}).get(pn) == actual for x in pers)]
+    mixtos = [pn for pn in productNames if pn not in completos]
+    txt = "IQVIA &middot; reload del %s" % fecha
+    if not mixtos:
+        return "<br>" + txt + " &middot; toda la serie"
+    nuevos = [sum(1 for x in pers if sellos.get(x, {}).get(pn) == actual) for pn in mixtos]
+    lo, hi = min(nuevos), max(nuevos)
+    cuantos = "%d" % lo if lo == hi else "entre %d y %d" % (lo, hi)
+    if completos:
+        quienes = ", ".join(completos) if len(completos) <= 6 else "%d productos" % len(completos)
+        txt += " &middot; serie completa en ese reload: %s" % quienes
+    n = len(mixtos)
+    if completos:
+        sujeto = "el otro producto conserva" if n == 1 else "los otros %d productos conservan" % n
+    else:
+        sujeto = "el producto conserva" if n == 1 else "los %d productos conservan" % n
+    txt += " &middot; %s períodos de reloads anteriores (%s de %d períodos son del vigente)" % (sujeto, cuantos, len(pers))
+    return "<br>" + txt
 
 
 def compute_kpis(dpTotalRow, productNames, n_regions):
@@ -457,9 +492,14 @@ def main():
     zonesOrder = parse_js_var(base, "zonesOrder")
     zoneRegions = parse_js_var(base, "zoneRegions")
 
+    # Los períodos de la serie principal (los que tienen los 42 productos) mandan: el mapa por
+    # departamento y su evolución usan los mismos.
+    trimc, wincobj = build_counts(store, winstore, productNames, zonesOrder, zoneRegions)
+
     unidepobj = build_unidades_depto(unidepstore, productNames) if unidepstore else None
     windepobj = build_depto_dp(deptowinstore, productNames) if deptowinstore else None
-    deptoevolobj = build_depto_evol(deptowinstore, productNames) if deptowinstore else None
+    deptoevolobj = (build_depto_evol(deptowinstore, productNames, set(trimc["periodos"]))
+                    if deptowinstore else None)
 
     # Re-clave los datos por partido a las claves del geojson: exacto -> subconjunto
     # de tokens (Coronel Brandsen->Brandsen) -> similitud, siempre dentro de la
@@ -535,7 +575,6 @@ def main():
         sys.exit(f"Período {P} ({period_label(P)}) no está en el store.")
     pdata = store["datos"][str(P)]
     n_regions = sum(len(v) for v in zoneRegions.values())
-    trimc, wincobj = build_counts(store, winstore, productNames, zonesOrder, zoneRegions)
     if P not in trimc["periodos"]:
         sys.exit(f"Período {P} ({period_label(P)}) está en el store pero incompleto "
                  f"(build_counts exige los {len(productNames)} productos con _ok). "
@@ -577,7 +616,8 @@ def main():
     html = re.sub(r"<title>.*?</title>", f"<title>DP% Report - {lbl}</title>", html, count=1)
     # El subtítulo del resumen lo fija el JS (updateMetricLabels) usando PERIODO_LBL.
     html = re.sub(r"Generado el [^\n]*?\| DP% Report - Datos [^\n<]*",
-                  f"Generado el {gen_ts} | DP% Report - Datos {lbl}", html, count=1)
+                  f"Generado el {gen_ts} | DP% Report - Datos {lbl}{nota_reload(store, trimc, P, productNames)}",
+                  html, count=1)
     # KPIs iniciales (DP); el JS los recalcula al alternar métrica
     html = re.sub(r'(id="kpiAvg">).*?(</div>)', rf'\g<1>{kpiDP["avg"]*100:.1f}%\g<2>', html, count=1)
     html = re.sub(r'(id="kpiAbove">).*?(</div>)', rf'\g<1>{kpiDP["above"]}\g<2>', html, count=1)

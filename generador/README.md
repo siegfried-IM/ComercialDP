@@ -15,10 +15,16 @@ agrupadas a 29 regiones / 7 zonas (mapeo en `config.py`).
   (El archivo está gitignoreado; nunca se commitea. Se genera en Qlik Cloud → Settings → API keys.)
 
 ## Actualización mensual (cuando hay un mes nuevo en Qlik)
-Con `P` = período nuevo y `M` = su mes (Jun-2026 → `P=24318`, `M=6`):
+Con `P` = período nuevo y `M` = su mes (Jun-2026 → `P=24318`, `M=6`).
+
+**Antes de extraer, el pre-flight** (solo lee; no correrlo mientras hay un extractor andando):
+`python preflight.py P` — sello del reload de la app, los 42 mercados, RegionCUP sin mapear, medidas
+maestras (su huella queda en `datos/medidas_hash.json` con `--guardar`) y si el mes nuevo viene completo.
+Si el sello de reload cambió desde la última extracción, **leer la sección "Reexpresión de IQVIA"**.
 
 ```bash
 cd generador
+python preflight.py P
 python extraer.py P                              # TRIM por región      -> historico.json
 python extraer_ventanas.py P P-1 P-3 P-6 P-12 P-M  # 5 ventanas x región -> historico_win.json
 python extraer_unidades.py P                     # unidades por región  -> unidades_region.json
@@ -42,6 +48,29 @@ Tarda 2-3 h en total; `python monitor_progreso.py` en paralelo escribe `../progr
 - Período = `Año*12 + Mes` (Jun-2026 = 24318, Ene-2026 = 24313). Sin argumento, cada extractor usa
   el máximo disponible en la app; `generar_html.py` usa el máximo del store.
 
+## Reexpresión de IQVIA (leer antes de interpretar un delta)
+IQVIA reexpresa meses pasados en cada reload de la app, y no de forma pareja: es **por producto**.
+Medido en el reload del 2-oct-2026: Trip D3 bajó −8,6 pp y Alidial −2,1 a −3,2 pp **en toda la
+historia** (Jul-26, Jul-25 y Ago-25 dieron lo mismo), mientras los otros 40 productos se movieron
+≤ 0,3 pp por producto (≈ 0,3 pp por producto × región, hasta 3 pp en regiones chicas). Un mes que
+parece una caída de 8 pp puede ser sólo el dato viejo contra el nuevo.
+
+- Cada extractor (`extraer.py`, `extraer_ventanas.py`, `extraer_depto.py`) guarda en
+  `store["sellos"][período][producto]` el `ReloadTime()` con que se leyó, y lo vuelve a leer después de
+  cada producto: si la app recargó en el medio, ese producto no se guarda y la corrida corta.
+- `verificar.py` exige el mismo reload en cada (período, producto) que comparten `historico.json` y
+  `historico_win.json`, e informa qué productos mezclan reloads (se ve como un escalón en Evolución).
+- **Medir la reexpresión sin re-extraer:** la medida "año anterior" de un período recién extraído es el
+  período P−12 leído *hoy*; compararla con el P−12 guardado (es el chequeo "año anterior vs actual
+  guardado" de `verificar.py`) dice cuánto se movió cada producto hace un año.
+- **Refresco dirigido:** si la reexpresión está concentrada en pocos productos, basta borrar sus bloques
+  y relanzar el extractor (retoma por producto). `python verificar.py P --refrescados P1 P2 --productos
+  "Trip D3" Alidial` declara de antemano qué debe moverse; todo otro bloque movido sigue siendo FAIL.
+- El pie del tablero declara el reload vigente y qué productos tienen su serie completa en él.
+- **Ventana de la app: 24 meses.** El primer período con trimestre entero es `min + 2`: en `min` y
+  `min + 1` la medida trimestral ve 1 y 2 meses (Ago-2024 daba 67,7% en vez de 76,3%). `extraer.py`
+  los saltea a propósito (`range(max_p, min_p + 1, -1)`); no es un error de índice.
+
 ## Archivos
 - `qlik_client.py` — cliente Engine API (websocket JSON-RPC), `connect_retry` (reconexión con
   backoff ante cortes de red/DNS) y `check_selection` (aborta si la selección se contaminó).
@@ -49,15 +78,18 @@ Tarda 2-3 h en total; `python monitor_progreso.py` en paralelo escribe `../progr
 - `extraer.py` — extracción Qlik → `../datos/historico.json`.
 - `extraer_ventanas.py`, `extraer_unidades.py`, `extraer_unidades_depto.py`, `extraer_depto.py` —
   los otros cuatro stores (ver secuencia mensual arriba). Están gitignoreados por tamaño.
-- `verificar.py` — 16 chequeos sobre los stores antes de generar. Correr siempre.
+- `verificar.py` — chequeos sobre los stores antes de generar (G0 a G3). Correr siempre.
+- `verificar_html.py` — chequea el `index.html` ya generado contra los stores.
+- `preflight.py` — chequeos contra la app antes de extraer (reload, mercados, regiones, medidas, mes completo).
 - `monitor_progreso.py` — escribe `../progreso.html` con el avance en vivo. Actualizar el período
   y las listas objetivo del encabezado cada mes.
 - `generar_html.py` — store → `../index.html`.
 - `plantilla_base.html` — template (diseño + vista de evolución). **Editar acá el diseño**, no el `index.html`.
-- `../datos/mapeo_mercados.json` — 41 productos → mercado IQVIA exacto.
+- `../datos/mapeo_mercados.json` — 42 productos → mercado IQVIA exacto.
 - `../datos/historico.json` — store histórico acumulado (conteos por período/mercado/región). **Commitear** para preservar historia.
 
 ## Notas
 - El store guarda **conteos** (SIE / 80-20 / Total Mercado), no porcentajes, para poder agregar
   regiones/compañía como *ratio de sumas* (no promedio de %).
-- Diferencias <1pp respecto de reportes viejos son normales: IQVIA reexpresa datos entre reloads.
+- Diferencias <1pp respecto de reportes viejos suelen ser reexpresión de IQVIA entre reloads, pero hay productos que IQVIA corrige
+  por completo (ver "Reexpresión de IQVIA"): un salto grande de un mes a otro se explica antes de interpretarlo.
