@@ -84,6 +84,17 @@ REGION_TO_PROVINCE = {
     "CHUBUT": "Chubut", "SANTA CRUZ": "Santa Cruz", "TIERRA DEL FUEGO": "Tierra del Fuego",
 }
 
+# --- Meses que tenía la app en cada reload: (primero, último) ---
+# Una ventana que empieza antes del primer mes de la app sale con menos meses y SIN error:
+# el extractor selecciona min..P y la medida toma [P-L+1, P]. Pasó con MAT May-2025 (10 meses),
+# Jun-2025 (11) y Jul-2025 de Trip D3 y Alidial. Desde oct-2026 extraer_ventanas.py guarda la
+# ventana de cada reload en el store (store["apps"]); estas dos son las anteriores, de la meta
+# de historico.json en git (187715f: 24296..24319 · 5773cdf: 24297..24320).
+VENTANA_APP_POR_RELOAD = {
+    "11/sep./2026 12:38:51": (24296, 24319),
+    "02/oct./2026 21:11:04": (24297, 24320),
+}
+
 # --- Mapeo producto (nombre tablero) -> DescripcionMercado exacto ---
 # 32 son match exacto; los 9 ambiguos se resuelven por valor (ver resolver_mercados.py)
 PRODUCTO_A_MERCADO = {

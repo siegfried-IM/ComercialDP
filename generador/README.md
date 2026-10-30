@@ -27,6 +27,7 @@ cd generador
 python preflight.py P
 python extraer.py P                              # TRIM por región      -> historico.json
 python extraer_ventanas.py P P-1 P-3 P-6 P-12 P-M  # 5 ventanas x región -> historico_win.json
+python extraer_mensual.py                        # cada mes de la app   -> mensual.json (promedio mensual)
 python extraer_unidades.py P                     # unidades por región  -> unidades_region.json
 python extraer_unidades_depto.py P               # unidades por depto   -> unidades_depto.json
 python extraer_depto.py MEN,TRI,SEM,MAT,YTD P    # 5 ventanas x depto   -> depto_win.json
@@ -71,6 +72,29 @@ parece una caída de 8 pp puede ser sólo el dato viejo contra el nuevo.
   `min + 1` la medida trimestral ve 1 y 2 meses (Ago-2024 daba 67,7% en vez de 76,3%). `extraer.py`
   los saltea a propósito (`range(max_p, min_p + 1, -1)`); no es un error de índice.
 
+## Acumulado vs promedio mensual
+Las ventanas (Trimestre, Semestre, MAT, YTD) se ven de dos formas; las elige el selector **Cálculo**
+del tablero:
+- **Acumulado:** la medida maestra con la ventana parametrizada. Una farmacia cuenta si compró al menos
+  una vez en toda la ventana, y el núcleo 80-20 se recalcula sobre la ventana. Cuanto más larga la
+  ventana, más alto da: en Ago-2026 el DP% MAT quedó (mediana) 17,5 pp arriba de un mes suelto.
+- **Promedio mensual:** el DP% / DF% de cada mes (ratio de sumas de las regiones de la ubicación),
+  promediado entre los meses de la ventana. Sale de `datos/mensual.json`, que trae la ventana MEN de
+  cada mes de la app. Una ventana sólo se calcula si tiene todos sus meses.
+- Con promedio mensual el mapa por departamento queda en acumulado (no hay meses por departamento) y
+  Crecimiento no calcula unidades atribuibles (el factor marginal se calibró sobre la ventana acumulada).
+- `extraer_mensual.py` copia de `historico_win.json` los meses que ya tiene y consulta el resto, del más
+  viejo al más nuevo. **`mensual.json` se commitea:** la app guarda 24 meses y en cada reload pierde el
+  más viejo, y el MAT del año anterior necesita los 24.
+
+## Ventanas que la app cortó
+`extraer_ventanas.py` selecciona `min..P` y la medida toma `[P-L+1, P]`: si la ventana empieza antes del
+primer mes de la app, sale con menos meses y **sin error**. MAT May-2025 salió con 10 meses y, como año
+anterior de May-2026, inflaba la suba. El generador descarta esas ventanas (`ventana_truncada`): no se
+ofrecen en el segmentador y como comparación quedan s/d. Para saber qué meses tenía la app en cada
+reload, `extraer_ventanas.py` guarda `store["apps"]`; los reloads anteriores a oct-2026 están en
+`config.VENTANA_APP_POR_RELOAD`.
+
 ## Archivos
 - `qlik_client.py` — cliente Engine API (websocket JSON-RPC), `connect_retry` (reconexión con
   backoff ante cortes de red/DNS) y `check_selection` (aborta si la selección se contaminó).
@@ -78,6 +102,8 @@ parece una caída de 8 pp puede ser sólo el dato viejo contra el nuevo.
 - `extraer.py` — extracción Qlik → `../datos/historico.json`.
 - `extraer_ventanas.py`, `extraer_unidades.py`, `extraer_unidades_depto.py`, `extraer_depto.py` —
   los otros cuatro stores (ver secuencia mensual arriba). Están gitignoreados por tamaño.
+- `extraer_mensual.py` — conteos de cada mes (ventana MEN) por región, todos los meses de la app →
+  `../datos/mensual.json` (**commitear**). Es lo que usa el promedio mensual.
 - `verificar.py` — chequeos sobre los stores antes de generar (G0 a G3). Correr siempre.
 - `verificar_html.py` — chequea el `index.html` ya generado contra los stores.
 - `preflight.py` — chequeos contra la app antes de extraer (reload, mercados, regiones, medidas, mes completo).

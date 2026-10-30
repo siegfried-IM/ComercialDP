@@ -18,6 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 BASE = os.path.join(HERE, "plantilla_base.html")
 STORE = os.path.join(ROOT, "datos", "historico.json")
+MENSUAL = os.environ.get("MENSUAL_STORE") or os.path.join(ROOT, "datos", "mensual.json")
 OUT = os.environ.get("TABLERO_OUT") or os.path.join(ROOT, "index.html")
 
 MESES = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
@@ -154,6 +155,45 @@ def _month(p):
     return 12 if m == 0 else m
 
 
+def win_len(W, P):
+    return _month(P) if W == "YTD" else WIN_LEN[W]
+
+
+def primer_mes_app(winstore, sello):
+    """Primer mes que tenía la app al leer con ese reload, o None si no se sabe."""
+    app = winstore.get("apps", {}).get(sello)
+    if app:
+        return app["min"]
+    v = C.VENTANA_APP_POR_RELOAD.get(sello)
+    return v[0] if v else None
+
+
+def ventana_truncada(winstore, P, W, pn):
+    """¿La ventana W de P empezaba antes del primer mes que tenía la app al extraerla?
+    Entonces la medida la cortó sin error: MAT May-2025 salió con 10 meses y, como año
+    anterior de May-2026, inflaba la suba. Sin sello o sin ventana conocida para el reload
+    se compara contra el primer mes de la última extracción, que es el más nuevo: descarta
+    de más, nunca de menos."""
+    sello = winstore.get("sellos", {}).get(str(P), {}).get(pn)
+    mn = primer_mes_app(winstore, sello) if sello else None
+    if mn is None:
+        mn = winstore.get("meta", {}).get("min_periodo")
+    return mn is not None and P - win_len(W, P) + 1 < mn
+
+
+def ventanas_completas(winstore, periodos, productNames):
+    """Por ventana (sin TRI), los períodos en que TODOS los productos la tienen entera.
+    Es lo que ofrece el segmentador; como comparación, un período que no está queda s/d."""
+    out = {}
+    for W in WIN_ORDER:
+        if W == "TRI":
+            continue
+        out[W] = [p for p in periodos
+                  if all(winstore["datos"][str(p)].get(pn, {}).get("TOTAL", {}).get(W)
+                         and not ventana_truncada(winstore, p, W, pn) for pn in productNames)]
+    return out
+
+
 def build_counts(store, winstore, productNames, zonesOrder, zoneRegions):
     """Conteos CRUDOS por período / producto / ubicación, para que el navegador
     pueda armar cualquier período con cualquier ventana.
@@ -172,6 +212,8 @@ def build_counts(store, winstore, productNames, zonesOrder, zoneRegions):
     TRIM cubre los 23 períodos de historico.json; WINC los 9 de historico_win.
     Las ubicaciones son TOTAL + las 29 regiones: zona, provincia y compañía se
     derivan sumando regiones en el front.
+
+    Una ventana que la app cortó (ventana_truncada) viaja como null: s/d en el tablero.
     """
     regions = [r for z in zonesOrder for r in zoneRegions[z]]
     locs = ["TOTAL"] + regions
@@ -204,6 +246,7 @@ def build_counts(store, winstore, productNames, zonesOrder, zoneRegions):
         wper = sorted(int(p) for p in winstore["datos"] if completo(winstore, str(p)))
         wprod = {}
         for pn in productNames:
+            corta = {W: [ventana_truncada(winstore, p, W, pn) for p in wper] for W in WIN_ORDER if W != "TRI"}
             porloc = {}
             for loc in locs:
                 porwin = {}
@@ -211,8 +254,8 @@ def build_counts(store, winstore, productNames, zonesOrder, zoneRegions):
                 # historico.json), que cubre los 23 períodos y no sólo estos 9.
                 for W in [x for x in WIN_ORDER if x != "TRI"]:
                     serie = []
-                    for p in wper:
-                        c = winstore["datos"][str(p)].get(pn, {}).get(loc, {}).get(W)
+                    for i, p in enumerate(wper):
+                        c = None if corta[W][i] else winstore["datos"][str(p)].get(pn, {}).get(loc, {}).get(W)
                         serie.append([int(round(c["s"])), int(round(c["p"])), int(round(c["t"]))] if c else None)
                     if any(serie):
                         porwin[W] = serie
@@ -222,6 +265,51 @@ def build_counts(store, winstore, productNames, zonesOrder, zoneRegions):
         WINC = {"periodos": wper, "labels": [period_label(p) for p in wper],
                 "regions": regions, "prod": wprod}
     return TRIM, WINC
+
+
+def build_mensual(mstore, productNames, zonesOrder, zoneRegions):
+    """Conteos de CADA MES (ventana MEN) desde mensual.json, para que el front arme las
+    ventanas como promedio de meses en vez del acumulado de la medida maestra:
+
+      MENC.prod[producto][ubicación] = [[sie, p80, mercado], ...]   # 1 por mes
+
+    Misma forma que TRIMC (TOTAL + 29 regiones). Sólo los meses con los 42 productos."""
+    datos = (mstore or {}).get("datos", {})
+    regions = [r for z in zonesOrder for r in zoneRegions[z]]
+    locs = ["TOTAL"] + regions
+    meses = sorted(int(p) for p, pd in datos.items()
+                   if sum(1 for v in pd.values() if isinstance(v, dict) and v.get("_ok")) >= len(productNames))
+    if not meses:
+        return None
+    prod = {}
+    for pn in productNames:
+        porloc = {}
+        for loc in locs:
+            serie = []
+            for p in meses:
+                c = datos[str(p)].get(pn, {}).get(loc)
+                serie.append([int(round(c["s"])), int(round(c["p"])), int(round(c["t"]))] if c else None)
+            if any(serie):
+                porloc[loc] = serie
+        prod[pn] = porloc
+    return {"periodos": meses, "labels": [period_label(p) for p in meses], "prod": prod}
+
+
+def nota_mensual(mstore, mencobj):
+    """Línea del pie del promedio mensual: qué meses trae y con qué reload se leyeron.
+    No dice "reload del": verificar_html busca esa frase para validar la línea de nota_reload."""
+    if not mencobj:
+        return ""
+    per = mencobj["periodos"]
+    txt = "Promedio mensual: %d meses (%s &rarr; %s)" % (len(per), period_label(per[0]), period_label(per[-1]))
+    faltan = [period_label(p) for p in range(per[0], per[-1] + 1) if p not in per]
+    if faltan:
+        txt += " &middot; faltan " + ", ".join(faltan)
+    sellos = mstore.get("sellos", {})
+    c = collections.Counter(s.split(" ")[0] for p in per for s in sellos.get(str(p), {}).values())
+    if len(c) > 1:
+        txt += " &middot; (mes, producto) por reload: " + ", ".join("%s %d" % kv for kv in c.most_common())
+    return "<br>" + txt
 
 
 def build_unidades(unistore, productNames, zonesOrder, zoneRegions):
@@ -487,6 +575,7 @@ def main():
     deptowinstore = load_opt("depto_win.json")
     pslstore = load_opt("psl_ponderado.json")   # PSL ponderado por el mix de presentaciones
     margstore = load_opt("factor_marginal.json")  # cuanto rinde la farmacia marginal del nucleo
+    mstore = json.load(open(MENSUAL, encoding="utf-8")) if os.path.exists(MENSUAL) else None
 
     productNames = parse_js_var(base, "productNames")
     zonesOrder = parse_js_var(base, "zonesOrder")
@@ -583,15 +672,22 @@ def main():
           f"{trimc['labels'][0]}..{trimc['labels'][-1]}")
     if wincobj:
         print(f"[conteos ventanas] {len(wincobj['periodos'])} períodos: {', '.join(wincobj['labels'])}")
+    mencobj = build_mensual(mstore, productNames, zonesOrder, zoneRegions)
+    if mencobj:
+        print(f"[conteos mensuales] {len(mencobj['periodos'])} meses: {', '.join(mencobj['labels'])}")
     # Metadata del segmentador: qué períodos se pueden elegir con cada ventana.
-    # TRI sale de historico.json (todos); el resto sólo de los períodos extraídos.
+    # TRI sale de historico.json (todos); el resto, de los períodos extraídos donde
+    # la ventana está entera para los 42 productos.
+    wdisp = ventanas_completas(winstore, wincobj["periodos"], productNames) if wincobj else {}
+    for W, ps in wdisp.items():
+        fuera = [period_label(p) for p in wincobj["periodos"] if p not in ps]
+        if fuera:
+            print(f"[ventanas] {W} no se ofrece en {', '.join(fuera)}: empezaba antes del primer mes de la app")
     winmeta = {"order": WIN_ORDER, "label": WIN_LABEL, "len": WIN_LEN,
                "current": P, "curLabel": period_label(P),
-               "periodos": {W: (trimc["periodos"] if W == "TRI"
-                                else (wincobj["periodos"] if wincobj else []))
+               "periodos": {W: (trimc["periodos"] if W == "TRI" else wdisp.get(W, []))
                             for W in WIN_ORDER},
-               "labels": {W: (trimc["labels"] if W == "TRI"
-                              else (wincobj["labels"] if wincobj else []))
+               "labels": {W: [period_label(p) for p in (trimc["periodos"] if W == "TRI" else wdisp.get(W, []))]
                           for W in WIN_ORDER}}
     uniobj = build_unidades(unistore, productNames, zonesOrder, zoneRegions) if unistore else None
     if uniobj:
@@ -616,7 +712,8 @@ def main():
     html = re.sub(r"<title>.*?</title>", f"<title>DP% Report - {lbl}</title>", html, count=1)
     # El subtítulo del resumen lo fija el JS (updateMetricLabels) usando PERIODO_LBL.
     html = re.sub(r"Generado el [^\n]*?\| DP% Report - Datos [^\n<]*",
-                  f"Generado el {gen_ts} | DP% Report - Datos {lbl}{nota_reload(store, trimc, P, productNames)}",
+                  f"Generado el {gen_ts} | DP% Report - Datos {lbl}{nota_reload(store, trimc, P, productNames)}"
+                  f"{nota_mensual(mstore, mencobj)}",
                   html, count=1)
     # KPIs iniciales (DP); el JS los recalcula al alternar métrica
     html = re.sub(r'(id="kpiAvg">).*?(</div>)', rf'\g<1>{kpiDP["avg"]*100:.1f}%\g<2>', html, count=1)
@@ -673,6 +770,8 @@ def main():
               "var WINMETA = " + dump(winmeta) + ";\n" +
               "var TRIMC = " + dump(trimc) + ";\n" +
               ("var WINC = " + dump(wincobj) + ";\n" if wincobj else "var WINC = null;\n") +
+              # Conteos de cada mes: con ellos el front arma las ventanas como promedio de meses
+              ("var MENC = " + dump(mencobj) + ";\n" if mencobj else "var MENC = null;\n") +
               ("var WINU = " + dump(uniobj) + ";\n" if uniobj else "var WINU = null;\n") +
               ("var WINU_DEPTO = " + dump(unidepobj) + ";\n" if unidepobj else "var WINU_DEPTO = null;\n") +
               ("var WINDEP = " + dump(windepobj) + ";\n" if windepobj else "var WINDEP = null;\n") +

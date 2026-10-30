@@ -91,6 +91,9 @@ def main():
     store = load_json(STORE, {"meta": {}, "periodos": {}, "datos": {}})
     store["meta"] = {"schema": "ventanas", "ventanas": list(FIXED_WIN.keys()) + ["YTD"],
                      "min_periodo": min_p, "max_periodo": max_p}
+    # Qué meses tenía la app con este reload: una ventana que empieza antes de min_p sale
+    # truncada sin error, y el generador la descarta (generar_html.ventana_truncada).
+    store.setdefault("apps", {})[sello] = {"min": min_p, "max": max_p}
 
     def windows_for(P):
         w = dict(FIXED_WIN)

@@ -710,6 +710,10 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
 .ctx-bar .ctx-tag { background:#95232C; color:#fff; border-radius:10px; padding:2px 9px; font-size:0.68rem; text-transform:uppercase; letter-spacing:.5px; margin-right:8px; }
 .ctx-bar b { color:#3a2022; }
 .ctx-bar .ctx-def { color:#8a6d6f; }
+/* === PAÍS Y PROVINCIAS === */
+.prov-table th.grp-start, .prov-table td.grp-start { border-left: 3px solid #e7cfd1; }
+.prov-table td.cell-region .product-dot { display:inline-block; margin-right:7px; vertical-align:middle; }
+.prov-nota { color:#8a6d6f; font-size:0.8rem; margin:10px 2px 0; line-height:1.5; }
 </style>
 </head>
 <body>
@@ -741,6 +745,10 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="2 6 9 3 15 6 22 3 22 18 15 21 9 18 2 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg></span>
             <span class="sidebar-text">Mapa</span>
         </div>
+        <div class="nav-item" id="nav-provincias" onclick="showView('provincias')">
+            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="14.5" x2="21" y2="14.5"/><line x1="9" y1="4" x2="9" y2="20"/></svg></span>
+            <span class="sidebar-text">Pa&iacute;s y provincias</span>
+        </div>
         <div class="nav-section-title sidebar-text">Productos</div>
         <div class="product-list" id="productList"></div>
     </div>
@@ -754,12 +762,19 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
 <div class="main-content" id="mainContent">
     <!-- Filter bar -->
     <div class="filter-bar">
-        <div class="metric-toggle" role="group" aria-label="M&eacute;trica">
+        <div class="metric-toggle" id="metricToggle" role="group" aria-label="M&eacute;trica">
             <button type="button" id="btnDP" class="metric-btn active" onclick="setMetric('DP')">Ponderada (DP%)</button>
             <button type="button" id="btnDF" class="metric-btn" onclick="setMetric('DF')">F&iacute;sica (DF%)</button>
         </div>
         <span class="filter-group-label" id="winGroupLabel" style="display:none">Ventana</span>
         <div class="win-toggle" id="winToggle" role="group" aria-label="Ventana temporal" style="display:none"></div>
+        <span class="filter-group-label" id="calcGroupLabel" style="display:none">C&aacute;lculo</span>
+        <div class="var-toggle" id="calcToggle" role="group" aria-label="C&aacute;lculo de la ventana" style="display:none">
+            <button type="button" id="btnCalcAcu" class="var-btn active" onclick="setCalc('ACU')"
+                    title="Farmacias con al menos una compra en toda la ventana (n&uacute;cleo 80-20 de la ventana)">Acumulado</button>
+            <button type="button" id="btnCalcProm" class="var-btn" onclick="setCalc('PROM')"
+                    title="El DP% / DF% de cada mes, promediado entre los meses de la ventana">Promedio mensual</button>
+        </div>
         <span class="filter-group-label" id="periodGroupLabel" style="display:none">Per&iacute;odo</span>
         <span class="period-seg" id="periodField" style="display:none">
             <select id="periodSel" onchange="setPeriod(this.value)" aria-label="Per&iacute;odo"></select>
@@ -952,6 +967,39 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
             </div>
         </div>
 
+        <!-- País y provincias: DF% y DP% juntos, actual vs comparación -->
+        <div class="view-panel" id="view-provincias">
+            <div class="view-title" id="provTitle">Pa&iacute;s y provincias</div>
+            <div class="evol-controls">
+                <div class="evol-field">
+                    <label>Ver</label>
+                    <select id="provModo" onchange="renderProvincias()">
+                        <option value="prod">Productos en una ubicaci&oacute;n</option>
+                        <option value="prov">Provincias de un producto</option>
+                    </select>
+                </div>
+                <div class="evol-field" id="provUbicField">
+                    <label>Ubicaci&oacute;n</label>
+                    <select id="provUbic" onchange="renderProvincias()"></select>
+                </div>
+                <div class="evol-field" id="provProdField" style="display:none">
+                    <label>Producto <span class="hint">(buscable)</span></label>
+                    <input type="hidden" id="provProd">
+                    <div class="ms-dropdown" id="provProdDD">
+                        <button type="button" class="ms-toggle" id="provProdBtn" onclick="ssToggle('provProdPanel', event)">&#9662;</button>
+                        <div class="ms-panel" id="provProdPanel"></div>
+                    </div>
+                </div>
+                <div class="evol-field">
+                    <button type="button" class="clear-btn" onclick="descargarProvincias()"
+                            title="Todas las ventanas del per&iacute;odo, cada producto, el pa&iacute;s y las 24 provincias, contra el a&ntilde;o anterior">Descargar Excel (CSV)</button>
+                </div>
+            </div>
+            <div class="growth-hint">Clic en una columna para ordenar</div>
+            <div class="table-container" id="provTableContainer"></div>
+            <p class="prov-nota" id="provNota"></p>
+        </div>
+
         <!-- Product Views (generated dynamically) -->
         <div id="productViews"></div>
     </div>
@@ -978,6 +1026,7 @@ var groupColors = {"#00B0F0": ["Acemuk", "Alidial", "Hexaler cort", "Aireal", "A
 var currentView = 'summary';
 var currentWindow = 'TRI';       // ventana temporal activa: MEN/TRI/SEM/MAT/YTD
 var currentVariation = 'ay';     // 'ay' = vs año anterior · 'ap' = vs período anterior
+var currentCalc = 'ACU';         // 'ACU' = acumulado de la ventana · 'PROM' = promedio de sus meses
 var winCurLabel = '';            // etiqueta del período actual de la ventana
 var winCmpHay = true;            // ¿el período de comparación está extraído?
 var winCmpFalta = '';            // si no lo está, cuál sería
@@ -1044,7 +1093,12 @@ function updateContext() {
     if (currentView === 'evolution') vista = 'Evolución';
     else if (currentView === 'crecimiento') vista = 'Crecimiento';
     else if (currentView === 'mapa') vista = 'Mapa';
+    else if (currentView === 'provincias') vista = 'País y provincias';
     else if (currentView !== 'summary') vista = currentView;
+    if (currentView === 'provincias') {   // muestra las dos métricas juntas
+        nombre = 'Distribución Física y Ponderada'; ml = 'DF% y DP%';
+        def = 'sobre <b>todas</b> las farmacias del mercado (DF%) y sobre las del <b>núcleo Pareto 80-20</b> (DP%) con presencia Siegfried';
+    }
     // La evolución es una serie trimestral de todos los períodos: la ventana no aplica
     if (currentView === 'evolution') {
         var rango = (typeof evolData !== 'undefined' && evolData.labels && evolData.labels.length)
@@ -1055,13 +1109,15 @@ function updateContext() {
         var extra = (pedido !== evolModoEfectivo)
             ? ' · <span class="ctx-warn">El rango elegido no tiene 2 cierres: se muestran todos los meses</span>' : '';
         bar.innerHTML = '<span class="ctx-tag">' + vista + '</span>' +
-            'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Serie <b>trimestral</b> · ' + rango +
+            'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Serie <b>trimestral</b> (' +
+            (currentCalc === 'PROM' ? '<b>promedio de 3 meses</b>' : '<b>acumulado</b>') + ') · ' + rango +
             (agr[evolModoEfectivo] || '') + extra +
             ' <span class="ctx-def">— mide % ' + def + '</span>';
         return;
     }
     var per = (winCurLabel || ((typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : ''));
     var vent = (WINMETA.label[currentWindow] || 'Trimestre');
+    var ct = calcTxt(currentWindow);
     var cmp = winCmpLabel
         ? ' · Comparaci&oacute;n: <b>vs ' + winCmpLabel + '</b> (' + (currentVariation === 'ap' ? 'per&iacute;odo ant.' : 'a&ntilde;o ant.') + ')'
         : (winCmpFalta ? ' · <span class="ctx-warn">Sin comparaci&oacute;n: ' + winCmpFalta + ' no est&aacute; extra&iacute;do en esta ventana</span>' : '');
@@ -1071,20 +1127,25 @@ function updateContext() {
                   periodLabel(unitsPeriod()) + ' (pesan demasiado para todos los per&iacute;odos), ' +
                   'por eso quedan en &mdash;</span>';
     }
+    if (currentView === 'crecimiento' && currentCalc === 'PROM' && currentMetric === 'DP') {
+        avisos += ' <span class="ctx-warn">Unidades y pesos atribuibles: s&oacute;lo en acumulado ' +
+                  '(se calibraron con las farmacias ganadas en la ventana)</span>';
+    }
     if (currentView === 'mapa' && !hayDepto() && deptoPeriod() !== null &&
         !(currentWindow === 'TRI' && currentMetric === 'DP')) {
         avisos += ' <span class="ctx-warn">Mapa por departamento: s&oacute;lo ' +
                   periodLabel(deptoPeriod()) + ' (fuera de Trimestre + DP%)</span>';
     }
     bar.innerHTML = '<span class="ctx-tag">' + vista + '</span>' +
-        'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Ventana: <b>' + vent + '</b> · Per&iacute;odo: <b>' + per + '</b>' + cmp +
+        'Analizando: <b>' + nombre + ' (' + ml + ')</b> · Ventana: <b>' + vent + '</b>' + (ct ? ' (<b>' + ct + '</b>)' : '') +
+        ' · Per&iacute;odo: <b>' + per + '</b>' + cmp +
         ' <span class="ctx-def">— mide % ' + def + '</span>' + avisos;
 }
 
 function setMetric(m) {
     if (typeof currentMetric !== 'undefined' && m === currentMetric) return;
     currentMetric = m;
-    evolData = (m === 'DP') ? evolDataDP : evolDataDF;   // la evolución siempre es por métrica
+    evolData = evolActiva();   // la evolución sigue a la métrica y al cálculo
     var bDP = document.getElementById('btnDP'), bDF = document.getElementById('btnDF');
     if (bDP) bDP.classList.toggle('active', m === 'DP');
     if (bDF) bDF.classList.toggle('active', m === 'DF');
@@ -1114,7 +1175,7 @@ function setMetric(m) {
 // tamaños muy distintos.
 
 var currentPeriod = WINMETA.current;
-var winCache = {};        // 'P|ventana|métrica' -> dataset  ·  '...|prov' -> provincias
+var winCache = {};        // 'P|ventana|métrica|cálculo' -> dataset  ·  '...|prov' -> provincias
 
 var MESES_CORTOS = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 function periodLabel(p) {
@@ -1125,8 +1186,62 @@ function periodLabel(p) {
 function monthOf(p) { var m = p % 12; return m === 0 ? 12 : m; }
 
 // Períodos elegibles por ventana: el trimestre sale de historico.json (los 23);
-// las otras cuatro, sólo de los períodos extraídos con las 5 ventanas.
-function periodsFor(w) { return WINMETA.periodos[w] || []; }
+// las otras cuatro, sólo de los períodos extraídos con las 5 ventanas. En promedio
+// mensual, los que tienen todos sus meses en MENC.
+function periodsFor(w) { return (currentCalc === 'PROM') ? promPeriods(w) : (WINMETA.periodos[w] || []); }
+
+// === PROMEDIO MENSUAL ===
+// La medida maestra de una ventana es ACUMULADA: cuenta la farmacia que compró al
+// menos una vez en toda la ventana, con el núcleo 80-20 recalculado sobre la ventana.
+// Por eso un MAT queda (mediana) 17 pp de DP% arriba de un mes suelto. El promedio
+// mensual toma el DP% / DF% de CADA mes —ratio de sumas sobre las regiones de la
+// ubicación, como siempre— y los promedia entre los meses de la ventana. Sale de MENC
+// (conteos del mes por producto y región). Sin TODOS sus meses la ventana no se calcula.
+var COMPANY_LBL = (typeof evolDataDP !== 'undefined' && evolDataDP.products) ? evolDataDP.products[0] : 'TOTAL COMPAÑÍA';
+function hayMensual() { return typeof MENC !== 'undefined' && MENC && MENC.periodos && MENC.periodos.length > 0; }
+function windowMonths(w, P) {
+    var L = (w === 'YTD') ? monthOf(P) : (WINMETA.len[w] || 3), out = [];
+    for (var k = P - L + 1; k <= P; k++) out.push(k);
+    return out;
+}
+var promPeriodsCache = {};
+function promPeriods(w) {
+    if (!hayMensual()) return [];
+    if (!promPeriodsCache[w]) {
+        promPeriodsCache[w] = MENC.periodos.filter(function (P) {
+            return windowMonths(w, P).every(function (k) { return MENC.periodos.indexOf(k) >= 0; });
+        });
+    }
+    return promPeriodsCache[w];
+}
+// Promedio de los ratios mensuales de unos productos sobre unas regiones. Un mes sin
+// denominador (sin núcleo o sin mercado en la ubicación) no entra al promedio.
+function promRatio(prods, regs, w, P, m) {
+    if (!hayMensual()) return null;
+    var months = windowMonths(w, P), sum = 0, n = 0;
+    for (var i = 0; i < months.length; i++) {
+        var idx = MENC.periodos.indexOf(months[i]);
+        if (idx < 0) return null;
+        var sie = 0, den = 0;
+        for (var a = 0; a < prods.length; a++) {
+            var byLoc = MENC.prod[prods[a]];
+            if (!byLoc) continue;
+            for (var b = 0; b < regs.length; b++) {
+                var c = byLoc[regs[b]] ? byLoc[regs[b]][idx] : null;
+                if (c) { sie += c[0]; den += (m === 'DP') ? c[1] : c[2]; }
+            }
+        }
+        if (den > 0) { sum += sie / den; n++; }
+    }
+    if (!n) return null;
+    return Math.round(sum / n * 1e6) / 1e6;
+}
+// Cómo se calculó la ventana, para el contexto y los títulos.
+function calcTxt(w) {
+    if (w === 'MEN') return '';   // un mes es un mes: acumulado y promedio coinciden
+    if (currentCalc !== 'PROM') return 'acumulado';
+    return 'promedio de ' + ((w === 'YTD') ? 'los meses del año' : (WINMETA.len[w] + ' meses'));
+}
 
 // ¿El período elegido tiene unidades extraídas? Sólo el/los más recientes.
 function unitsPeriod() { return (typeof WINU !== 'undefined' && WINU) ? WINU.current : null; }
@@ -1157,6 +1272,7 @@ function rawCounts(pn, loc, w, P) {
 // Ratio de sumas sobre una lista de regiones. Devuelve null —no 0— si ninguna
 // tiene dato o el denominador es cero: "sin dato" y "cero" no son lo mismo.
 function ratioOf(pn, regs, w, P, m) {
+    if (currentCalc === 'PROM') return promRatio([pn], regs, w, P, m);
     var sie = 0, den = 0, hay = false;
     for (var i = 0; i < regs.length; i++) {
         var c = rawCounts(pn, regs[i], w, P);
@@ -1168,6 +1284,7 @@ function ratioOf(pn, regs, w, P, m) {
 
 // Ratio de sumas sobre TODOS los productos (TOTAL COMPAÑÍA), no promedio de productos.
 function companyRatio(regs, w, P, m) {
+    if (currentCalc === 'PROM') return promRatio(productNames, regs, w, P, m);
     var sie = 0, den = 0, hay = false;
     for (var pi = 0; pi < productNames.length; pi++) {
         for (var i = 0; i < regs.length; i++) {
@@ -1273,13 +1390,13 @@ function buildWinProv(w, m, P) {
 
 function winDataFor(w, m) {
     if (periodsFor(w).indexOf(currentPeriod) < 0) return null;
-    var k = currentPeriod + '|' + w + '|' + m;
+    var k = currentPeriod + '|' + w + '|' + m + '|' + currentCalc;
     if (!winCache[k]) winCache[k] = buildWinData(w, m, currentPeriod);
     return winCache[k];
 }
 function winProvFor(w, m) {
     if (periodsFor(w).indexOf(currentPeriod) < 0) return null;
-    var k = currentPeriod + '|' + w + '|' + m + '|prov';
+    var k = currentPeriod + '|' + w + '|' + m + '|' + currentCalc + '|prov';
     if (!winCache[k]) winCache[k] = buildWinProv(w, m, currentPeriod);
     return winCache[k];
 }
@@ -1330,13 +1447,15 @@ function applyWindow(doMap) {
     buildDPTable();
     buildAllProductViews();
     // buildAllProductViews resetea las clases de los paneles de producto: reactivar el actual
-    if (currentView !== 'summary' && currentView !== 'evolution' && currentView !== 'crecimiento' && currentView !== 'mapa') {
+    if (currentView !== 'summary' && currentView !== 'evolution' && currentView !== 'crecimiento' &&
+        currentView !== 'mapa' && currentView !== 'provincias') {
         var panel = document.getElementById('view-' + currentView.replace(/ /g, '_'));
         if (panel) panel.classList.add('active');
     }
     applyFilters();
     updateMetricLabels();   // el título del resumen lleva el período; llama a updateContext()
     if (doMap && currentView === 'mapa') renderMap();
+    if (currentView === 'provincias') renderProvincias();
     refreshTopScrollbars();
 }
 
@@ -1363,6 +1482,11 @@ function buildWindowControls() {
     markVarActive();
     enforceVariationForWindow();
     buildPeriodControl();
+    var bp = document.getElementById('btnCalcProm');
+    if (bp && !hayMensual()) {
+        bp.disabled = true; bp.classList.add('disabled');
+        bp.title = 'Falta datos/mensual.json: correr extraer_mensual.py y regenerar el tablero';
+    }
 }
 
 function markWinActive() {
@@ -1430,10 +1554,11 @@ function buildPeriodControl() {
     if (nota) {
         var todos = TRIMC.periodos.length;
         nota.textContent = (ps.length < todos) ? ps.length + '/' + todos : '';
-        nota.title = (ps.length < todos)
-            ? 'Esta ventana está extraída en ' + ps.length + ' de los ' + todos +
-              ' períodos. El trimestre tiene los ' + todos + '.'
-            : '';
+        nota.title = (ps.length >= todos) ? ''
+            : (currentCalc === 'PROM')
+            ? 'Promedio mensual: ' + ps.length + ' períodos tienen todos los meses de la ventana extraídos.'
+            : 'Esta ventana está extraída en ' + ps.length + ' de los ' + todos +
+              ' períodos. El trimestre tiene los ' + todos + '.';
     }
 }
 
@@ -1470,6 +1595,29 @@ function setVariation(v) {
     if (currentView === 'crecimiento') renderGrowth();   // el crecimiento usa la variación activa
 }
 
+// Acumulado (la medida maestra sobre toda la ventana) o promedio de sus meses. Cambia
+// todas las vistas; la Evolución pasa al trimestre móvil promediado.
+function setCalc(c) {
+    if (c === currentCalc) return;
+    if (c === 'PROM' && !hayMensual()) return;
+    currentCalc = c;
+    markCalcActive();
+    clampPeriodToWindow();
+    buildWindowControls();   // en promedio puede faltar alguna ventana: cae a la primera que haya
+    sortState = {};
+    evolData = evolActiva();
+    rebuildEvolRange();
+    mapEvolFrom = mapEvolTo = null;   // el rango del detalle del mapa es por índice de la serie
+    applyWindow(true);
+    if (currentView === 'crecimiento') renderGrowth();
+    if (currentView === 'evolution') renderEvolution();
+}
+function markCalcActive() {
+    var a = document.getElementById('btnCalcAcu'), b = document.getElementById('btnCalcProm');
+    if (a) a.classList.toggle('active', currentCalc === 'ACU');
+    if (b) b.classList.toggle('active', currentCalc === 'PROM');
+}
+
 // === VISIBILIDAD DE FILTROS POR VISTA ===
 // Cada pestaña muestra únicamente los controles que efectivamente la afectan.
 function _fbShow(id, on) { var e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; }
@@ -1477,13 +1625,18 @@ function updateFilterBarForView(v) {
     var isEvol = (v === 'evolution');
     var isGrowth = (v === 'crecimiento');
     var isMap = (v === 'mapa');
-    var isTable = !isEvol && !isGrowth && !isMap;   // 'summary' o vista de producto
+    var isProv = (v === 'provincias');
+    var isTable = !isEvol && !isGrowth && !isMap && !isProv;   // 'summary' o vista de producto
     var hasWin = (typeof WINMETA !== 'undefined' && WINMETA);
-    // Ventana: aplica a tablas, crecimiento y mapa (no a la evolución trimestral).
+    // Ventana: aplica a tablas, crecimiento, mapa y país/provincias (no a la evolución trimestral).
     var showWin = hasWin && !isEvol;
-    // Variación (vs año/período ant.): SOLO donde se consume — tablas y crecimiento.
-    // El mapa colorea el valor actual de la ventana, no usa la variación.
-    var showVar = hasWin && (isTable || isGrowth);
+    // Variación (vs año/período ant.): SOLO donde se consume — tablas, crecimiento y
+    // país/provincias. El mapa colorea el valor actual de la ventana, no usa la variación.
+    var showVar = hasWin && (isTable || isGrowth || isProv);
+    // Cálculo (acumulado / promedio mensual): en todas, también la evolución (cambia la serie).
+    _fbShow('calcGroupLabel', hasWin); _fbShow('calcToggle', hasWin);
+    // País y provincias muestra DF% y DP% juntos: el selector de métrica no aplica.
+    _fbShow('metricToggle', !isProv);
     _fbShow('winGroupLabel', showWin); _fbShow('winToggle', showWin);
     // Período: mismas vistas que la ventana. En Evolución no va: esa vista muestra
     // una serie completa y tiene su propio rango Desde/Hasta más la agrupación.
@@ -1510,6 +1663,8 @@ function init() {
     initEvolution();
     initGrowth();
     initMap();
+    initProvincias();
+    markCalcActive();
     setupTopScrollbars();
     setupTooltip();
 }
@@ -1583,6 +1738,8 @@ function showView(viewName) {
     if (navCrec) navCrec.classList.remove('active');
     var navMapa = document.getElementById('nav-mapa');
     if (navMapa) navMapa.classList.remove('active');
+    var navProv = document.getElementById('nav-provincias');
+    if (navProv) navProv.classList.remove('active');
     var items = document.querySelectorAll('.product-item');
     for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
 
@@ -1602,6 +1759,10 @@ function showView(viewName) {
         document.getElementById('view-mapa').classList.add('active');
         if (navMapa) navMapa.classList.add('active');
         renderMap();
+    } else if (viewName === 'provincias') {
+        document.getElementById('view-provincias').classList.add('active');
+        if (navProv) navProv.classList.add('active');
+        renderProvincias();
     } else {
         var panel = document.getElementById('view-' + viewName.replace(/ /g, '_'));
         if (panel) panel.classList.add('active');
@@ -2341,6 +2502,49 @@ function mapTooltipHtml(el) {
 }
 
 // === EVOLUCION ===
+// En promedio mensual la serie es el trimestre MÓVIL promediado: en cada período, el
+// promedio de los 3 meses que terminan en él. Misma grilla y misma lectura que la serie
+// acumulada (la medida trimestral), así que la agrupación por cierres vale igual.
+var evolPromCache = {};
+function evolActiva() {
+    if (currentCalc === 'PROM' && hayMensual()) {
+        if (!evolPromCache[currentMetric]) evolPromCache[currentMetric] = buildEvolProm(currentMetric);
+        return evolPromCache[currentMetric];
+    }
+    return (currentMetric === 'DP') ? evolDataDP : evolDataDF;
+}
+function buildEvolProm(m) {
+    var periods = promPeriods('TRI'), locs = ['TOTAL'], locRegs = { TOTAL: ['TOTAL'] }, i, j;
+    for (i = 0; i < zonesOrder.length; i++) { locs.push('ZONA:' + zonesOrder[i]); locRegs['ZONA:' + zonesOrder[i]] = zoneRegions[zonesOrder[i]]; }
+    var pr = provinceRegions();
+    for (var pv in pr) if (pr.hasOwnProperty(pv)) { locs.push('PROV:' + pv); locRegs['PROV:' + pv] = pr[pv]; }
+    var regs = allRegions();
+    for (i = 0; i < regs.length; i++) { locs.push(regs[i]); locRegs[regs[i]] = [regs[i]]; }
+    var products = [COMPANY_LBL].concat(productNames), series = {};
+    for (i = 0; i < products.length; i++) {
+        var prods = (i === 0) ? productNames : [products[i]];
+        series[products[i]] = {};
+        for (j = 0; j < locs.length; j++) {
+            series[products[i]][locs[j]] = periods.map(function (P) { return promRatio(prods, locRegs[locs[j]], 'TRI', P, m); });
+        }
+    }
+    return { labels: periods.map(periodLabel), periods: periods, products: products, series: series };
+}
+// Mientras falten meses en MENC, la serie promediada tiene otros períodos que la
+// acumulada: al cambiar de cálculo se rearman Desde/Hasta conservando lo elegido.
+function rebuildEvolRange() {
+    var selF = document.getElementById('evolFrom'), selT = document.getElementById('evolTo');
+    if (!selF || !selT || !evolData || !evolData.labels) return;
+    var L = evolData.labels;
+    var fTxt = selF.selectedIndex >= 0 ? selF.options[selF.selectedIndex].text : null;
+    var tTxt = selT.selectedIndex >= 0 ? selT.options[selT.selectedIndex].text : null;
+    var oh = '';
+    for (var i = 0; i < L.length; i++) oh += '<option value="' + i + '">' + L[i] + '</option>';
+    selF.innerHTML = oh; selT.innerHTML = oh;
+    selF.selectedIndex = L.indexOf(fTxt) >= 0 ? L.indexOf(fTxt) : 0;
+    selT.selectedIndex = L.indexOf(tTxt) >= 0 ? L.indexOf(tTxt) : L.length - 1;
+}
+
 function initEvolution() {
     if (typeof evolData === 'undefined' || !evolData.labels) return;
     var panel = document.getElementById('evolProductPanel');
@@ -2677,6 +2881,9 @@ function factorMarginal(product) {
 
 function atribuible(product, location, delta) {
     if (currentMetric !== 'DP') return null;
+    // El factor marginal se midió con las farmacias ganadas en la ventana ACUMULADA:
+    // sobre la variación de un promedio de meses no está calibrado.
+    if (currentCalc === 'PROM') return null;
     var u = unidsSie(product, location);
     if (u == null) return null;
     var unid = delta * 0.80 * factorMarginal(product) * u;
@@ -3084,7 +3291,9 @@ function renderMap() {
     attachMapZoom(document.querySelector('#mapSvg svg'), provGeo.viewBox);
     var mt = document.getElementById('mapTitle');
     var ventLbl = (WINMETA.label[currentWindow] || '');
-    if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
+    var ctM = calcTxt(currentWindow);
+    if (mt) mt.textContent = 'Mapa ' + metricLabel + ' por provincia — ' + product + (ventLbl ? ' · ' + ventLbl : '') +
+                             (ctM ? ' (' + ctM + ')' : '') + ' · ' + (winCurLabel || PERIODO_LBL);
     // ranking al costado (con unidades del mercado + potencial no capturado)
     var rows = [];
     for (var j = 0; j < provinciasOrden.length; j++) {
@@ -3159,7 +3368,8 @@ function renderMapDetail(prov) {
         }
     }
     html += '</div>';
-    if (ps) html += '<h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n trimestral</h4>' + mapEvolRangeCtl(labels, fP, tP) + '<div class="evol-chart-wrap">' + miniLine(psC, lblP) + '</div>';
+    if (ps) html += '<h4 style="margin:14px 0 4px;color:#7a1e24;font-size:0.82rem">Evoluci&oacute;n trimestral' +
+                    (currentCalc === 'PROM' ? ' (promedio de 3 meses)' : '') + '</h4>' + mapEvolRangeCtl(labels, fP, tP) + '<div class="evol-chart-wrap">' + miniLine(psC, lblP) + '</div>';
     var regs = []; for (var r in regionProvincia) if (regionProvincia[r] === prov) regs.push(r);
     if (regs.length > 1) {
         html += '<h4 style="margin:14px 0 6px;color:#7a1e24">Regiones de la provincia &middot; ' + metricLabel + ' ' + ventLbl + '</h4>';
@@ -3254,7 +3464,10 @@ function renderMapDepto() {
     svgc.innerHTML = svg;
     attachMapZoom(svgc.querySelector('svg'), provGeoDepto.viewBox);
     var ventLbl = (WINMETA.label[currentWindow] || '');
-    document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + (ventLbl ? ' · ' + ventLbl : '') + ' · ' + (winCurLabel || PERIODO_LBL);
+    // Por departamento no hay meses extraídos: siempre es el acumulado de la ventana
+    document.getElementById('mapTitle').textContent = 'Mapa ' + metricLabel + ' por departamento — ' + product + (ventLbl ? ' · ' + ventLbl : '') +
+        (currentWindow !== 'MEN' ? ' (acumulado' + (currentCalc === 'PROM' ? ': no hay meses por departamento' : '') + ')' : '') +
+        ' · ' + (winCurLabel || PERIODO_LBL);
     var rows = provGeoDepto.feats.map(function (f) {
         var u = deptoUnits(product, f.k);
         var r = deptoDP(product, f.k);
@@ -3336,6 +3549,177 @@ function renderDeptoDetail(k) {
         evolStat(metricLabel + ' &middot; ' + ventLbl, (v !== undefined && v !== null) ? (v * 100).toFixed(1) + '%' : 's/d') +
         uStats +
         (evolHtml || '</div><p') + ' style="color:#8a6d6f;font-size:0.82rem;margin-top:8px">M&aacute;ximo detalle por departamento &middot; ventana <b>' + ventLbl + '</b> (per&iacute;odo ' + (winCurLabel || PERIODO_LBL) + '). Evoluci&oacute;n en DP% trimestral.</p>';
+}
+
+// === PAÍS Y PROVINCIAS ===
+// DF% y DP% juntos, actual contra la comparación activa, para el país y las 24
+// provincias. Sigue a la ventana, el período, la comparación y el cálculo de arriba.
+// La provincia es la suma de sus regiones CUP (ratio de sumas), igual que en el mapa.
+var provSort = { key: null, dir: 1 };   // sin clave: orden de líneas / de provincias
+
+function provUbicaciones() {
+    var pr = provinceRegions(), out = [{ v: 'TOTAL', label: 'País', regs: ['TOTAL'] }];
+    for (var i = 0; i < provinciasOrden.length; i++) {
+        var p = provinciasOrden[i];
+        if (pr[p]) out.push({ v: 'PROV:' + p, label: p, regs: pr[p] });
+    }
+    return out;
+}
+
+function initProvincias() {
+    var sel = document.getElementById('provUbic');
+    if (sel) sel.innerHTML = provUbicaciones().map(function (u) { return '<option value="' + u.v + '">' + u.label + '</option>'; }).join('');
+    var items = [{ v: COMPANY_LBL, label: COMPANY_LBL }].concat(productNames.map(function (p) { return { v: p, label: p }; }));
+    ssBuild('provProdPanel', 'provProdBtn', 'provProd', items, COMPANY_LBL, function () { renderProvincias(); });
+}
+
+// {dfA, dfC, dpA, dpC} de un producto (o la compañía) sobre unas regiones; cmpP null = sin comparación.
+function provFila(pn, regs, w, P, cmpP) {
+    function val(m, per) {
+        if (per == null) return null;
+        return (pn === COMPANY_LBL) ? companyRatio(regs, w, per, m) : ratioOf(pn, regs, w, per, m);
+    }
+    return { dfA: val('DF', P), dfC: val('DF', cmpP), dpA: val('DP', P), dpC: val('DP', cmpP) };
+}
+
+function provSetSort(key) {
+    provSort = (provSort.key === key) ? { key: key, dir: -provSort.dir } : { key: key, dir: (key === 'name') ? 1 : -1 };
+    renderProvincias();
+}
+
+function provSortVal(f, k) {
+    if (k === 'dfD') return (f.dfA == null || f.dfC == null) ? null : f.dfA - f.dfC;
+    if (k === 'dpD') return (f.dpA == null || f.dpC == null) ? null : f.dpA - f.dpC;
+    return f[k];
+}
+
+function renderProvincias() {
+    var cont = document.getElementById('provTableContainer');
+    if (!cont) return;
+    var modo = document.getElementById('provModo').value;
+    document.getElementById('provUbicField').style.display = (modo === 'prod') ? '' : 'none';
+    document.getElementById('provProdField').style.display = (modo === 'prov') ? '' : 'none';
+    var w = currentWindow, P = currentPeriod, ps = periodsFor(w);
+    var cp = cmpPeriods(w, P), cmpP = (currentVariation === 'ap') ? cp.prev : cp.ant;
+    var hayCmp = ps.indexOf(cmpP) >= 0;
+    var vent = WINMETA.label[w] || w, ct = calcTxt(w);
+    var titulo = document.getElementById('provTitle');
+    if (titulo) titulo.textContent = 'País y provincias — ' + vent + (ct ? ' (' + ct + ')' : '') + ' · ' +
+                                     periodLabel(P) + ' vs ' + periodLabel(cmpP);
+    var nota = document.getElementById('provNota');
+    if (ps.indexOf(P) < 0) {
+        cont.innerHTML = '<div class="evol-empty">Sin datos de ' + vent + ' en ' + periodLabel(P) + '.</div>';
+        if (nota) nota.innerHTML = '';
+        return;
+    }
+    var cmpUse = hayCmp ? cmpP : null, filas = [], total = null;
+    if (modo === 'prod') {
+        var uv = document.getElementById('provUbic').value, ubics = provUbicaciones(), ubic = ubics[0];
+        for (var i = 0; i < ubics.length; i++) if (ubics[i].v === uv) ubic = ubics[i];
+        total = provFila(COMPANY_LBL, ubic.regs, w, P, cmpUse); total.name = COMPANY_LBL;
+        for (var p = 0; p < productNames.length; p++) {
+            var f = provFila(productNames[p], ubic.regs, w, P, cmpUse);
+            f.name = productNames[p]; f.color = productColor[productNames[p]] || '#888';
+            filas.push(f);
+        }
+    } else {
+        var pn = document.getElementById('provProd').value || COMPANY_LBL;
+        provUbicaciones().forEach(function (u) {
+            var fu = provFila(pn, u.regs, w, P, cmpUse); fu.name = u.label;
+            if (u.v === 'TOTAL') total = fu; else filas.push(fu);
+        });
+    }
+    if (provSort.key) {
+        var k = provSort.key, d = provSort.dir;
+        filas.sort(function (a, b) {
+            if (k === 'name') return d * a.name.localeCompare(b.name);
+            var va = provSortVal(a, k), vb = provSortVal(b, k);
+            if (va == null && vb == null) return 0;
+            if (va == null) return 1;      // sin dato siempre al fondo
+            if (vb == null) return -1;
+            return d * (va - vb);
+        });
+    }
+    var cmpL = hayCmp ? periodLabel(cmpP) : 'sin ' + periodLabel(cmpP), actL = periodLabel(P);
+    function th(key, txt, cls) {
+        var flecha = (provSort.key === key) ? (provSort.dir > 0 ? ' &#9650;' : ' &#9660;') : '';
+        return '<th class="sortable' + (cls ? ' ' + cls : '') + '" style="background:#95232C" onclick="provSetSort(\'' + key + '\')">' + txt + flecha + '</th>';
+    }
+    function pct(v) { return (v == null) ? '<span class="sd">s/d</span>' : (v * 100).toFixed(1) + '%'; }
+    function celdas(act, ant) {   // anterior · actual · diferencia, como en las vistas de producto
+        var dd = (act == null || ant == null) ? null : act - ant;
+        var cls = (dd == null) ? '' : (dd >= 0 ? ' class="var-positive"' : ' class="var-negative"');
+        return '<td class="grp-start">' + pct(ant) + '</td><td>' + pct(act) + '</td><td' + cls + '>' +
+               (dd == null ? '<span class="sd">s/d</span>' : (dd >= 0 ? '+' : '') + (dd * 100).toFixed(1) + ' pp') + '</td>';
+    }
+    function fila(f, esTotal) {
+        var dot = f.color ? '<span class="product-dot" style="background:' + f.color + '"></span>' : '';
+        return '<tr' + (esTotal ? ' class="total-row"' : '') + '><td class="cell-region">' + dot + f.name + '</td>' +
+               celdas(f.dfA, f.dfC) + celdas(f.dpA, f.dpC) + '</tr>';
+    }
+    var html = '<table class="prod-table prov-table"><thead><tr>' +
+        th('name', (modo === 'prod') ? 'Producto' : 'Ubicaci&oacute;n', 'col-region') +
+        th('dfC', 'DF% ' + cmpL, 'grp-start') + th('dfA', 'DF% ' + actL) + th('dfD', 'DF% dif.') +
+        th('dpC', 'DP% ' + cmpL, 'grp-start') + th('dpA', 'DP% ' + actL) + th('dpD', 'DP% dif.') +
+        '</tr></thead><tbody>';
+    if (total) html += fila(total, true);
+    for (var r = 0; r < filas.length; r++) html += fila(filas[r], false);
+    cont.innerHTML = html + '</tbody></table>';
+    if (nota) {
+        var txt = (w === 'MEN')
+            ? 'Mensual: farmacias con Siegfried en el mes, sobre las que compraron el mercado (DF%) o las del n&uacute;cleo 80-20 (DP%).'
+            : (currentCalc === 'PROM')
+            ? 'Promedio mensual: el DF% y el DP% de cada mes, promediados entre los ' + windowMonths(w, P).length +
+              ' meses de la ventana (' + periodLabel(windowMonths(w, P)[0]) + ' a ' + periodLabel(P) + ').'
+            : 'Acumulado: farmacias con al menos una compra en toda la ventana, sobre las que compraron el mercado (DF%) ' +
+              'o las del n&uacute;cleo 80-20 de la ventana (DP%). Para el promedio de los meses, eleg&iacute; <b>Promedio mensual</b> arriba.';
+        txt += ' Cada provincia suma sus regiones CUP.';
+        if (!hayCmp) txt += ' <span class="ctx-warn">Sin comparaci&oacute;n: ' + periodLabel(cmpP) + ' no tiene esta ventana entera</span>';
+        nota.innerHTML = txt;
+    }
+    refreshTopScrollbars();
+}
+
+// CSV para Excel (separador ';' y coma decimal, como lo abre Excel en es-AR): todas las
+// ventanas del período, en acumulado y en promedio mensual, cada producto y la compañía,
+// el país y las 24 provincias, contra el año anterior.
+function descargarProvincias() {
+    var P = currentPeriod, sep = ';', ubics = provUbicaciones(), prods = [COMPANY_LBL].concat(productNames);
+    function num(v) { return (v == null) ? '' : (v * 100).toFixed(2).replace('.', ','); }
+    function dif(a, b) { return (a == null || b == null) ? '' : ((a - b) * 100).toFixed(2).replace('.', ','); }
+    var lineas = [['Cálculo', 'Ventana', 'Período', 'Año anterior', 'Producto', 'Ubicación',
+                   'DF% actual', 'DF% año ant.', 'Dif. DF (pp)', 'DP% actual', 'DP% año ant.', 'Dif. DP (pp)'].join(sep)];
+    var calcGuardado = currentCalc;
+    var calcs = hayMensual() ? ['ACU', 'PROM'] : ['ACU'];
+    try {
+        calcs.forEach(function (c) {
+            currentCalc = c;   // ratioOf y periodsFor leen el cálculo activo
+            WINMETA.order.forEach(function (w) {
+                if (c === 'PROM' && w === 'MEN') return;   // un mes es igual en los dos cálculos
+                var ps = periodsFor(w);
+                if (ps.indexOf(P) < 0) return;
+                var ant = P - 12, hay = ps.indexOf(ant) >= 0;
+                var nombre = (w === 'MEN') ? 'Mensual' : (c === 'PROM' ? 'Promedio mensual' : 'Acumulado');
+                prods.forEach(function (pn) {
+                    ubics.forEach(function (u) {
+                        var f = provFila(pn, u.regs, w, P, hay ? ant : null);
+                        lineas.push([nombre, WINMETA.label[w], periodLabel(P), hay ? periodLabel(ant) : 'sin ' + periodLabel(ant),
+                                     pn, u.label, num(f.dfA), num(f.dfC), dif(f.dfA, f.dfC),
+                                     num(f.dpA), num(f.dpC), dif(f.dpA, f.dpC)].join(sep));
+                    });
+                });
+            });
+        });
+    } finally {
+        currentCalc = calcGuardado;
+    }
+    var blob = new Blob(['﻿' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'DF_DP_' + periodLabel(P) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.parentNode.removeChild(a); }, 0);
 }
 
 // === RUN ===

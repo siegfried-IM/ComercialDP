@@ -10,6 +10,7 @@ Corre DESPUÉS de generar:
     python verificar.py P && python generar_html.py P && python verificar_html.py P
 """
 import collections, json, os, re, sys
+import generar_html as G
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -36,7 +37,8 @@ def main():
     with open(HTML, encoding="utf-8") as f:
         src = f.read()
     H = json.load(open(os.path.join(DATA, "historico.json"), encoding="utf-8"))["datos"]
-    W = json.load(open(os.path.join(DATA, "historico_win.json"), encoding="utf-8"))["datos"]
+    WS = json.load(open(os.path.join(DATA, "historico_win.json"), encoding="utf-8"))
+    W = WS["datos"]
     TRIMC = js_var(src, "TRIMC")
     WINC = js_var(src, "WINC")
     META = js_var(src, "WINMETA")
@@ -80,15 +82,18 @@ def main():
     chequeo("TRIMC == historico.json", not mal,
             f"{n} celdas · {len(mal)} diferencias" + (f": {mal[:2]}" if mal else ""))
 
-    # --- WINC: idem contra historico_win.json ---
-    mal, n = [], 0
+    # --- WINC: idem contra historico_win.json. Una ventana que la app cortó (empezaba
+    #     antes de su primer mes al extraerla) tiene que viajar como null ---
+    mal, n, cortadas = [], 0, 0
     for i, per in enumerate(WINC["periodos"]):
         for pn in prods:
-            for loc in locs:
-                for win in [x for x in META["order"] if x != "TRI"]:
+            for win in [x for x in META["order"] if x != "TRI"]:
+                corta = G.ventana_truncada(WS, per, win, pn)
+                cortadas += corta
+                for loc in locs:
                     c = WINC["prod"].get(pn, {}).get(loc, {}).get(win)
                     cel = c[i] if c else None
-                    o = W[str(per)].get(pn, {}).get(loc, {}).get(win)
+                    o = None if corta else W[str(per)].get(pn, {}).get(loc, {}).get(win)
                     esp = [int(round(o["s"])), int(round(o["p"])), int(round(o["t"]))] if o else None
                     n += 1
                     if cel != esp:
@@ -98,16 +103,18 @@ def main():
     chequeo("WINC no duplica TRI (lo aporta TRIM)", not trae_tri,
             "ausente" if not trae_tri else "TRI viaja sin leerse y puede discrepar con TRIM")
     chequeo("WINC == historico_win.json", not mal,
-            f"{n} celdas · {len(mal)} diferencias" + (f": {mal[:2]}" if mal else ""))
+            f"{n} celdas · {len(mal)} diferencias · {cortadas} (período, producto, ventana) "
+            f"cortados por la app viajan null" + (f": {mal[:2]}" if mal else ""))
 
-    # --- el segmentador ofrece exactamente los períodos que tienen dato ---
+    # --- el segmentador ofrece exactamente los períodos con la ventana entera ---
     okp = True
     detalles = []
+    wper = sorted(int(p) for p in W
+                  if sum(1 for v in W[p].values() if isinstance(v, dict) and v.get("_ok")) >= len(prods))
+    enteras = G.ventanas_completas(WS, wper, prods)
     for win in META["order"]:
         ofrecidos = META["periodos"][win]
-        esperados = TRIMC["periodos"] if win == "TRI" else WINC["periodos"]
-        if win != "TRI" and not WINC["periodos"]:
-            esperados = []
+        esperados = TRIMC["periodos"] if win == "TRI" else enteras.get(win, [])
         if ofrecidos != esperados:
             okp = False
             detalles.append(f"{win}: ofrece {len(ofrecidos)}, hay {len(esperados)}")
@@ -123,6 +130,37 @@ def main():
         sin_ant[win] = sum(1 for p in ps if (p - 12) not in ps)
     chequeo("períodos sin año anterior (se muestran s/d)", True,
             " · ".join(f"{w}:{c}/{len(META['periodos'][w])}" for w, c in sin_ant.items()))
+
+    # --- MENC (promedio mensual): conteo a conteo contra mensual.json. Sin mensual.json el
+    #     tablero no ofrece el promedio mensual, y eso es coherente ---
+    MENC = js_var(src, "MENC")
+    if not os.path.exists(G.MENSUAL):
+        chequeo("MENC == mensual.json", not MENC,
+                "sin mensual.json: el promedio mensual queda deshabilitado" if not MENC
+                else "el HTML trae MENC pero no hay mensual.json")
+    else:
+        M = json.load(open(G.MENSUAL, encoding="utf-8"))["datos"]
+        meses = sorted(int(p) for p in M
+                       if sum(1 for v in M[p].values() if isinstance(v, dict) and v.get("_ok")) >= len(prods))
+        mal, n = [], 0
+        hp = MENC["periodos"] if MENC else []
+        if hp != meses:
+            mal.append(f"meses: html={len(hp)} store={len(meses)}")
+        for per in meses:
+            if per not in hp:
+                continue
+            j = hp.index(per)
+            for pn in prods:
+                for loc in locs:
+                    c = MENC["prod"].get(pn, {}).get(loc)
+                    cel = c[j] if c else None
+                    o = M[str(per)].get(pn, {}).get(loc)
+                    esp = [int(round(o["s"])), int(round(o["p"])), int(round(o["t"]))] if o else None
+                    n += 1
+                    if cel != esp:
+                        mal.append(f"{per}/{pn}/{loc}: html={cel} store={esp}")
+        chequeo("MENC == mensual.json", not mal,
+                f"{len(meses)} meses · {n} celdas · {len(mal)} diferencias" + (f": {mal[:2]}" if mal else ""))
 
     # --- la evolucion por departamento usa los mismos periodos que la serie principal.
     #     depto_win conserva trimestres truncados de los meses mas viejos de la app; sin este
