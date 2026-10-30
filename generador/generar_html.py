@@ -685,6 +685,8 @@ def main():
             print(f"[ventanas] {W} no se ofrece en {', '.join(fuera)}: empezaba antes del primer mes de la app")
     winmeta = {"order": WIN_ORDER, "label": WIN_LABEL, "len": WIN_LEN,
                "current": P, "curLabel": period_label(P),
+               # primer mes de la app: lo anterior ya no se puede extraer (lo dicen los avisos)
+               "appMin": store.get("meta", {}).get("min_periodo"),
                "periodos": {W: (trimc["periodos"] if W == "TRI" else wdisp.get(W, []))
                             for W in WIN_ORDER},
                "labels": {W: [period_label(p) for p in (trimc["periodos"] if W == "TRI" else wdisp.get(W, []))]

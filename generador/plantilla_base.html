@@ -599,8 +599,8 @@ body {
 .win-btn + .win-btn, .var-btn + .var-btn { border-left:1px solid #d9c2c4; }
 .win-btn:hover, .var-btn:hover { background:#f7ebec; }
 .win-btn.active, .var-btn.active { background:#7a1e24; color:#fff; }
-.var-btn.disabled, .var-btn:disabled { opacity:0.4; cursor:not-allowed; background:#f4eeee; color:#b9a0a3; }
-.var-btn.disabled:hover, .var-btn:disabled:hover { background:#f4eeee; }
+.var-btn.disabled, .var-btn:disabled, .win-btn:disabled { opacity:0.4; cursor:not-allowed; background:#f4eeee; color:#b9a0a3; }
+.var-btn.disabled:hover, .var-btn:disabled:hover, .win-btn:disabled:hover { background:#f4eeee; }
 .filter-group-label { font-size:0.62rem; text-transform:uppercase; letter-spacing:1px; color:#a58589; font-weight:700; margin:0 4px 0 8px; align-self:center; }
 .evol-field .hint { font-weight:400; text-transform:none; color:#a88; font-size:0.68rem; }
 #evolProduct[multiple] { min-width:230px; padding:4px; }
@@ -1118,10 +1118,20 @@ function updateContext() {
     var per = (winCurLabel || ((typeof PERIODO_LBL !== 'undefined') ? PERIODO_LBL : ''));
     var vent = (WINMETA.label[currentWindow] || 'Trimestre');
     var ct = calcTxt(currentWindow);
+    var faltaCmp = winCmpFalta + ' no est&aacute; extra&iacute;do en esta ventana';
+    if (winCmpFalta && currentCalc === 'PROM') {
+        var cpx = cmpPeriods(currentWindow, currentPeriod);
+        faltaCmp = 'promedio de ' + winCmpFalta + ' &mdash; ' + faltaPromTxt(currentWindow, currentVariation === 'ap' ? cpx.prev : cpx.ant);
+    }
     var cmp = winCmpLabel
         ? ' · Comparaci&oacute;n: <b>vs ' + winCmpLabel + '</b> (' + (currentVariation === 'ap' ? 'per&iacute;odo ant.' : 'a&ntilde;o ant.') + ')'
-        : (winCmpFalta ? ' · <span class="ctx-warn">Sin comparaci&oacute;n: ' + winCmpFalta + ' no est&aacute; extra&iacute;do en esta ventana</span>' : '');
+        : (winCmpFalta ? ' · <span class="ctx-warn">Sin comparaci&oacute;n: ' + faltaCmp + '</span>' : '');
     var avisos = '';
+    // En acumulado, si el promedio de esta ventana todavía no se puede armar, decir por qué
+    if (currentCalc === 'ACU' && hayMensual() && currentWindow !== 'MEN' && !promHay(currentWindow, currentPeriod)) {
+        avisos += ' <span class="ctx-warn">Promedio mensual de ' + vent + ' en ' + periodLabel(currentPeriod) + ': ' +
+                  faltaPromTxt(currentWindow, currentPeriod) + '</span>';
+    }
     if (!hayUnidades() && unitsPeriod() !== null) {
         avisos += ' <span class="ctx-warn">Unidades y MS%: el tablero s&oacute;lo las trae de ' +
                   periodLabel(unitsPeriod()) + ' (pesan demasiado para todos los per&iacute;odos), ' +
@@ -1235,6 +1245,29 @@ function promRatio(prods, regs, w, P, m) {
     }
     if (!n) return null;
     return Math.round(sum / n * 1e6) / 1e6;
+}
+function promDisponible(w) { return promPeriods(w).length > 0; }
+function promHay(w, P) { return promPeriods(w).indexOf(P) >= 0; }
+// "Sep-2024 a Abr-2025, Sep-2025": meses consecutivos en tramos.
+function rangoMeses(lista) {
+    var tramos = [], ini = null, prev = null;
+    for (var i = 0; i < lista.length; i++) {
+        if (ini === null) ini = lista[i];
+        else if (lista[i] !== prev + 1) { tramos.push([ini, prev]); ini = lista[i]; }
+        prev = lista[i];
+    }
+    if (ini !== null) tramos.push([ini, prev]);
+    return tramos.map(function (t) { return t[0] === t[1] ? periodLabel(t[0]) : periodLabel(t[0]) + ' a ' + periodLabel(t[1]); }).join(', ');
+}
+// Por qué no hay promedio de la ventana w en P: qué meses faltan y si todavía se pueden
+// extraer (los anteriores al primer mes de la app ya no).
+function faltaPromTxt(w, P) {
+    var f = windowMonths(w, P).filter(function (k) { return !hayMensual() || MENC.periodos.indexOf(k) < 0; });
+    var min = WINMETA.appMin || 0, partes = [];
+    var ext = f.filter(function (k) { return k >= min; }), fuera = f.filter(function (k) { return k < min; });
+    if (ext.length) partes.push('faltan ' + rangoMeses(ext) + ' (se completan con extraer_mensual.py)');
+    if (fuera.length) partes.push(rangoMeses(fuera) + (fuera.length > 1 ? ' ya no están' : ' ya no está') + ' en la app');
+    return partes.join(' y ');
 }
 // Cómo se calculó la ventana, para el contexto y los títulos.
 function calcTxt(w) {
@@ -1456,6 +1489,8 @@ function applyWindow(doMap) {
     updateMetricLabels();   // el título del resumen lleva el período; llama a updateContext()
     if (doMap && currentView === 'mapa') renderMap();
     if (currentView === 'provincias') renderProvincias();
+    refreshWinButtons();
+    updateCalcButton();
     refreshTopScrollbars();
 }
 
@@ -1463,8 +1498,10 @@ function buildWindowControls() {
     if (typeof WINMETA === 'undefined' || !WINMETA) return;   // sin metadata => controles ocultos
     var box = document.getElementById('winToggle');
     if (!box) return;
+    // Los botones son los mismos en los dos cálculos: una ventana sin promedio posible se
+    // apaga y dice qué meses faltan. Esconderla parecía que el MAT había desaparecido.
     var order = (WINMETA.order || ['MEN', 'TRI', 'SEM', 'MAT', 'YTD'])
-                .filter(function (w) { return periodsFor(w).length > 0; });
+                .filter(function (w) { return (WINMETA.periodos[w] || []).length > 0; });
     if (!order.length) { box.style.display = 'none'; return; }
     if (order.indexOf(currentWindow) < 0) { currentWindow = order[0]; clampPeriodToWindow(); }
     var h = '';
@@ -1482,11 +1519,36 @@ function buildWindowControls() {
     markVarActive();
     enforceVariationForWindow();
     buildPeriodControl();
-    var bp = document.getElementById('btnCalcProm');
-    if (bp && !hayMensual()) {
-        bp.disabled = true; bp.classList.add('disabled');
-        bp.title = 'Falta datos/mensual.json: correr extraer_mensual.py y regenerar el tablero';
+    refreshWinButtons();
+    updateCalcButton();
+}
+
+// En promedio mensual, la ventana sin ningún período con todos sus meses se apaga y
+// el título dice cuáles faltan para el período elegido.
+function refreshWinButtons() {
+    var btns = document.querySelectorAll('#winToggle .win-btn');
+    for (var i = 0; i < btns.length; i++) {
+        var w = btns[i].getAttribute('data-win');
+        var off = (currentCalc === 'PROM' && !promDisponible(w));
+        btns[i].disabled = off;
+        btns[i].title = off ? 'Promedio mensual de ' + (WINMETA.label[w] || w) + ': ' + faltaPromTxt(w, currentPeriod) : '';
     }
+}
+
+// Sin todos los meses de la ventana el promedio no existe. En vez de saltar a otra
+// ventana, el botón se apaga y dice qué falta.
+function updateCalcButton() {
+    var bp = document.getElementById('btnCalcProm');
+    if (!bp) return;
+    var motivo = !hayMensual() ? 'Falta datos/mensual.json: correr extraer_mensual.py y regenerar el tablero'
+               : !promHay(currentWindow, currentPeriod)
+               ? 'Promedio mensual de ' + (WINMETA.label[currentWindow] || currentWindow) + ' en ' + periodLabel(currentPeriod) +
+                 ': ' + faltaPromTxt(currentWindow, currentPeriod)
+               : '';
+    var off = !!motivo && currentCalc !== 'PROM';
+    bp.disabled = off;
+    bp.classList.toggle('disabled', off);
+    bp.title = motivo || 'El DP% / DF% de cada mes, promediado entre los meses de la ventana';
 }
 
 function markWinActive() {
@@ -1509,15 +1571,19 @@ function enforceVariationForWindow() {
     var ps = periodsFor(currentWindow), cp = cmpPeriods(currentWindow, currentPeriod);
     var hayPrev = ps.indexOf(cp.prev) >= 0, hayAnt = ps.indexOf(cp.ant) >= 0;
     var apOff = (currentWindow === 'YTD') || !hayPrev;
+    function falta(per) {
+        return (currentCalc === 'PROM') ? 'Promedio de ' + periodLabel(per) + ': ' + faltaPromTxt(currentWindow, per)
+                                        : periodLabel(per) + ' no está extraído en esta ventana';
+    }
     apBtn.disabled = apOff;
     apBtn.classList.toggle('disabled', apOff);
     apBtn.title = (currentWindow === 'YTD')
         ? 'No aplica para YTD: se compara contra el mismo acumulado del año anterior.'
-        : (hayPrev ? '' : periodLabel(cp.prev) + ' no está extraído en esta ventana');
+        : (hayPrev ? '' : falta(cp.prev));
     if (ayBtn) {
         ayBtn.disabled = !hayAnt;
         ayBtn.classList.toggle('disabled', !hayAnt);
-        ayBtn.title = hayAnt ? '' : periodLabel(cp.ant) + ' no está extraído en esta ventana';
+        ayBtn.title = hayAnt ? '' : falta(cp.ant);
     }
     // Caer en la comparación que sí existe; si no hay ninguna, se muestra s/d.
     if (currentVariation === 'ap' && apOff && hayAnt) { currentVariation = 'ay'; markVarActive(); }
@@ -1526,6 +1592,7 @@ function enforceVariationForWindow() {
 
 function setWindow(w) {
     if (w === currentWindow) return;
+    if (currentCalc === 'PROM' && !promDisponible(w)) return;   // el botón ya está apagado
     currentWindow = w;
     markWinActive();
     enforceVariationForWindow();
@@ -1599,7 +1666,7 @@ function setVariation(v) {
 // todas las vistas; la Evolución pasa al trimestre móvil promediado.
 function setCalc(c) {
     if (c === currentCalc) return;
-    if (c === 'PROM' && !hayMensual()) return;
+    if (c === 'PROM' && (!hayMensual() || !promHay(currentWindow, currentPeriod))) return;   // el botón ya está apagado
     currentCalc = c;
     markCalcActive();
     clampPeriodToWindow();
@@ -3674,7 +3741,9 @@ function renderProvincias() {
             : 'Acumulado: farmacias con al menos una compra en toda la ventana, sobre las que compraron el mercado (DF%) ' +
               'o las del n&uacute;cleo 80-20 de la ventana (DP%). Para el promedio de los meses, eleg&iacute; <b>Promedio mensual</b> arriba.';
         txt += ' Cada provincia suma sus regiones CUP.';
-        if (!hayCmp) txt += ' <span class="ctx-warn">Sin comparaci&oacute;n: ' + periodLabel(cmpP) + ' no tiene esta ventana entera</span>';
+        if (!hayCmp) txt += ' <span class="ctx-warn">Sin comparaci&oacute;n: ' + ((currentCalc === 'PROM')
+            ? 'promedio de ' + periodLabel(cmpP) + ' &mdash; ' + faltaPromTxt(w, cmpP)
+            : periodLabel(cmpP) + ' no tiene esta ventana entera') + '</span>';
         nota.innerHTML = txt;
     }
     refreshTopScrollbars();
