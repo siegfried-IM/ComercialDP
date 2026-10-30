@@ -12,8 +12,10 @@ Salida: datos/mensual.json
   sellos[mes][producto] = ReloadTime() con que se leyó
 
 Los (mes, producto) que historico_win.json ya tiene con la ventana MEN se COPIAN con su sello
-en vez de consultarse: es el mismo número. --sin-copiar los consulta igual (toda la serie en el
-reload vigente). Va del mes más viejo al más nuevo: el próximo reload saca de la app el más viejo.
+en vez de consultarse: es el mismo número. Si historico_win lo tiene con el reload vigente y
+mensual.json con uno anterior, la copia se refresca. --sin-copiar los consulta igual (toda la
+serie en el reload vigente). Va del mes más viejo al más nuevo: el próximo reload saca de la app
+el más viejo, y mensual.json lo conserva.
 
 Serial y resumible (guarda por producto). Uso:
   python extraer_mensual.py                       # todos los meses de la app que falten
@@ -38,20 +40,27 @@ MAPJS = os.path.join(DATA, "mapeo_mercados.json")
 MEDIDAS = (C.MEAS["sie_act"], C.MEAS["p80_act"], C.MEAS["totmdo_act"])
 
 
-def copiar_de_ventanas(store, meses, productos):
-    """Copia la ventana MEN de historico_win.json a los (mes, producto) que falten."""
+def copiar_de_ventanas(store, meses, productos, sello_actual):
+    """Copia la ventana MEN de historico_win.json a los (mes, producto) que falten, y a los
+    que historico_win tiene con el reload vigente y mensual.json con uno anterior (la
+    actualización mensual re-extrae P-1, P-3...): si no, acumulado y promedio mostrarían
+    dos versiones del mismo mes."""
     win = load_json(WINSTORE, {})
     n = 0
     for P in meses:
         pk = str(P)
         for prod in productos:
             d = win.get("datos", {}).get(pk, {}).get(prod)
-            if not d or not d.get("_ok") or store["datos"].get(pk, {}).get(prod, {}).get("_ok"):
+            sello = win.get("sellos", {}).get(pk, {}).get(prod)
+            if not d or not d.get("_ok") or not sello:
+                continue
+            ya = store["datos"].get(pk, {}).get(prod, {}).get("_ok")
+            viejo = store.get("sellos", {}).get(pk, {}).get(prod) != sello_actual
+            if ya and not (sello == sello_actual and viejo):
                 continue
             out = {reg: dict(w["MEN"]) for reg, w in d.items()
                    if reg != "_ok" and isinstance(w, dict) and "MEN" in w}
-            sello = win.get("sellos", {}).get(pk, {}).get(prod)
-            if "TOTAL" not in out or not sello:
+            if "TOTAL" not in out:
                 continue
             out["_ok"] = True
             store["datos"].setdefault(pk, {})[prod] = out
@@ -92,7 +101,7 @@ def main():
     store = load_json(STORE, {"meta": {}, "datos": {}, "sellos": {}})
     store["meta"] = {"schema": "mensual", "ventana": "MEN", "min_periodo": min_p, "max_periodo": max_p}
     if copiar:
-        n = copiar_de_ventanas(store, meses, list(mapping))
+        n = copiar_de_ventanas(store, meses, list(mapping), sello)
         save_json(STORE, store)
         print(f"copiados de historico_win.json: {n} (mes, producto)")
 

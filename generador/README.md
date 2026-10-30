@@ -31,9 +31,12 @@ python extraer_mensual.py                        # cada mes de la app   -> mensu
 python extraer_unidades.py P                     # unidades por región  -> unidades_region.json
 python extraer_unidades_depto.py P               # unidades por depto   -> unidades_depto.json
 python extraer_depto.py MEN,TRI,SEM,MAT,YTD P    # 5 ventanas x depto   -> depto_win.json
-python verificar.py P                            # 16 chequeos; exit!=0 si algo falla
+python verificar.py P                            # 22 chequeos (G4 = mensual.json); exit!=0 si algo falla
 python generar_html.py P                         # regenera ../index.html
+python verificar_html.py P                       # el index.html generado contra los stores
 ```
+Después: commit de `datos/historico.json`, `datos/mensual.json` e `index.html`, y `git push` publica en
+GitHub Pages (https://siegfried-im.github.io/ComercialDP/).
 Jun-2026 fue: `python extraer_ventanas.py 24318 24315 24312 24306` (24317 ya estaba de mayo).
 Los períodos extra del paso 2 son los que el tablero compara: `P-1` mensual, `P-3` trimestre,
 `P-6` semestre, `P-12` año anterior y MAT, `P-M` inicio del YTD. Los que ya estén en el store se saltean.

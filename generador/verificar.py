@@ -12,11 +12,15 @@ algún FAIL o SKIP, para poder encadenarlo:
 
 Uso:  python verificar.py [periodo]     (por defecto, el máximo del store)
 """
-import collections, json, os, subprocess, sys
+import collections, json, os, shutil, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DATA = os.path.join(ROOT, "datos")
+# Git for Windows instalado por usuario no queda en el PATH: sin esto G3 daba SKIP y bloqueaba.
+GIT = shutil.which("git") or next(
+    (p for p in (os.path.expandvars(r"%LOCALAPPDATA%\Programs\Git\cmd\git.exe"),
+                 r"C:\Program Files\Git\cmd\git.exe") if os.path.exists(p)), "git")
 
 WINS = ["MEN", "TRI", "SEM", "MAT", "YTD"]
 # Región descarta los RegionCUP sin mapear; departamento no. El gap es real y chico.
@@ -269,7 +273,7 @@ def g3(P, H, refrescados=frozenset(), prods_refrescados=frozenset()):
     debe moverse. Un bloque que se movió sin estar cubierto por ninguna lista es FAIL."""
     print("\nG3 · Diff contra la versión commiteada")
     try:
-        crudo = subprocess.run(["git", "--no-pager", "show", "HEAD:datos/historico.json"],
+        crudo = subprocess.run([GIT, "--no-pager", "show", "HEAD:datos/historico.json"],
                                cwd=ROOT, capture_output=True, timeout=120)
         base = json.loads(crudo.stdout.decode("utf-8"))
     except Exception as e:
@@ -308,12 +312,69 @@ def g3(P, H, refrescados=frozenset(), prods_refrescados=frozenset()):
             f"{prods} productos, {regs} regiones (base: {base_regs})")
 
 
+def g4(H, W, M):
+    """mensual.json: los meses con que el tablero arma el promedio mensual.
+
+    No hay otro camino a la misma cifra mensual, así que se cruza contra lo que la acota:
+    las farmacias del mercado de un mes ('t', conteo puro) no pueden superar las del
+    trimestre que lo contiene; 's' y 'p' dependen del núcleo 80-20 y no son monótonos.
+    Donde historico_win tiene el mismo mes y producto con el mismo reload, tiene que ser
+    el mismo número: si no, acumulado y promedio mostrarían dos versiones de un mes."""
+    print("\nG4 · Meses del promedio mensual (mensual.json)")
+    if M is None:
+        chequeo("mensual.json existe", None, "falta: correr extraer_mensual.py")
+        return
+    prods = list(json.load(open(os.path.join(DATA, "mapeo_mercados.json"), encoding="utf-8")))
+    meta = M.get("meta", {})
+    meses = range(meta.get("min_periodo", 0), meta.get("max_periodo", -1) + 1)
+    faltan = [f"{p}/{pn}" for p in meses for pn in prods
+              if not M["datos"].get(str(p), {}).get(pn, {}).get("_ok") or not sello_pp(M, str(p), pn)]
+    chequeo("los meses de la app con los 42 productos y sello", bool(meses) and not faltan,
+            f"{len(meses)} meses ({meta.get('min_periodo')}..{meta.get('max_periodo')})"
+            + (f" · faltan {len(faltan)}: {faltan[:3]}" if faltan else ""))
+    n, malos = 0, []
+    for pk, d in H["datos"].items():
+        P = int(pk)
+        for pn, tri in ok_prods(H, pk).items():
+            for loc, c in tri.items():
+                if not isinstance(c, dict) or "totmdo_act" not in c:
+                    continue
+                for k in (P - 2, P - 1, P):
+                    men = M["datos"].get(str(k), {}).get(pn, {}).get(loc)
+                    if men:
+                        n += 1
+                        if men["t"] > c["totmdo_act"] + 0.5:
+                            malos.append(f"{k} {pn} {loc}: mes={men['t']:.0f} > trim {pk}={c['totmdo_act']:.0f}")
+    chequeo("mercado del mes <= el del trimestre que lo contiene", not malos,
+            f"{n} pares comparados" + (f" · {len(malos)} violaciones: {malos[:3]}" if malos else ""))
+    n, distintos, viejos = 0, [], []
+    for pk in W.get("datos", {}):
+        for pn, regs in ok_prods(W, pk).items():
+            sw, sm = sello_pp(W, pk, pn), sello_pp(M, pk, pn)
+            if not sw or sw != sm:
+                if sw and sm and M["datos"].get(pk, {}).get(pn, {}).get("_ok"):
+                    viejos.append(f"{pk}/{pn}")
+                continue
+            for loc, wins in regs.items():
+                if loc == "_ok" or "MEN" not in wins:
+                    continue
+                n += 1
+                if M["datos"].get(pk, {}).get(pn, {}).get(loc) != wins["MEN"]:
+                    distintos.append(f"{pk}/{pn}/{loc}")
+    chequeo("== historico_win[MEN] donde comparten reload", not distintos,
+            f"{n} celdas" + (f" · {len(distintos)} distintas: {distintos[:3]}" if distintos else ""))
+    if viejos:
+        print(f"  AVISO {len(viejos)} (mes, producto) de historico_win tienen otro reload que en mensual.json "
+              f"(p.ej. {viejos[:3]}): correr extraer_mensual.py, que copia el del reload vigente")
+
+
 def main():
     H = cargar("historico.json")
     W = cargar("historico_win.json")
     U = cargar("unidades_region.json")
     UD = cargar("unidades_depto.json")
     D = cargar("depto_win.json")
+    M = cargar("mensual.json")
     pos, refrescados, prods_ref = leer_args(sys.argv[1:])
     P = int(pos[0]) if pos else max(int(k) for k in H["datos"])
 
@@ -329,6 +390,7 @@ def main():
     g1(P, H, W, D)
     g2(P, H, W, U, UD, D)
     g3(P, H, refrescados, prods_ref)
+    g4(H, W, M)
 
     print()
     n_fail = resultados.count("FAIL")
