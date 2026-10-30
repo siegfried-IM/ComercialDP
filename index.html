@@ -770,9 +770,9 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
         <div class="win-toggle" id="winToggle" role="group" aria-label="Ventana temporal" style="display:none"></div>
         <span class="filter-group-label" id="calcGroupLabel" style="display:none">C&aacute;lculo</span>
         <div class="var-toggle" id="calcToggle" role="group" aria-label="C&aacute;lculo de la ventana" style="display:none">
-            <button type="button" id="btnCalcAcu" class="var-btn active" onclick="setCalc('ACU')"
+            <button type="button" id="btnCalcAcu" class="var-btn" onclick="setCalc('ACU')"
                     title="Farmacias con al menos una compra en toda la ventana (n&uacute;cleo 80-20 de la ventana)">Acumulado</button>
-            <button type="button" id="btnCalcProm" class="var-btn" onclick="setCalc('PROM')"
+            <button type="button" id="btnCalcProm" class="var-btn active" onclick="setCalc('PROM')"
                     title="El DP% / DF% de cada mes, promediado entre los meses de la ventana">Promedio mensual</button>
         </div>
         <span class="filter-group-label" id="periodGroupLabel" style="display:none">Per&iacute;odo</span>
@@ -1006,7 +1006,7 @@ body.compact-tables .prod-table th, body.compact-tables .prod-table td { padding
 
     <!-- Footer -->
     <div class="footer">
-        Generado el 30/10/2026 11:18 | DP% Report - Datos Agosto 2026<br>IQVIA &middot; reload del 02/oct./2026 &middot; serie completa en ese reload: Alidial, Trip D3 &middot; los otros 40 productos conservan períodos de reloads anteriores (3 de 22 períodos son del vigente)<br>Promedio mensual: 14 meses (May-2025 &rarr; Ago-2026) &middot; faltan Sep-2025, Oct-2025 &middot; (mes, producto) por reload: 11/sep./2026 440, 02/oct./2026 148
+        Generado el 30/10/2026 11:36 | DP% Report - Datos Agosto 2026<br>IQVIA &middot; reload del 02/oct./2026 &middot; serie completa en ese reload: Alidial, Trip D3 &middot; los otros 40 productos conservan períodos de reloads anteriores (3 de 22 períodos son del vigente)<br>Promedio mensual: 14 meses (May-2025 &rarr; Ago-2026) &middot; faltan Sep-2025, Oct-2025 &middot; (mes, producto) por reload: 11/sep./2026 440, 02/oct./2026 148
     </div>
 </div>
 
@@ -1050,7 +1050,7 @@ var DEPTO_EVOL = {"labels": ["Nov-2024", "Dic-2024", "Ene-2025", "Feb-2025", "Ma
 var currentView = 'summary';
 var currentWindow = 'TRI';       // ventana temporal activa: MEN/TRI/SEM/MAT/YTD
 var currentVariation = 'ay';     // 'ay' = vs año anterior · 'ap' = vs período anterior
-var currentCalc = 'ACU';         // 'ACU' = acumulado de la ventana · 'PROM' = promedio de sus meses
+var currentCalc = 'PROM';        // 'PROM' = promedio de sus meses (por defecto) · 'ACU' = acumulado de la ventana
 var winCurLabel = '';            // etiqueta del período actual de la ventana
 var winCmpHay = true;            // ¿el período de comparación está extraído?
 var winCmpFalta = '';            // si no lo está, cuál sería
@@ -1744,6 +1744,10 @@ function updateFilterBarForView(v) {
 
 // === INIT ===
 function init() {
+    // Abre en promedio mensual. Si la ventana y el período iniciales no tienen todos sus
+    // meses (o no hay mensual.json), abre en acumulado y el aviso dice qué falta.
+    if (currentCalc === 'PROM' && (!hayMensual() || !promHay(currentWindow, currentPeriod))) currentCalc = 'ACU';
+    evolData = evolActiva();
     clampPeriodToWindow();   // el período generado puede no estar en la ventana inicial
     updateMetricLabels();
     buildSidebar();

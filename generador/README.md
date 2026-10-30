@@ -74,7 +74,8 @@ parece una caída de 8 pp puede ser sólo el dato viejo contra el nuevo.
 
 ## Acumulado vs promedio mensual
 Las ventanas (Trimestre, Semestre, MAT, YTD) se ven de dos formas; las elige el selector **Cálculo**
-del tablero:
+del tablero, que abre en **promedio mensual** (si la ventana y el período iniciales no tienen todos sus
+meses, abre en acumulado y avisa qué falta):
 - **Acumulado:** la medida maestra con la ventana parametrizada. Una farmacia cuenta si compró al menos
   una vez en toda la ventana, y el núcleo 80-20 se recalcula sobre la ventana. Cuanto más larga la
   ventana, más alto da: en Ago-2026 el DP% MAT quedó (mediana) 17,5 pp arriba de un mes suelto.
